@@ -1,0 +1,50 @@
+<svg width="1400" height="320" viewBox="0 0 1400 320" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1400" y2="320" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#050505"/>
+      <stop offset="1" stop-color="#110000"/>
+    </linearGradient>
+    <radialGradient id="glow" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(1080 70) rotate(145) scale(520 260)">
+      <stop stop-color="#9A0019" stop-opacity="0.8"/>
+      <stop offset="1" stop-color="#9A0019" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="line" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#330008"/>
+      <stop offset="0.5" stop-color="#D4002A"/>
+      <stop offset="1" stop-color="#330008"/>
+    </linearGradient>
+    <filter id="soft" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="12"/>
+    </filter>
+    <filter id="textGlow" x="-20%" y="-50%" width="160%" height="220%">
+      <feDropShadow dx="0" dy="0" stdDeviation="6" flood-color="#FF1E47" flood-opacity="0.8"/>
+      <feDropShadow dx="0" dy="0" stdDeviation="14" flood-color="#8A0018" flood-opacity="0.7"/>
+    </filter>
+  </defs>
+
+  <rect width="1400" height="320" fill="url(#bg)"/>
+  <rect width="1400" height="320" fill="url(#glow)"/>
+
+  <g opacity="0.5">
+    <path d="M0 64H1400" stroke="url(#line)" stroke-width="2"/>
+    <path d="M0 256H1400" stroke="url(#line)" stroke-width="2"/>
+  </g>
+
+  <g opacity="0.25" filter="url(#soft)">
+    <path d="M-30 220C200 140 420 280 620 205C810 135 1030 170 1430 60" stroke="#A50021" stroke-width="3"/>
+    <path d="M-20 110C220 185 380 85 600 130C790 168 980 85 1420 170" stroke="#700014" stroke-width="2"/>
+  </g>
+
+  <rect x="92" y="86" width="10" height="148" fill="#D4002A"/>
+  <rect x="106" y="86" width="2" height="148" fill="#FF6B85" opacity="0.7"/>
+
+  <g filter="url(#textGlow)">
+    <text x="132" y="165" fill="#FF224D" font-size="88" font-family="Inter, Segoe UI, Arial, sans-serif" font-weight="900" letter-spacing="4">REDPINCER</text>
+  </g>
+
+  <text x="136" y="206" fill="#C3C3C3" font-size="24" font-family="Inter, Segoe UI, Arial, sans-serif" font-weight="600" letter-spacing="2">AI / LLM RED TEAM SUITE</text>
+
+  <rect x="136" y="224" width="420" height="3" fill="#D4002A" opacity="0.85"/>
+
+  <text x="136" y="258" fill="#8D8D8D" font-size="16" font-family="Inter, Segoe UI, Arial, sans-serif" letter-spacing="1.2">AUTHORIZED SECURITY TESTING · PROMPT INJECTION · JAILBREAK · EXTRACTION · BYPASS</text>
+</svg>
