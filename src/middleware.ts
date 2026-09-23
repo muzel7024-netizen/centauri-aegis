@@ -5,6 +5,7 @@ import {
   resolveRateLimitTier,
   rateLimitHeaders,
 } from "@/lib/rate-limit";
+import { validateRequestAuth } from "@/lib/auth";
 
 /**
  * Middleware to handle:
@@ -40,7 +41,7 @@ function isAuthExemptPath(pathname: string): boolean {
   return AUTH_EXEMPT_PATHS.some((p) => pathname.startsWith(p));
 }
 
-export function middleware(request: NextRequest) {
+export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
   // Always allow fully public paths (no rate limiting, no auth)
@@ -82,36 +83,25 @@ export function middleware(request: NextRequest) {
 
     // For other API routes, fall through to auth check below
     // but carry the rate-limit-augmented response forward
-    return applyAuthCheck(request, pathname, response);
+    return await applyAuthCheck(request, pathname, response);
   }
 
   // --- Authentication (non-API page routes) ---
-  return applyAuthCheck(request, pathname);
+  return await applyAuthCheck(request, pathname);
 }
 
-function applyAuthCheck(
+async function applyAuthCheck(
   request: NextRequest,
   pathname: string,
   existingResponse?: NextResponse
-): NextResponse {
-  // Check if auth is enabled via env vars (AEGIS_*)
-  const authDisabled = process.env.AEGIS_AUTH_DISABLED === "true";
-  const user = process.env.AEGIS_USERNAME;
-  const pass = process.env.AEGIS_PASSWORD;
-  const authEnabled = !authDisabled && !!(user && pass);
+): Promise<NextResponse> {
+  const auth = await validateRequestAuth(request);
 
-  if (!authEnabled) {
-    return existingResponse ?? NextResponse.next();
-  }
-
-  // Check for session cookie
-  const sessionCookie = request.cookies.get("aegis_session")?.value;
-
-  if (!sessionCookie) {
+  if (!auth.authenticated) {
     // API routes get 401, pages get redirected to /login
     if (pathname.startsWith("/api/")) {
       return NextResponse.json(
-        { error: "Authentication required" },
+        { error: auth.error || "Authentication required" },
         { status: 401 }
       );
     }
@@ -120,8 +110,6 @@ function applyAuthCheck(
     return NextResponse.redirect(loginUrl);
   }
 
-  // Cookie exists — let the request through.
-  // Full HMAC validation happens in the auth status endpoint.
   return existingResponse ?? NextResponse.next();
 }
 

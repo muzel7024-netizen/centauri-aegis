@@ -190,11 +190,10 @@ export function getClientKey(request: Request): string {
     if (forwarded) {
       return forwarded.split(",")[0].trim();
     }
-  }
-
-  const realIp = headers.get("x-real-ip");
-  if (realIp) {
-    return realIp.trim();
+    const realIp = headers.get("x-real-ip");
+    if (realIp) {
+      return realIp.trim();
+    }
   }
 
   return "direct";

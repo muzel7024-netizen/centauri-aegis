@@ -186,6 +186,8 @@ export function AssessmentRunner({
     }, 1000);
 
     let wasCancelled = false;
+    let executionFailed = false;
+    let failureReason = "";
 
     try {
       const res = await fetch("/api/attack", {
@@ -201,6 +203,55 @@ export function AssessmentRunner({
         }),
         signal: controller.signal,
       });
+
+      if (!res.ok) {
+        executionFailed = true;
+        let sanitizedError = "";
+        try {
+          const errData = await res.json();
+          if (errData && typeof errData.error === "string") {
+            sanitizedError = errData.error.trim().slice(0, 300);
+          }
+        } catch {
+          // Non-JSON response
+        }
+
+        switch (res.status) {
+          case 400:
+            failureReason = sanitizedError || "Invalid assessment request (HTTP 400)";
+            break;
+          case 401:
+            failureReason = sanitizedError || "Authentication required (HTTP 401)";
+            break;
+          case 403:
+            failureReason = sanitizedError || "Access forbidden (HTTP 403)";
+            break;
+          case 404:
+            failureReason = "Assessment endpoint not found (HTTP 404)";
+            break;
+          case 408:
+            failureReason = "Assessment request timed out (HTTP 408)";
+            break;
+          case 429:
+            failureReason = sanitizedError || "Rate limit exceeded (HTTP 429). Please wait before retrying.";
+            break;
+          case 500:
+            failureReason = "Internal server error occurred during assessment (HTTP 500)";
+            break;
+          case 502:
+            failureReason = sanitizedError || "Target model connection failed (HTTP 502)";
+            break;
+          case 503:
+            failureReason = "Target service unavailable (HTTP 503)";
+            break;
+          default:
+            failureReason = sanitizedError || `Assessment request failed with HTTP ${res.status}`;
+            break;
+        }
+
+        toast.error(failureReason);
+        return;
+      }
 
       const reader = res.body?.getReader();
       readerRef.current = reader || null;
@@ -223,7 +274,12 @@ export function AssessmentRunner({
           throw e;
         }
         const { done, value } = chunk;
-        if (done) break;
+        if (done) {
+          if (controller.signal.aborted) {
+            wasCancelled = true;
+          }
+          break;
+        }
 
         buffer += decoder.decode(value, { stream: true });
         const lines = buffer.split("\n");
@@ -266,8 +322,10 @@ export function AssessmentRunner({
       if (err instanceof DOMException && err.name === "AbortError") {
         wasCancelled = true;
       } else {
+        executionFailed = true;
+        failureReason = err instanceof Error ? err.message.slice(0, 300) : "Execution encountered an error";
         console.error("Assessment execution error:", err);
-        toast.error("Execution encountered an error");
+        toast.error(failureReason);
       }
     } finally {
       if (timerRef.current) clearInterval(timerRef.current);
@@ -277,13 +335,19 @@ export function AssessmentRunner({
       setIsStopping(false);
       setCancelActiveExecution(null);
 
-      if (wasCancelled) {
+      if (wasCancelled || controller.signal.aborted) {
         cancelRun(runId);
         updateAssessment(assessment.id, {
           status: "stopped",
           updatedAt: Date.now(),
         });
         toast.info("Assessment execution stopped");
+      } else if (executionFailed) {
+        cancelRun(runId);
+        updateAssessment(assessment.id, {
+          status: "failed",
+          updatedAt: Date.now(),
+        });
       } else {
         completeRun(runId);
         updateAssessment(assessment.id, {

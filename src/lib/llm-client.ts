@@ -1,4 +1,5 @@
 import type { LLMRequest, LLMResponse } from "./types";
+import { validateTargetEndpoint } from "./endpoint-security";
 
 const DEFAULT_TIMEOUT_MS = 120_000;
 const REASONING_TIMEOUT_MS = 300_000;
@@ -20,12 +21,84 @@ function isTimeoutLikeError(message: string): boolean {
 }
 
 /**
+ * Execute outbound HTTP fetch with manual redirect handling and strict SSRF policy enforcement.
+ * Redirects are validated before following to prevent SSRF redirect bypasses (e.g. public -> metadata IP).
+ */
+async function safeFetchWithSSRF(
+  url: string,
+  init: RequestInit,
+  maxRedirects: number = 3
+): Promise<Response> {
+  let currentUrl = url;
+  let redirectsRemaining = maxRedirects;
+
+  while (true) {
+    const validation = validateTargetEndpoint(currentUrl);
+    if (!validation.allowed) {
+      throw new Error(`Outbound request to "${currentUrl}" blocked by security policy: ${validation.reason || "Forbidden destination"}`);
+    }
+
+    const response = await fetch(currentUrl, {
+      ...init,
+      redirect: "manual",
+    });
+
+    const isRedirect =
+      response.status === 301 ||
+      response.status === 302 ||
+      response.status === 303 ||
+      response.status === 307 ||
+      response.status === 308 ||
+      response.type === "opaqueredirect";
+
+    if (!isRedirect) {
+      return response;
+    }
+
+    if (redirectsRemaining <= 0) {
+      throw new Error("Too many redirects");
+    }
+    redirectsRemaining--;
+
+    const location = response.headers.get("location");
+    if (!location) {
+      throw new Error(`Redirect (${response.status}) missing Location header`);
+    }
+
+    let nextUrl: string;
+    try {
+      nextUrl = new URL(location, currentUrl).toString();
+    } catch {
+      throw new Error(`Invalid redirect Location: "${location}"`);
+    }
+
+    const nextValidation = validateTargetEndpoint(nextUrl);
+    if (!nextValidation.allowed) {
+      throw new Error(`Redirect to "${nextUrl}" blocked by security policy: ${nextValidation.reason || "Forbidden destination"}`);
+    }
+
+    currentUrl = nextUrl;
+  }
+}
+
+/**
  * Send a chat completion request to an LLM provider.
  * Supports OpenAI, Anthropic, OpenRouter, and custom (OpenAI-compatible) endpoints.
+ * Enforces centralized SSRF protection prior to dispatching network requests.
  */
 export async function sendLLMRequest(req: LLMRequest): Promise<LLMResponse> {
   const start = Date.now();
   const timeoutMs = resolveTimeoutMs(req.model);
+
+  // Centralized SSRF Guard: Validate target endpoint before initiating outbound requests
+  const endpointValidation = validateTargetEndpoint(req.endpoint);
+  if (!endpointValidation.allowed) {
+    return {
+      content: "",
+      error: `Endpoint rejected by security policy: ${endpointValidation.reason || "Forbidden destination"}`,
+      durationMs: 0,
+    };
+  }
 
   try {
     if (req.provider === "anthropic") {
@@ -64,7 +137,7 @@ async function sendOpenAICompatibleRequest(
       headers.Authorization = `Bearer ${req.apiKey}`;
     }
 
-    const response = await fetch(req.endpoint, {
+    const response = await safeFetchWithSSRF(req.endpoint, {
       method: "POST",
       headers,
       body: JSON.stringify({
@@ -130,7 +203,7 @@ async function sendAnthropicRequest(
       body.system = systemText;
     }
 
-    const response = await fetch(req.endpoint, {
+    const response = await safeFetchWithSSRF(req.endpoint, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",

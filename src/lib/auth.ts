@@ -4,10 +4,10 @@
  * Auth is enabled when AEGIS_USERNAME and AEGIS_PASSWORD env vars are set.
  * Set AEGIS_AUTH_DISABLED=true to explicitly disable auth even if credentials exist.
  *
- * Session tokens are HMAC-signed (SHA-256) cookies with a configurable TTL.
+ * Session tokens are HMAC-signed (SHA-256) cookies with a configurable TTL,
+ * implemented via the Web Crypto API for universal compatibility across Node.js,
+ * Next.js Edge Middleware, and browser environments.
  */
-
-import { createHmac, randomBytes, timingSafeEqual } from "crypto";
 
 // ── Config ──────────────────────────────────────────────────────────────
 
@@ -15,6 +15,12 @@ const SESSION_COOKIE = "aegis_session";
 const SESSION_TTL_MS = 24 * 60 * 60 * 1000; // 24 hours
 
 let ephemeralSessionSecret: string | null = null;
+
+function randomHex(byteLength: number): string {
+  const arr = new Uint8Array(byteLength);
+  crypto.getRandomValues(arr);
+  return Array.from(arr, (b) => b.toString(16).padStart(2, "0")).join("");
+}
 
 function getSecret(): string {
   const secret =
@@ -24,9 +30,47 @@ function getSecret(): string {
   if (secret) return secret;
 
   if (!ephemeralSessionSecret) {
-    ephemeralSessionSecret = randomBytes(32).toString("hex");
+    ephemeralSessionSecret = randomHex(32);
   }
   return ephemeralSessionSecret;
+}
+
+// ── Web Crypto Encoding & HMAC ──────────────────────────────────────────
+
+function base64UrlEncode(buffer: ArrayBuffer | Uint8Array): string {
+  const bytes = buffer instanceof Uint8Array ? buffer : new Uint8Array(buffer);
+  let binary = "";
+  for (let i = 0; i < bytes.byteLength; i++) {
+    binary += String.fromCharCode(bytes[i]);
+  }
+  return btoa(binary)
+    .replace(/\+/g, "-")
+    .replace(/\//g, "_")
+    .replace(/=+$/, "");
+}
+
+function base64UrlDecode(str: string): Uint8Array {
+  let base64 = str.replace(/-/g, "+").replace(/_/g, "/");
+  while (base64.length % 4) {
+    base64 += "=";
+  }
+  const binary = atob(base64);
+  const bytes = new Uint8Array(binary.length);
+  for (let i = 0; i < binary.length; i++) {
+    bytes[i] = binary.charCodeAt(i);
+  }
+  return bytes;
+}
+
+async function getHmacKey(secret: string): Promise<CryptoKey> {
+  const enc = new TextEncoder();
+  return await crypto.subtle.importKey(
+    "raw",
+    enc.encode(secret),
+    { name: "HMAC", hash: "SHA-256" },
+    false,
+    ["sign", "verify"]
+  );
 }
 
 // ── Public helpers ──────────────────────────────────────────────────────
@@ -40,24 +84,25 @@ export function isAuthEnabled(): boolean {
   return !!(user && pass);
 }
 
+function constantTimeEqual(a: string, b: string): boolean {
+  if (a.length !== b.length) return false;
+  let diff = 0;
+  for (let i = 0; i < a.length; i++) {
+    diff |= a.charCodeAt(i) ^ b.charCodeAt(i);
+  }
+  return diff === 0;
+}
+
 export function validateCredentials(username: string, password: string): boolean {
   const expectedUser = process.env.AEGIS_USERNAME || "";
   const expectedPass = process.env.AEGIS_PASSWORD || "";
 
-  // Constant-time comparison to prevent timing attacks
-  const userBuf = Buffer.from(username);
-  const passBuf = Buffer.from(password);
-  const expectedUserBuf = Buffer.from(expectedUser);
-  const expectedPassBuf = Buffer.from(expectedPass);
+  if (!expectedUser || !expectedPass) return false;
 
-  const userMatch =
-    userBuf.length === expectedUserBuf.length &&
-    timingSafeEqual(userBuf, expectedUserBuf);
-  const passMatch =
-    passBuf.length === expectedPassBuf.length &&
-    timingSafeEqual(passBuf, expectedPassBuf);
-
-  return userMatch && passMatch;
+  return (
+    constantTimeEqual(username, expectedUser) &&
+    constantTimeEqual(password, expectedPass)
+  );
 }
 
 // ── Session tokens ──────────────────────────────────────────────────────
@@ -69,31 +114,31 @@ interface SessionPayload {
   jti: string; // unique ID
 }
 
-function sign(payload: SessionPayload): string {
+async function sign(payload: SessionPayload): Promise<string> {
+  const enc = new TextEncoder();
   const data = JSON.stringify(payload);
-  const b64 = Buffer.from(data).toString("base64url");
-  const sig = createHmac("sha256", getSecret()).update(b64).digest("base64url");
+  const b64 = base64UrlEncode(enc.encode(data));
+  const key = await getHmacKey(getSecret());
+  const sigBuffer = await crypto.subtle.sign("HMAC", key, enc.encode(b64));
+  const sig = base64UrlEncode(sigBuffer);
   return `${b64}.${sig}`;
 }
 
-function verify(token: string): SessionPayload | null {
+async function verify(token: string): Promise<SessionPayload | null> {
   const parts = token.split(".");
   if (parts.length !== 2) return null;
 
   const [b64, sig] = parts;
-  const expectedSig = createHmac("sha256", getSecret()).update(b64).digest("base64url");
-
-  // Constant-time comparison
-  const sigBuf = Buffer.from(sig);
-  const expectedBuf = Buffer.from(expectedSig);
-  if (sigBuf.length !== expectedBuf.length || !timingSafeEqual(sigBuf, expectedBuf)) {
-    return null;
-  }
+  const enc = new TextEncoder();
 
   try {
-    const payload: SessionPayload = JSON.parse(
-      Buffer.from(b64, "base64url").toString()
-    );
+    const key = await getHmacKey(getSecret());
+    const sigBytes = base64UrlDecode(sig);
+    const isValid = await crypto.subtle.verify("HMAC", key, sigBytes.buffer as ArrayBuffer, enc.encode(b64));
+    if (!isValid) return null;
+
+    const payloadJson = new TextDecoder().decode(base64UrlDecode(b64));
+    const payload: SessionPayload = JSON.parse(payloadJson);
     if (Date.now() > payload.exp) return null;
     return payload;
   } catch {
@@ -101,20 +146,73 @@ function verify(token: string): SessionPayload | null {
   }
 }
 
-export function createSessionToken(username: string): string {
+export async function createSessionToken(username: string): Promise<string> {
   const now = Date.now();
-  return sign({
+  return await sign({
     sub: username,
     iat: now,
     exp: now + SESSION_TTL_MS,
-    jti: randomBytes(16).toString("hex"),
+    jti: randomHex(16),
   });
 }
 
-export function validateSessionToken(token: string): { valid: boolean; username?: string } {
-  const payload = verify(token);
+export async function validateSessionToken(token: string): Promise<{ valid: boolean; username?: string }> {
+  const payload = await verify(token);
   if (!payload) return { valid: false };
   return { valid: true, username: payload.sub };
+}
+
+export interface RequestAuthResult {
+  authenticated: boolean;
+  username?: string;
+  error?: string;
+}
+
+/**
+ * Validates request authentication authoritatively.
+ * 1. Checks if auth is enabled (via isAuthEnabled()). If disabled, allows request.
+ * 2. Extracts the `aegis_session` cookie from request cookies or Cookie header.
+ * 3. Cryptographically validates the HMAC-SHA256 signature and expiration via Web Crypto.
+ * 4. Rejects missing, malformed, expired, or forged tokens.
+ */
+export async function validateRequestAuth(
+  request: Request | { cookies?: { get(name: string): { value: string } | undefined }; headers?: Headers }
+): Promise<RequestAuthResult> {
+  if (!isAuthEnabled()) {
+    return { authenticated: true };
+  }
+
+  let token: string | undefined;
+
+  if ("cookies" in request && request.cookies && typeof request.cookies.get === "function") {
+    token = request.cookies.get(SESSION_COOKIE)?.value;
+  }
+
+  if (!token && "headers" in request && request.headers) {
+    const cookieHeader =
+      typeof request.headers.get === "function"
+        ? request.headers.get("cookie")
+        : (request.headers as unknown as Record<string, string>)["cookie"];
+    if (cookieHeader) {
+      const match = cookieHeader.match(
+        new RegExp(`(?:^|;\\s*)${SESSION_COOKIE}=([^;]*)`)
+      );
+      if (match) {
+        token = decodeURIComponent(match[1]);
+      }
+    }
+  }
+
+  if (!token) {
+    return { authenticated: false, error: "Authentication required" };
+  }
+
+  const session = await validateSessionToken(token);
+  if (!session.valid) {
+    return { authenticated: false, error: "Invalid or expired session" };
+  }
+
+  return { authenticated: true, username: session.username };
 }
 
 export { SESSION_COOKIE };

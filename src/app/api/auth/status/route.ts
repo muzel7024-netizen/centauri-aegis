@@ -1,8 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import {
   isAuthEnabled,
-  validateSessionToken,
-  SESSION_COOKIE,
+  validateRequestAuth,
 } from "@/lib/auth";
 
 export async function GET(request: NextRequest) {
@@ -12,17 +11,11 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ authEnabled: false, authenticated: true });
   }
 
-  const token = request.cookies.get(SESSION_COOKIE)?.value;
-
-  if (!token) {
-    return NextResponse.json({ authEnabled: true, authenticated: false });
-  }
-
-  const session = validateSessionToken(token);
+  const auth = await validateRequestAuth(request);
 
   return NextResponse.json({
     authEnabled: true,
-    authenticated: session.valid,
-    username: session.username,
+    authenticated: auth.authenticated,
+    username: auth.username,
   });
 }

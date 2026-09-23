@@ -169,4 +169,181 @@ describe("llm-client", () => {
     expect(result.content).toBe("");
     expect(result.error).toBe("Request timed out after 300000ms");
   });
+
+  describe("SSRF policy enforcement", () => {
+    it("unconditionally blocks cloud metadata endpoint (169.254.169.254) without making network request", async () => {
+      const result = await sendLLMRequest({
+        endpoint: "http://169.254.169.254/latest/meta-data",
+        apiKey: "test-key",
+        model: "gpt-4o-mini",
+        provider: "openai",
+        messages: [{ role: "user", content: "hello" }],
+      });
+
+      expect(result.content).toBe("");
+      expect(result.error).toContain("Endpoint rejected by security policy");
+      expect(result.error).toContain("169.254");
+      expect(mockFetch).not.toHaveBeenCalled();
+    });
+
+    it("blocks malformed endpoint URL without making network request", async () => {
+      const result = await sendLLMRequest({
+        endpoint: "not-a-valid-url",
+        apiKey: "test-key",
+        model: "gpt-4o-mini",
+        provider: "openai",
+        messages: [{ role: "user", content: "hello" }],
+      });
+
+      expect(result.content).toBe("");
+      expect(result.error).toContain("Malformed endpoint URL");
+      expect(mockFetch).not.toHaveBeenCalled();
+    });
+
+    it("blocks unsupported protocol without making network request", async () => {
+      const result = await sendLLMRequest({
+        endpoint: "ftp://example.com/api",
+        apiKey: "test-key",
+        model: "gpt-4o-mini",
+        provider: "openai",
+        messages: [{ role: "user", content: "hello" }],
+      });
+
+      expect(result.content).toBe("");
+      expect(result.error).toContain("Unsupported protocol");
+      expect(mockFetch).not.toHaveBeenCalled();
+    });
+
+    it("blocks private IP and loopback in production mode when AEGIS_ALLOW_PRIVATE_TARGETS is not set", async () => {
+      const prevEnv = process.env.NODE_ENV;
+      const prevAllow = process.env.AEGIS_ALLOW_PRIVATE_TARGETS;
+      try {
+        (process.env as Record<string, string | undefined>).NODE_ENV = "production";
+        delete process.env.AEGIS_ALLOW_PRIVATE_TARGETS;
+
+        const loopbackResult = await sendLLMRequest({
+          endpoint: "http://127.0.0.1:8000/v1/chat/completions",
+          apiKey: "test-key",
+          model: "gpt-4o-mini",
+          provider: "openai",
+          messages: [{ role: "user", content: "hello" }],
+        });
+        expect(loopbackResult.error).toContain("resolves to a private or loopback address");
+        expect(mockFetch).not.toHaveBeenCalled();
+
+        const privateResult = await sendLLMRequest({
+          endpoint: "http://10.0.0.5:8000/v1/chat/completions",
+          apiKey: "test-key",
+          model: "gpt-4o-mini",
+          provider: "openai",
+          messages: [{ role: "user", content: "hello" }],
+        });
+        expect(privateResult.error).toContain("resolves to a private or loopback address");
+        expect(mockFetch).not.toHaveBeenCalled();
+      } finally {
+        (process.env as Record<string, string | undefined>).NODE_ENV = prevEnv;
+        if (prevAllow !== undefined) {
+          process.env.AEGIS_ALLOW_PRIVATE_TARGETS = prevAllow;
+        } else {
+          delete process.env.AEGIS_ALLOW_PRIVATE_TARGETS;
+        }
+      }
+    });
+
+    it("permits private targets in production mode when AEGIS_ALLOW_PRIVATE_TARGETS=true", async () => {
+      const prevEnv = process.env.NODE_ENV;
+      const prevAllow = process.env.AEGIS_ALLOW_PRIVATE_TARGETS;
+      try {
+        (process.env as Record<string, string | undefined>).NODE_ENV = "production";
+        process.env.AEGIS_ALLOW_PRIVATE_TARGETS = "true";
+
+        mockFetch.mockResolvedValueOnce(
+          new Response(
+            JSON.stringify({ choices: [{ message: { content: "local ok" } }] }),
+            { status: 200 }
+          )
+        );
+
+        const result = await sendLLMRequest({
+          endpoint: "http://127.0.0.1:11434/v1/chat/completions",
+          apiKey: "test-key",
+          model: "llama3",
+          provider: "openai",
+          messages: [{ role: "user", content: "hello" }],
+        });
+
+        expect(result.content).toBe("local ok");
+        expect(mockFetch).toHaveBeenCalledTimes(1);
+      } finally {
+        (process.env as Record<string, string | undefined>).NODE_ENV = prevEnv;
+        if (prevAllow !== undefined) {
+          process.env.AEGIS_ALLOW_PRIVATE_TARGETS = prevAllow;
+        } else {
+          delete process.env.AEGIS_ALLOW_PRIVATE_TARGETS;
+        }
+      }
+    });
+  });
+
+  describe("redirect hardening", () => {
+    it("uses redirect: manual and blocks redirect to cloud metadata destination", async () => {
+      // Step 1: Initial public endpoint returns a 302 redirect pointing to AWS/GCP metadata service
+      const redirectResponse = new Response(null, {
+        status: 302,
+        headers: {
+          Location: "http://169.254.169.254/latest/meta-data",
+        },
+      });
+      mockFetch.mockResolvedValueOnce(redirectResponse);
+
+      const result = await sendLLMRequest({
+        endpoint: "https://api.example.com/v1/chat/completions",
+        apiKey: "test-key",
+        model: "gpt-4o-mini",
+        provider: "openai",
+        messages: [{ role: "user", content: "hello" }],
+      });
+
+      // Verification: The request fails with security policy rejection and metadata destination was NEVER called
+      expect(result.content).toBe("");
+      expect(result.error).toContain("Redirect to \"http://169.254.169.254/latest/meta-data\" blocked by security policy");
+      expect(mockFetch).toHaveBeenCalledTimes(1);
+
+      // Verify that initial call used redirect: manual
+      const [, firstCallInit] = mockFetch.mock.calls[0] as [string, RequestInit];
+      expect(firstCallInit.redirect).toBe("manual");
+    });
+
+    it("safely follows redirect to a valid public endpoint", async () => {
+      // Step 1: Initial call returns 301 to another valid public HTTPS endpoint
+      const redirectResponse = new Response(null, {
+        status: 301,
+        headers: {
+          Location: "https://api-backup.example.com/v1/chat/completions",
+        },
+      });
+      // Step 2: Second call returns 200 OK
+      const successResponse = new Response(
+        JSON.stringify({
+          choices: [{ message: { content: "redirect succeeded" } }],
+        }),
+        { status: 200 }
+      );
+
+      mockFetch.mockResolvedValueOnce(redirectResponse);
+      mockFetch.mockResolvedValueOnce(successResponse);
+
+      const result = await sendLLMRequest({
+        endpoint: "https://api.example.com/v1/chat/completions",
+        apiKey: "test-key",
+        model: "gpt-4o-mini",
+        provider: "openai",
+        messages: [{ role: "user", content: "hello" }],
+      });
+
+      expect(result.content).toBe("redirect succeeded");
+      expect(mockFetch).toHaveBeenCalledTimes(2);
+      expect(mockFetch.mock.calls[1][0]).toBe("https://api-backup.example.com/v1/chat/completions");
+    });
+  });
 });

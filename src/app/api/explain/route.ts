@@ -1,5 +1,6 @@
 import { NextRequest } from "next/server";
 import { sendLLMRequest } from "@/lib/llm-client";
+import { validateTargetEndpoint } from "@/lib/endpoint-security";
 import type { AttackCategory, AnalysisClassification, TargetConfig } from "@/lib/types";
 import { CATEGORY_LABELS } from "@/lib/types";
 import { resolveKeyFromBody } from "@/lib/resolve-key";
@@ -33,6 +34,14 @@ export async function POST(request: NextRequest) {
     if (!endpoint || !apiKey || !model || !provider || !prompt || !response) {
       return new Response(
         JSON.stringify({ error: "Missing required fields" }),
+        { status: 400, headers: { "Content-Type": "application/json" } }
+      );
+    }
+
+    const endpointValidation = validateTargetEndpoint(endpoint);
+    if (!endpointValidation.allowed) {
+      return new Response(
+        JSON.stringify({ error: endpointValidation.reason || "Forbidden target endpoint" }),
         { status: 400, headers: { "Content-Type": "application/json" } }
       );
     }

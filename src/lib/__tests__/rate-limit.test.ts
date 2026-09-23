@@ -153,6 +153,54 @@ describe("getClientKey", () => {
     });
     expect(getClientKey(req)).toBe("1.2.3.4");
   });
+
+  it("does not trust X-Forwarded-For or X-Real-IP in production without AEGIS_TRUSTED_PROXY", () => {
+    const prevEnv = process.env.NODE_ENV;
+    const prevProxy = process.env.AEGIS_TRUSTED_PROXY;
+    try {
+      (process.env as Record<string, string | undefined>).NODE_ENV = "production";
+      delete process.env.AEGIS_TRUSTED_PROXY;
+      delete process.env.TRUSTED_PROXY;
+
+      const req = new Request("http://localhost/api/test", {
+        headers: {
+          "X-Forwarded-For": "198.51.100.1",
+          "X-Real-IP": "198.51.100.2",
+        },
+      });
+      // In direct production deployment, spoofed proxy headers are rejected and bucketed to "direct"
+      expect(getClientKey(req)).toBe("direct");
+    } finally {
+      (process.env as Record<string, string | undefined>).NODE_ENV = prevEnv;
+      if (prevProxy !== undefined) {
+        process.env.AEGIS_TRUSTED_PROXY = prevProxy;
+      }
+    }
+  });
+
+  it("trusts proxy headers in production when AEGIS_TRUSTED_PROXY=true", () => {
+    const prevEnv = process.env.NODE_ENV;
+    const prevProxy = process.env.AEGIS_TRUSTED_PROXY;
+    try {
+      (process.env as Record<string, string | undefined>).NODE_ENV = "production";
+      process.env.AEGIS_ALLOW_PRIVATE_TARGETS = "true";
+      process.env.AEGIS_TRUSTED_PROXY = "true";
+
+      const req = new Request("http://localhost/api/test", {
+        headers: {
+          "X-Forwarded-For": "203.0.113.19",
+        },
+      });
+      expect(getClientKey(req)).toBe("203.0.113.19");
+    } finally {
+      (process.env as Record<string, string | undefined>).NODE_ENV = prevEnv;
+      if (prevProxy !== undefined) {
+        process.env.AEGIS_TRUSTED_PROXY = prevProxy;
+      } else {
+        delete process.env.AEGIS_TRUSTED_PROXY;
+      }
+    }
+  });
 });
 
 describe("rateLimitHeaders", () => {
