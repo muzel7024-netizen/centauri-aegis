@@ -35,7 +35,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const mounted = useSyncExternalStore(emptySubscribe, () => true, () => false);
   const [theme, setThemeState] = useState<Theme>(() => {
     if (typeof window === "undefined") return "dark";
-    const saved = (localStorage.getItem("centauri-aegis-theme") || localStorage.getItem("redpincer-theme")) as Theme | null;
+    const saved = localStorage.getItem("centauri-aegis-theme") as Theme | null;
     return saved && ["dark", "light", "system"].includes(saved) ? saved : "dark";
   });
   const [systemTheme, setSystemTheme] = useState<"dark" | "light">(() => getSystemTheme());

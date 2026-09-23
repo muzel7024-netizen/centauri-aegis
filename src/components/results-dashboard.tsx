@@ -463,9 +463,7 @@ export function ResultsDashboard() {
   const saveMutationToEditor = useCallback(
     (result: AttackResult, mutatedPrompt: string) => {
       const existing = JSON.parse(
-        localStorage.getItem("centauri-aegis-custom-payloads") ||
-        localStorage.getItem("redpincer-custom-payloads") ||
-        "[]"
+        localStorage.getItem("centauri-aegis-custom-payloads") || "[]"
       );
       const newPayload = {
         id: `custom-${Date.now()}`,

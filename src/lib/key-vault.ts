@@ -2,7 +2,7 @@
  * Server-side encrypted API key vault.
  *
  * API keys are encrypted with AES-256-GCM using a secret derived from
- * PINCER_KEY_SECRET (or PINCER_SESSION_SECRET / PINCER_PASSWORD as fallback).
+ * AEGIS_KEY_SECRET (or AEGIS_SESSION_SECRET / AEGIS_PASSWORD as fallback).
  * Keys are stored in-memory on the server — they never reach localStorage.
  *
  * Each key gets an opaque ID (e.g., "key_abc123") stored client-side instead
@@ -36,10 +36,7 @@ function getEncryptionKey(): Buffer {
   const secret =
     process.env.AEGIS_KEY_SECRET ||
     process.env.AEGIS_SESSION_SECRET ||
-    process.env.AEGIS_PASSWORD ||
-    process.env.PINCER_KEY_SECRET || // Legacy compatibility only — do not use for new deployments.
-    process.env.PINCER_SESSION_SECRET || // Legacy compatibility only
-    process.env.PINCER_PASSWORD; // Legacy compatibility only
+    process.env.AEGIS_PASSWORD;
 
   if (secret) {
     return createHash("sha256").update(secret).digest();

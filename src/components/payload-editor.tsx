@@ -69,7 +69,6 @@ import { toast } from "sonner";
 // ── Constants ───────────────────────────────────────────────────────────────
 
 const STORAGE_KEY = "centauri-aegis-custom-payloads";
-const LEGACY_STORAGE_KEY = "redpincer-custom-payloads"; // Legacy compatibility only — do not use for new deployments.
 
 const CATEGORIES: AttackCategory[] = [
   "injection",
@@ -162,7 +161,7 @@ function modelTargetColor(target: ModelTarget): string {
 function loadCustomPayloads(): AttackPayload[] {
   if (typeof window === "undefined") return [];
   try {
-    const raw = localStorage.getItem(STORAGE_KEY) || localStorage.getItem(LEGACY_STORAGE_KEY);
+    const raw = localStorage.getItem(STORAGE_KEY);
     return raw ? JSON.parse(raw) : [];
   } catch {
     return [];

@@ -101,8 +101,8 @@ describe("ThemeToggle and ThemeProvider", () => {
     expect(screen.getByText("system Mode")).toBeTruthy();
   });
 
-  it("supports legacy redpincer-theme fallback in localStorage", () => {
-    localStorage.setItem("redpincer-theme", "light");
+  it("loads saved centauri-aegis-theme from localStorage", () => {
+    localStorage.setItem("centauri-aegis-theme", "light");
 
     render(
       <ThemeProvider>

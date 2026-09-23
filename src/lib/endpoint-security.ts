@@ -59,7 +59,6 @@ function isPrivateIpOrHost(hostname: string): boolean {
  */
 export function arePrivateTargetsEnabled(): boolean {
   if (process.env.AEGIS_ALLOW_PRIVATE_TARGETS === "true") return true;
-  if (process.env.PINCER_ALLOW_PRIVATE_TARGETS === "true") return true; // Legacy compatibility only — do not use for new deployments.
   // In development mode, allow local models (e.g. Ollama localhost:11434) by default
   if (process.env.NODE_ENV !== "production") return true;
   return false;

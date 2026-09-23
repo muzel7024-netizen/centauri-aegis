@@ -12,8 +12,7 @@ import {
  * 2. Authentication (opt-in via env vars)
  *
  * Auth is considered enabled when both AEGIS_USERNAME and AEGIS_PASSWORD
- * are set AND AEGIS_AUTH_DISABLED is not "true"
- * (Legacy PINCER_* environment variables remain supported for backward compatibility).
+ * are set AND AEGIS_AUTH_DISABLED is not "true".
  *
  * Unprotected paths:
  * - /login (login page)
@@ -95,22 +94,18 @@ function applyAuthCheck(
   pathname: string,
   existingResponse?: NextResponse
 ): NextResponse {
-  // Check if auth is enabled via env vars (AEGIS_* primary; PINCER_* legacy fallback)
-  const authDisabled =
-    process.env.AEGIS_AUTH_DISABLED === "true" ||
-    process.env.PINCER_AUTH_DISABLED === "true"; // Legacy compatibility only — do not use for new deployments.
-  const user = process.env.AEGIS_USERNAME || process.env.PINCER_USERNAME; // Legacy compatibility fallback
-  const pass = process.env.AEGIS_PASSWORD || process.env.PINCER_PASSWORD; // Legacy compatibility fallback
+  // Check if auth is enabled via env vars (AEGIS_*)
+  const authDisabled = process.env.AEGIS_AUTH_DISABLED === "true";
+  const user = process.env.AEGIS_USERNAME;
+  const pass = process.env.AEGIS_PASSWORD;
   const authEnabled = !authDisabled && !!(user && pass);
 
   if (!authEnabled) {
     return existingResponse ?? NextResponse.next();
   }
 
-  // Check for session cookie (aegis_session primary; pincer_session legacy fallback)
-  const sessionCookie =
-    request.cookies.get("aegis_session")?.value ||
-    request.cookies.get("pincer_session")?.value; // Legacy compatibility only
+  // Check for session cookie
+  const sessionCookie = request.cookies.get("aegis_session")?.value;
 
   if (!sessionCookie) {
     // API routes get 401, pages get redirected to /login

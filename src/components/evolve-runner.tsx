@@ -51,16 +51,13 @@ function formatGenerationLabel(generation: number, totalGenerations: number): st
 }
 
 const CUSTOM_PAYLOADS_STORAGE_KEY = "centauri-aegis-custom-payloads";
-const LEGACY_CUSTOM_PAYLOADS_STORAGE_KEY = "redpincer-custom-payloads"; // Legacy compatibility only — do not use for new deployments.
 
 function loadCustomPayloadsFromStorage(): AttackPayload[] {
   if (typeof window === "undefined") {
     return [];
   }
   try {
-    const raw =
-      localStorage.getItem(CUSTOM_PAYLOADS_STORAGE_KEY) ||
-      localStorage.getItem(LEGACY_CUSTOM_PAYLOADS_STORAGE_KEY);
+    const raw = localStorage.getItem(CUSTOM_PAYLOADS_STORAGE_KEY);
     return raw ? (JSON.parse(raw) as AttackPayload[]) : [];
   } catch {
     return [];

@@ -161,8 +161,6 @@ Configure the platform using a `.env` file or container environment variables:
 | `AEGIS_ALLOW_PRIVATE_TARGETS` | Allow targeting internal/private IP ranges in production | `false` |
 | `AEGIS_TRUSTED_PROXY` | Trust reverse proxy headers (`X-Forwarded-For`) | `false` |
 
-*(Note: Legacy `PINCER_*` environment variables remain supported as migration fallbacks).*
-
 ---
 
 ## Keyboard Shortcuts

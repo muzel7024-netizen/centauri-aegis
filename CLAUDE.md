@@ -68,7 +68,6 @@ Docker: `docker build -t centauri-aegis . && docker run -p 3000:3000 centauri-ae
 Auth is opt-in via environment variables:
 - `AEGIS_AUTH_ENABLED=true`
 - `AEGIS_USERNAME` and `AEGIS_PASSWORD`
-- Fallback support for legacy `PINCER_*` environment variables is preserved for seamless deployment upgrades.
 
 ### Server-Side Key Vault
 

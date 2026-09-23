@@ -5,10 +5,10 @@ const originalEnv = { ...process.env };
 
 function resetEnv() {
   process.env = { ...originalEnv };
-  delete process.env.PINCER_USERNAME;
-  delete process.env.PINCER_PASSWORD;
-  delete process.env.PINCER_AUTH_DISABLED;
-  delete process.env.PINCER_SESSION_SECRET;
+  delete process.env.AEGIS_USERNAME;
+  delete process.env.AEGIS_PASSWORD;
+  delete process.env.AEGIS_AUTH_DISABLED;
+  delete process.env.AEGIS_SESSION_SECRET;
 }
 
 describe("auth", () => {
@@ -28,22 +28,22 @@ describe("auth", () => {
     });
 
     it("returns true when both username and password are set", async () => {
-      process.env.PINCER_USERNAME = "admin";
-      process.env.PINCER_PASSWORD = "secret";
+      process.env.AEGIS_USERNAME = "admin";
+      process.env.AEGIS_PASSWORD = "secret";
       const { isAuthEnabled } = await import("../auth");
       expect(isAuthEnabled()).toBe(true);
     });
 
     it("returns false when only username is set", async () => {
-      process.env.PINCER_USERNAME = "admin";
+      process.env.AEGIS_USERNAME = "admin";
       const { isAuthEnabled } = await import("../auth");
       expect(isAuthEnabled()).toBe(false);
     });
 
-    it("returns false when PINCER_AUTH_DISABLED is true", async () => {
-      process.env.PINCER_USERNAME = "admin";
-      process.env.PINCER_PASSWORD = "secret";
-      process.env.PINCER_AUTH_DISABLED = "true";
+    it("returns false when AEGIS_AUTH_DISABLED is true", async () => {
+      process.env.AEGIS_USERNAME = "admin";
+      process.env.AEGIS_PASSWORD = "secret";
+      process.env.AEGIS_AUTH_DISABLED = "true";
       const { isAuthEnabled } = await import("../auth");
       expect(isAuthEnabled()).toBe(false);
     });
@@ -51,22 +51,22 @@ describe("auth", () => {
 
   describe("validateCredentials", () => {
     it("returns true for matching credentials", async () => {
-      process.env.PINCER_USERNAME = "admin";
-      process.env.PINCER_PASSWORD = "secret123";
+      process.env.AEGIS_USERNAME = "admin";
+      process.env.AEGIS_PASSWORD = "secret123";
       const { validateCredentials } = await import("../auth");
       expect(validateCredentials("admin", "secret123")).toBe(true);
     });
 
     it("returns false for wrong password", async () => {
-      process.env.PINCER_USERNAME = "admin";
-      process.env.PINCER_PASSWORD = "secret123";
+      process.env.AEGIS_USERNAME = "admin";
+      process.env.AEGIS_PASSWORD = "secret123";
       const { validateCredentials } = await import("../auth");
       expect(validateCredentials("admin", "wrong")).toBe(false);
     });
 
     it("returns false for wrong username", async () => {
-      process.env.PINCER_USERNAME = "admin";
-      process.env.PINCER_PASSWORD = "secret123";
+      process.env.AEGIS_USERNAME = "admin";
+      process.env.AEGIS_PASSWORD = "secret123";
       const { validateCredentials } = await import("../auth");
       expect(validateCredentials("wrong", "secret123")).toBe(false);
     });
@@ -74,7 +74,7 @@ describe("auth", () => {
 
   describe("session tokens", () => {
     it("creates and validates a session token", async () => {
-      process.env.PINCER_PASSWORD = "test-secret";
+      process.env.AEGIS_PASSWORD = "test-secret";
       const { createSessionToken, validateSessionToken } = await import("../auth");
       const token = createSessionToken("testuser");
       const result = validateSessionToken(token);
@@ -83,7 +83,7 @@ describe("auth", () => {
     });
 
     it("rejects tampered tokens", async () => {
-      process.env.PINCER_PASSWORD = "test-secret";
+      process.env.AEGIS_PASSWORD = "test-secret";
       const { createSessionToken, validateSessionToken } = await import("../auth");
       const token = createSessionToken("testuser");
       const tampered = token.slice(0, -5) + "XXXXX";

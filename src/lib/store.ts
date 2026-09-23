@@ -325,19 +325,7 @@ export const useStore = create<AppState>()(
       storage: createJSONStorage(() => ({
         getItem: (name: string): string | null => {
           if (typeof window === "undefined") return null;
-          const current = localStorage.getItem(name);
-          if (current) return current;
-          // Legacy compatibility only — do not use for new deployments.
-          const legacy = localStorage.getItem("redpincer-state");
-          if (legacy) {
-            try {
-              localStorage.setItem(name, legacy);
-              return legacy;
-            } catch {
-              return legacy;
-            }
-          }
-          return null;
+          return localStorage.getItem(name);
         },
         setItem: (name: string, value: string): void => {
           if (typeof window !== "undefined") {

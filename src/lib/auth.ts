@@ -19,9 +19,7 @@ let ephemeralSessionSecret: string | null = null;
 function getSecret(): string {
   const secret =
     process.env.AEGIS_SESSION_SECRET ||
-    process.env.AEGIS_PASSWORD ||
-    process.env.PINCER_SESSION_SECRET || // Legacy compatibility only — do not use for new deployments.
-    process.env.PINCER_PASSWORD; // Legacy compatibility only
+    process.env.AEGIS_PASSWORD;
 
   if (secret) return secret;
 
@@ -34,20 +32,17 @@ function getSecret(): string {
 // ── Public helpers ──────────────────────────────────────────────────────
 
 export function isAuthEnabled(): boolean {
-  if (
-    process.env.AEGIS_AUTH_DISABLED === "true" ||
-    process.env.PINCER_AUTH_DISABLED === "true" // Legacy compatibility only — do not use for new deployments.
-  ) {
+  if (process.env.AEGIS_AUTH_DISABLED === "true") {
     return false;
   }
-  const user = process.env.AEGIS_USERNAME || process.env.PINCER_USERNAME; // Legacy compatibility fallback
-  const pass = process.env.AEGIS_PASSWORD || process.env.PINCER_PASSWORD; // Legacy compatibility fallback
+  const user = process.env.AEGIS_USERNAME;
+  const pass = process.env.AEGIS_PASSWORD;
   return !!(user && pass);
 }
 
 export function validateCredentials(username: string, password: string): boolean {
-  const expectedUser = process.env.AEGIS_USERNAME || process.env.PINCER_USERNAME || ""; // Legacy compatibility fallback
-  const expectedPass = process.env.AEGIS_PASSWORD || process.env.PINCER_PASSWORD || ""; // Legacy compatibility fallback
+  const expectedUser = process.env.AEGIS_USERNAME || "";
+  const expectedPass = process.env.AEGIS_PASSWORD || "";
 
   // Constant-time comparison to prevent timing attacks
   const userBuf = Buffer.from(username);

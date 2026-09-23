@@ -193,12 +193,11 @@ function scoreToGrade(score: number): LetterGrade {
 // ---------------------------------------------------------------------------
 
 const RUBRICS_STORAGE_KEY = "centauri-aegis-rubrics";
-const LEGACY_RUBRICS_STORAGE_KEY = "redpincer-rubrics"; // Legacy compatibility only — do not use for new deployments.
 
 export function loadSavedRubrics(): ScoringRubric[] {
   if (typeof window === "undefined") return [];
   try {
-    const raw = localStorage.getItem(RUBRICS_STORAGE_KEY) || localStorage.getItem(LEGACY_RUBRICS_STORAGE_KEY);
+    const raw = localStorage.getItem(RUBRICS_STORAGE_KEY);
     return raw ? JSON.parse(raw) : [];
   } catch {
     return [];

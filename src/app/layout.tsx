@@ -33,7 +33,7 @@ export default function RootLayout({
             __html: `
               (function() {
                 try {
-                  var theme = localStorage.getItem('centauri-aegis-theme') || localStorage.getItem('redpincer-theme') || 'dark';
+                  var theme = localStorage.getItem('centauri-aegis-theme') || 'dark';
                   if (theme === 'system') {
                     theme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
                   }

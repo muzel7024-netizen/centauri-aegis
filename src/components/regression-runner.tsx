@@ -82,14 +82,12 @@ interface RegressionRun {
 // ---------------------------------------------------------------------------
 
 const BASELINES_KEY = "centauri-aegis-baselines";
-const LEGACY_BASELINES_KEY = "redpincer-baselines"; // Legacy compatibility only — do not use for new deployments.
 const REGRESSION_RUNS_KEY = "centauri-aegis-regression-runs";
-const LEGACY_REGRESSION_RUNS_KEY = "redpincer-regression-runs"; // Legacy compatibility only — do not use for new deployments.
 
 function loadBaselines(): Baseline[] {
   if (typeof window === "undefined") return [];
   try {
-    const raw = localStorage.getItem(BASELINES_KEY) || localStorage.getItem(LEGACY_BASELINES_KEY);
+    const raw = localStorage.getItem(BASELINES_KEY);
     return raw ? JSON.parse(raw) : [];
   } catch {
     return [];
@@ -103,7 +101,7 @@ function saveBaselines(baselines: Baseline[]): void {
 function loadRegressionRuns(): RegressionRun[] {
   if (typeof window === "undefined") return [];
   try {
-    const raw = localStorage.getItem(REGRESSION_RUNS_KEY) || localStorage.getItem(LEGACY_REGRESSION_RUNS_KEY);
+    const raw = localStorage.getItem(REGRESSION_RUNS_KEY);
     return raw ? JSON.parse(raw) : [];
   } catch {
     return [];

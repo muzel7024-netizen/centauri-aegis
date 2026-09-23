@@ -9,7 +9,6 @@ import type {
 // ─── Constants ────────────────────────────────────────────────────────────────
 
 export const STORAGE_KEY = "centauri-aegis-state";
-export const LEGACY_STORAGE_KEY = "redpincer-state"; // Legacy compatibility only — do not use for new deployments.
 export const SESSION_VERSION = "1.1.0";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -25,10 +24,7 @@ export interface CentauriAegisSession {
   findings?: Finding[];
 }
 
-/**
- * @deprecated Legacy compatibility only — do not use for new deployments. Use CentauriAegisSession instead.
- */
-export type RedPincerSession = CentauriAegisSession;
+export type AegisSession = CentauriAegisSession;
 
 // ─── Validation ───────────────────────────────────────────────────────────────
 
@@ -206,7 +202,7 @@ export function saveToStorage(key: string, data: unknown): boolean {
 
 export function loadFromStorage<T>(key: string): T | null {
   try {
-    const raw = localStorage.getItem(key) ?? (key === STORAGE_KEY ? localStorage.getItem(LEGACY_STORAGE_KEY) : null);
+    const raw = localStorage.getItem(key);
     if (raw === null) return null;
     return JSON.parse(raw) as T;
   } catch {
@@ -217,7 +213,6 @@ export function loadFromStorage<T>(key: string): T | null {
 export function clearStorage(): void {
   try {
     localStorage.removeItem(STORAGE_KEY);
-    localStorage.removeItem(LEGACY_STORAGE_KEY);
   } catch {
     // silently ignore
   }
@@ -227,7 +222,7 @@ export function clearStorage(): void {
 
 export function getStorageSizeBytes(): number {
   try {
-    const raw = localStorage.getItem(STORAGE_KEY) ?? localStorage.getItem(LEGACY_STORAGE_KEY);
+    const raw = localStorage.getItem(STORAGE_KEY);
     if (!raw) return 0;
     return new Blob([raw]).size;
   } catch {

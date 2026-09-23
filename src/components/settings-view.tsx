@@ -196,7 +196,7 @@ export function SettingsView() {
             <div className="flex items-center justify-between pt-2">
               <div>
                 <p className="text-xs text-muted-foreground">
-                  Automatic migration is active for backwards compatibility with legacy session namespaces.
+                  Session state, rubrics, and custom payloads are persisted locally in your browser.
                 </p>
               </div>
               <Button

@@ -125,9 +125,7 @@ export function AttackModules() {
   const [customPayloads] = useState<AttackPayload[]>(() => {
     if (typeof window === "undefined") return [];
     try {
-      const stored =
-        localStorage.getItem("centauri-aegis-custom-payloads") ||
-        localStorage.getItem("redpincer-custom-payloads");
+      const stored = localStorage.getItem("centauri-aegis-custom-payloads");
       return stored ? (JSON.parse(stored) as AttackPayload[]) : [];
     } catch {
       return [];

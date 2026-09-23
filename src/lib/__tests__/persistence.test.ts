@@ -12,8 +12,8 @@ import {
   clearStorage,
   getStorageSizeBytes,
   formatBytes,
+  type CentauriAegisSession,
 } from "../persistence";
-import type { RedPincerSession } from "../persistence";
 import type { TargetConfig, AttackRun, AttackCategory } from "../types";
 
 // ─── Fixtures ──────────────────────────────────────────────────────────────────
@@ -43,7 +43,7 @@ function makeRun(overrides: Partial<AttackRun> = {}): AttackRun {
   } as AttackRun;
 }
 
-function makeValidSession(overrides: Partial<RedPincerSession> = {}): RedPincerSession {
+function makeValidSession(overrides: Partial<CentauriAegisSession> = {}): CentauriAegisSession {
   return {
     version: SESSION_VERSION,
     exportedAt: new Date().toISOString(),
