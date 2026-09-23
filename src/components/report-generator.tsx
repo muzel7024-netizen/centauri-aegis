@@ -3,8 +3,7 @@
 import { useMemo, useState, useCallback } from "react";
 import { useStore } from "@/lib/store";
 import { CATEGORY_LABELS } from "@/lib/types";
-import type { AttackCategory, AttackRun } from "@/lib/types";
-import { getTargetKeyFields } from "@/lib/target-utils";
+import type { AttackCategory, AttackRun, Finding } from "@/lib/types";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -20,13 +19,12 @@ import {
   FileText,
   Copy,
   Download,
-  CheckCircle,
-  AlertTriangle,
   Loader2,
   Sparkles,
   FileJson,
   Sheet,
   ShieldCheck,
+  Shield,
 } from "lucide-react";
 import { toast } from "sonner";
 import {
@@ -38,7 +36,7 @@ import {
 } from "@/lib/export";
 import { getConfigRequestFields } from "@/lib/target-utils";
 
-function generateReport(run: AttackRun): string {
+function generateReport(run: AttackRun, findings: Finding[] = []): string {
   // --- Core metrics ---
   const totalAttacks = run.results.length;
   const successfulAttacks = run.results.filter((r) => r.success).length;
@@ -505,9 +503,51 @@ The following ${anomalies.length} response(s) exceeded 2 standard deviations fro
 `;
 
   // =======================================================================
+  // SECTION 7: FINDINGS REGISTER & EVIDENCE (if findings present)
+  // =======================================================================
+  if (findings.length > 0) {
+    report += `## 7. Verified Findings Register & Remediations
+
+The following ${findings.length} empirical security finding(s) were derived from confirmed vulnerability evidence during this assessment.
+
+| ID | Title | Category | Severity | Status | Affected Probes |
+|---|---|---|---|---|---|
+`;
+    for (const f of findings) {
+      report += `| \`${f.id}\` | ${f.title} | ${CATEGORY_LABELS[f.category]} | **${f.severity.toUpperCase()}** | ${f.status.toUpperCase()} | ${(f.affectedTests || []).length} probe(s) |\n`;
+    }
+    report += `\n### Detailed Evidence & Defensive Remediation\n\n`;
+
+    for (const f of findings) {
+      report += `#### [${f.severity.toUpperCase()}] ${f.title} (\`${f.id}\`)
+
+- **Threat Category:** ${CATEGORY_LABELS[f.category]}
+- **Status:** ${f.status.toUpperCase()}
+- **Probes Triggered:** ${(f.affectedTests || []).join(", ")}
+- **Vulnerability Description:** ${f.description}
+
+`;
+      if (f.evidence && f.evidence.length > 0) {
+        report += `**Empirical Output Evidence:**
+${f.evidence.map((e) => `> "${e.replace(/\n/g, "\n> ")}"`).join("\n\n")}
+
+`;
+      }
+
+      report += `**Targeted Defensive Remediation:**
+${f.remediation}
+
+---
+
+`;
+    }
+  }
+
+  // =======================================================================
   // SECTION 8: REMEDIATION RECOMMENDATIONS
   // =======================================================================
-  report += `## 7. Remediation Recommendations
+  const recSectionNum = findings.length > 0 ? 8 : 7;
+  report += `## ${recSectionNum}. Strategic Defensive Recommendations
 
 The following recommendations are organized by priority based on the severity and nature of findings identified during this assessment.
 
@@ -684,17 +724,39 @@ The confidence score reflects the analysis engine's certainty in its classificat
 }
 
 export function ReportGenerator() {
-  const { runs, activeRunId, targets, redTeamConfig } = useStore();
-  const activeRun = runs.find((r) => r.id === activeRunId) ?? runs[0];
-  const activeTarget = targets.find((t) => t.id === activeRun?.targetId);
+  const { runs, activeRunId, redTeamConfig, assessments, findings } = useStore();
+  const [selectedAssessmentId, setSelectedAssessmentId] = useState<string>("all");
   const [showReport, setShowReport] = useState(false);
   const [aiSummary, setAiSummary] = useState<string | null>(null);
   const [generatingSummary, setGeneratingSummary] = useState(false);
 
+  const activeRun = useMemo(() => {
+    if (selectedAssessmentId !== "all") {
+      const matched = assessments.find((a) => a.id === selectedAssessmentId);
+      if (matched?.runIds && matched.runIds.length > 0) {
+        const r = runs.find((item) => matched.runIds.includes(item.id));
+        if (r) return r;
+      }
+      const rByAssessment = runs.find((item) => item.assessmentId === selectedAssessmentId);
+      if (rByAssessment) return rByAssessment;
+    }
+    return runs.find((r) => r.id === activeRunId) ?? runs[0];
+  }, [selectedAssessmentId, assessments, runs, activeRunId]);
+
+  const scopedFindings = useMemo(() => {
+    if (!activeRun) return [];
+    if (selectedAssessmentId !== "all") {
+      return findings.filter((f) => f.assessmentId === selectedAssessmentId);
+    }
+    return findings.filter(
+      (f) => (activeRun.assessmentId && f.assessmentId === activeRun.assessmentId) || f.targetId === activeRun.targetId
+    );
+  }, [selectedAssessmentId, activeRun, findings]);
+
   const report = useMemo(() => {
     if (!activeRun) return "";
-    return generateReport(activeRun);
-  }, [activeRun]);
+    return generateReport(activeRun, scopedFindings);
+  }, [activeRun, scopedFindings]);
 
   const copyToClipboard = async () => {
     try {
@@ -710,7 +772,7 @@ export function ReportGenerator() {
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = `redpincer-report-${activeRun?.targetName?.replace(/\s+/g, "-").toLowerCase() ?? "unknown"}-${new Date().toISOString().slice(0, 10)}.md`;
+    a.download = `centauri-aegis-report-${activeRun?.targetName?.replace(/\s+/g, "-").toLowerCase() ?? "unknown"}-${new Date().toISOString().slice(0, 10)}.md`;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
@@ -810,10 +872,10 @@ export function ReportGenerator() {
   if (!activeRun) {
     return (
       <div className="flex h-full flex-col items-center justify-center gap-4 p-6 text-muted-foreground">
-        <FileText className="h-16 w-16 opacity-30" />
+        <FileText className="h-16 w-16 opacity-30 text-purple-400" />
         <p className="text-lg">No runs available</p>
         <p className="text-sm">
-          Complete an attack run to generate a report.
+          Complete an assessment run to generate a report.
         </p>
       </div>
     );
@@ -826,51 +888,91 @@ export function ReportGenerator() {
   ).length;
 
   return (
-    <div className="mx-auto max-w-3xl space-y-6 p-6">
+    <div className="mx-auto max-w-4xl space-y-6 p-6">
       {/* Header */}
       <div>
         <h2 className="flex items-center gap-2 text-2xl font-bold text-foreground">
-          <FileText className="h-6 w-6 text-redpincer" />
-          Report Generator
+          <FileText className="h-6 w-6 text-purple-400" />
+          Executive Report Generator
         </h2>
         <p className="mt-1 text-sm text-muted-foreground">
-          Generate a security assessment report for the latest attack run.
+          Generate comprehensive Markdown, SARIF, and CSV security assessment reports with verified findings.
         </p>
       </div>
+
+      {/* Assessment Context Selector */}
+      {assessments.length > 0 && (
+        <Card className="border-border bg-card/60">
+          <CardHeader className="py-3 px-4">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div>
+                <CardTitle className="text-sm font-semibold flex items-center gap-2">
+                  <Shield className="h-4 w-4 text-purple-400" />
+                  Assessment Context Filter
+                </CardTitle>
+                <CardDescription className="text-xs">
+                  Scope the report to a specific assessment campaign and its verified findings.
+                </CardDescription>
+              </div>
+              <select
+                value={selectedAssessmentId}
+                onChange={(e) => setSelectedAssessmentId(e.target.value)}
+                className="bg-background border border-border rounded px-3 py-1.5 text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-purple-500 font-mono"
+              >
+                <option value="all">Latest Test Run (All Results)</option>
+                {assessments.map((a) => (
+                  <option key={a.id} value={a.id}>
+                    {a.name} [{a.status.toUpperCase()}] ({new Date(a.createdAt).toLocaleDateString()})
+                  </option>
+                ))}
+              </select>
+            </div>
+          </CardHeader>
+        </Card>
+      )}
 
       {/* Run Summary */}
       <Card className="border-border bg-card">
         <CardHeader>
-          <CardTitle className="text-lg">Run Summary</CardTitle>
-          <CardDescription>
-            {activeRun.targetName} &middot;{" "}
-            {new Date(activeRun.startTime).toLocaleString()}
-          </CardDescription>
+          <div className="flex items-center justify-between">
+            <div>
+              <CardTitle className="text-lg">Assessment Summary</CardTitle>
+              <CardDescription>
+                {activeRun.targetName} &middot;{" "}
+                {new Date(activeRun.startTime).toLocaleString()}
+              </CardDescription>
+            </div>
+            {scopedFindings.length > 0 && (
+              <Badge variant="outline" className="border-amber-500/40 bg-amber-500/10 text-amber-400 text-xs">
+                {scopedFindings.length} Verified Findings
+              </Badge>
+            )}
+          </div>
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-3 gap-4">
             <div className="text-center">
-              <p className="text-2xl font-bold">{totalAttacks}</p>
-              <p className="text-xs text-muted-foreground">Total Attacks</p>
+              <p className="text-2xl font-bold font-mono">{totalAttacks}</p>
+              <p className="text-xs text-muted-foreground">Total Probes</p>
             </div>
             <div className="text-center">
-              <p className="text-2xl font-bold text-redpincer">
+              <p className="text-2xl font-bold font-mono text-rose-400">
                 {successfulAttacks}
               </p>
               <p className="text-xs text-muted-foreground">Breached</p>
             </div>
             <div className="text-center">
-              <p className="text-2xl font-bold text-redpincer">
+              <p className="text-2xl font-bold font-mono text-purple-400">
                 {criticalFindings}
               </p>
-              <p className="text-xs text-muted-foreground">Critical</p>
+              <p className="text-xs text-muted-foreground">Critical Vulnerabilities</p>
             </div>
           </div>
 
           {activeRun.status === "running" && (
-            <div className="mt-4 flex items-center gap-2 text-sm text-warning">
+            <div className="mt-4 flex items-center gap-2 text-sm text-amber-400">
               <Loader2 className="h-4 w-4 animate-spin" />
-              Run still in progress. Report will be partial.
+              Assessment still in progress. Generated report will reflect completed probes.
             </div>
           )}
         </CardContent>
@@ -880,7 +982,7 @@ export function ReportGenerator() {
       <div className="flex flex-wrap gap-3">
         <Button
           onClick={() => setShowReport(true)}
-          className="gap-2 bg-redpincer font-semibold text-redpincer-foreground hover:bg-redpincer/90"
+          className="gap-2 bg-aegis font-semibold text-white hover:bg-aegis/90"
           disabled={totalAttacks === 0}
         >
           <FileText className="h-4 w-4" />
@@ -893,7 +995,7 @@ export function ReportGenerator() {
             onClick={generateAiSummary}
             disabled={generatingSummary || !redTeamConfig}
             title={!redTeamConfig ? "Configure a Red Team LLM to use AI features" : undefined}
-            className="gap-2 border-lobster/40 text-lobster hover:bg-lobster/10"
+            className="gap-2 border-purple-500/40 text-purple-400 hover:bg-purple-500/10"
           >
             {generatingSummary ? (
               <Loader2 className="h-4 w-4 animate-spin" />
@@ -909,7 +1011,7 @@ export function ReportGenerator() {
             <Button
               variant="outline"
               onClick={copyToClipboard}
-              className="gap-2"
+              className="gap-2 border-border hover:bg-card"
             >
               <Copy className="h-4 w-4" />
               Copy to Clipboard
@@ -918,7 +1020,7 @@ export function ReportGenerator() {
             <Button
               variant="outline"
               onClick={downloadReport}
-              className="gap-2"
+              className="gap-2 border-purple-500/40 text-purple-300 hover:bg-purple-500/10"
             >
               <Download className="h-4 w-4" />
               Download .md
@@ -941,7 +1043,7 @@ export function ReportGenerator() {
             <Button
               variant="outline"
               onClick={downloadCSV}
-              className="gap-2 border-success/40 text-success hover:bg-success/10"
+              className="gap-2 border-emerald-500/40 text-emerald-400 hover:bg-emerald-500/10"
             >
               <Sheet className="h-4 w-4" />
               Export CSV
@@ -961,10 +1063,10 @@ export function ReportGenerator() {
 
       {/* AI Summary */}
       {aiSummary && (
-        <Card className="border-lobster/30 bg-card">
+        <Card className="border-purple-500/30 bg-card">
           <CardHeader className="pb-2">
             <CardTitle className="flex items-center gap-2 text-sm font-semibold">
-              <Sparkles className="h-4 w-4 text-lobster" />
+              <Sparkles className="h-4 w-4 text-purple-400" />
               AI Executive Summary
             </CardTitle>
           </CardHeader>
@@ -981,7 +1083,7 @@ export function ReportGenerator() {
         <Card className="border-border bg-card">
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-sm font-medium">
-              <FileText className="h-4 w-4" />
+              <FileText className="h-4 w-4 text-purple-400" />
               Report Preview
             </CardTitle>
           </CardHeader>
@@ -1003,22 +1105,25 @@ export function ReportGenerator() {
           <Separator />
           <div>
             <h3 className="mb-3 text-sm font-medium text-muted-foreground">
-              Past Runs
+              Past Assessment Runs
             </h3>
             <div className="space-y-2">
               {runs.map((run) => {
                 const runSuccess = run.results.filter(
                   (r) => r.success
                 ).length;
-                const isActive = run.id === activeRunId;
+                const isActive = run.id === activeRun?.id;
 
                 return (
                   <button
                     key={run.id}
-                    onClick={() => useStore.getState().setActiveRun(run.id)}
+                    onClick={() => {
+                      setSelectedAssessmentId("all");
+                      useStore.getState().setActiveRun(run.id);
+                    }}
                     className={`flex w-full items-center justify-between rounded-lg border p-3 text-left transition-colors hover:bg-accent/50 ${
                       isActive
-                        ? "border-redpincer/50 bg-accent/30"
+                        ? "border-purple-500/50 bg-accent/30"
                         : "border-border bg-background"
                     }`}
                   >
@@ -1031,11 +1136,11 @@ export function ReportGenerator() {
                     </div>
                     <div className="flex items-center gap-2">
                       {runSuccess > 0 ? (
-                        <Badge className="bg-redpincer/20 text-redpincer border-transparent">
+                        <Badge className="bg-rose-500/20 text-rose-400 border-transparent">
                           {runSuccess} breached
                         </Badge>
                       ) : (
-                        <Badge className="bg-success/20 text-success border-transparent">
+                        <Badge className="bg-emerald-500/20 text-emerald-400 border-transparent">
                           All blocked
                         </Badge>
                       )}
@@ -1043,7 +1148,7 @@ export function ReportGenerator() {
                         variant="outline"
                         className={
                           run.status === "running"
-                            ? "text-warning"
+                            ? "text-amber-400 border-amber-500/30"
                             : "text-muted-foreground"
                         }
                       >

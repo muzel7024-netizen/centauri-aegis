@@ -28,22 +28,33 @@ import {
   Target,
   Settings,
   Wifi,
-  WifiOff,
   Loader2,
   CheckCircle,
   XCircle,
   Trash2,
   Pencil,
-  X,
   Download,
   Brain,
+  Copy,
+  Play,
+  Check,
 } from "lucide-react";
 
 type Provider = TargetConfig["provider"];
 
 export function TargetConfig() {
-  const { targets, addTarget, removeTarget, updateTarget, setActiveTarget, setView, redTeamConfig, setRedTeamConfig, updateRedTeamConfig } =
-    useStore();
+  const {
+    targets,
+    activeTargetId,
+    addTarget,
+    removeTarget,
+    updateTarget,
+    duplicateTarget,
+    setActiveTarget,
+    setView,
+    redTeamConfig,
+    setRedTeamConfig,
+  } = useStore();
 
   const [name, setName] = useState("");
   const [provider, setProvider] = useState<Provider>("openai");
@@ -84,7 +95,7 @@ export function TargetConfig() {
   const handleProviderChange = (value: string) => {
     const p = value as Provider;
     setProvider(p);
-    setEndpoint(PROVIDER_PRESETS[p].endpoint);
+    setEndpoint(PROVIDER_PRESETS[p]?.endpoint ?? "");
     setTestResult(null);
     setFetchedModels([]);
     setFetchError(null);
@@ -94,7 +105,7 @@ export function TargetConfig() {
 
   const fetchModels = async () => {
     // Need either a typed key or an existing vault key
-    const editTarget = editingId ? targets.find(t => t.id === editingId) : null;
+    const editTarget = editingId ? targets.find((t) => t.id === editingId) : null;
     const hasVaultKey = editTarget?.apiKeyId;
     if (!apiKey.trim() && !hasVaultKey) return;
 
@@ -104,11 +115,18 @@ export function TargetConfig() {
     try {
       const keyFields = apiKey.trim()
         ? { apiKey }
-        : hasVaultKey ? { apiKeyId: editTarget.apiKeyId } : { apiKey };
+        : hasVaultKey
+          ? { apiKeyId: editTarget.apiKeyId }
+          : { apiKey };
+
       const res = await fetch("/api/models", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ endpoint, ...keyFields, provider }),
+        body: JSON.stringify({
+          endpoint,
+          ...keyFields,
+          provider,
+        }),
       });
 
       const data = await res.json();
@@ -117,7 +135,7 @@ export function TargetConfig() {
         setFetchError(data.error);
         setFetchedModels([]);
         setModelInputMode("manual");
-      } else if (data.models.length === 0) {
+      } else if (!data.models || data.models.length === 0) {
         setModelInputMode("manual");
         setFetchedModels([]);
       } else {
@@ -137,8 +155,9 @@ export function TargetConfig() {
     setTestResult(null);
 
     try {
-      const editTarget = editingId ? targets.find(t => t.id === editingId) : null;
+      const editTarget = editingId ? targets.find((t) => t.id === editingId) : null;
       const hasVaultKey = editTarget?.apiKeyId;
+
       const keyFields = apiKey.trim()
         ? { apiKey }
         : hasVaultKey
@@ -146,15 +165,21 @@ export function TargetConfig() {
           : provider === "custom"
             ? {}
             : { apiKey };
+
       const res = await fetch("/api/test-connection", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ endpoint, ...keyFields, model, provider }),
+        body: JSON.stringify({
+          endpoint,
+          ...keyFields,
+          model,
+          provider,
+        }),
       });
 
       const data = await res.json();
       setTestResult(data);
-    } catch (err) {
+    } catch {
       setTestResult({ success: false, error: "Network error" });
     } finally {
       setIsTesting(false);
@@ -177,6 +202,7 @@ export function TargetConfig() {
 
   const saveTarget = async () => {
     if (!name.trim() || !endpoint.trim() || !model.trim()) return;
+
     if (provider !== "custom" && !apiKey.trim() && !hasExistingVaultKey) return;
 
     // Store key in server-side vault (only if a new key was entered)
@@ -195,10 +221,9 @@ export function TargetConfig() {
           apiKeyLabel = data.label;
         }
       } catch {
-        // Vault unavailable — fall back to legacy storage (apiKey in memory only)
+        // Vault unavailable — fall back to legacy storage
       }
     } else if (hasExistingVaultKey) {
-      // Keep existing vault key
       apiKeyId = editTarget!.apiKeyId;
       apiKeyLabel = editTarget!.apiKeyLabel;
     }
@@ -209,7 +234,7 @@ export function TargetConfig() {
         endpoint: endpoint.trim(),
         apiKeyId,
         apiKeyLabel,
-        apiKey: apiKey.trim() || editTarget?.apiKey, // keep plaintext in-memory fallback for volatile vault/dev restarts
+        apiKey: apiKey.trim() || editTarget?.apiKey,
         model: model.trim(),
         provider,
         connected: testResult?.success ?? false,
@@ -239,7 +264,7 @@ export function TargetConfig() {
     setName(target.name);
     setProvider(target.provider);
     setEndpoint(target.endpoint);
-    setApiKey(target.apiKey || ""); // Will be empty if vault-stored
+    setApiKey(target.apiKey || "");
     setModel(target.model);
     setTestResult(null);
     setFetchedModels([]);
@@ -252,8 +277,9 @@ export function TargetConfig() {
     resetForm();
   };
 
-  const editTarget = editingId ? targets.find(t => t.id === editingId) : null;
-  const hasExistingVaultKey = !!(editTarget?.apiKeyId);
+  const editTarget = editingId ? targets.find((t) => t.id === editingId) : null;
+  const hasExistingVaultKey = !!editTarget?.apiKeyId;
+
   const canSave =
     !!name.trim() &&
     !!endpoint.trim() &&
@@ -261,7 +287,7 @@ export function TargetConfig() {
     (provider === "custom" || !!apiKey.trim() || hasExistingVaultKey);
 
   // Red Team helpers
-  const rtHasVaultKey = !!(redTeamConfig?.apiKeyId);
+  const rtHasVaultKey = !!redTeamConfig?.apiKeyId;
   const rtCanSave =
     !!rtEndpoint.trim() &&
     !!rtModel.trim() &&
@@ -270,7 +296,7 @@ export function TargetConfig() {
   const handleRtProviderChange = (value: string) => {
     const p = value as Provider;
     setRtProvider(p);
-    setRtEndpoint(PROVIDER_PRESETS[p].endpoint);
+    setRtEndpoint(PROVIDER_PRESETS[p]?.endpoint ?? "");
     setRtTestResult(null);
     setRtFetchedModels([]);
     setRtFetchError(null);
@@ -300,7 +326,7 @@ export function TargetConfig() {
         setRtFetchError(data.error);
         setRtFetchedModels([]);
         setRtModelInputMode("manual");
-      } else if (data.models.length === 0) {
+      } else if (!data.models || data.models.length === 0) {
         setRtModelInputMode("manual");
         setRtFetchedModels([]);
       } else {
@@ -411,7 +437,7 @@ export function TargetConfig() {
     <div className="mx-auto max-w-2xl space-y-6 p-6">
       <div>
         <h2 className="flex items-center gap-2 text-2xl font-bold text-foreground">
-          <Settings className="h-6 w-6 text-redpincer" />
+          <Settings className="h-6 w-6 text-purple-400" />
           Target Configuration
         </h2>
         <p className="mt-1 text-sm text-muted-foreground">
@@ -452,12 +478,12 @@ export function TargetConfig() {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="openai">OpenAI</SelectItem>
-                <SelectItem value="anthropic">Anthropic</SelectItem>
+                <SelectItem value="anthropic">Anthropic Claude</SelectItem>
                 <SelectItem value="openrouter">OpenRouter</SelectItem>
                 <SelectItem value="xai">xAI</SelectItem>
                 <SelectItem value="kimi">Kimi Code</SelectItem>
                 <SelectItem value="nous">Nous</SelectItem>
-                <SelectItem value="custom">Custom</SelectItem>
+                <SelectItem value="custom">Custom (OpenAI Compatible)</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -477,10 +503,10 @@ export function TargetConfig() {
           {/* API Key */}
           <div className="space-y-2">
             <Label htmlFor="api-key">API Key</Label>
-            {editingId && targets.find(t => t.id === editingId)?.apiKeyId && !apiKey.trim() && !forceApiKeyInput ? (
+            {editingId && targets.find((t) => t.id === editingId)?.apiKeyId && !apiKey.trim() && !forceApiKeyInput ? (
               <div className="flex items-center gap-2">
                 <div className="flex-1 rounded-md border border-border bg-background px-3 py-2 font-mono text-sm text-muted-foreground">
-                  🔒 {targets.find(t => t.id === editingId)?.apiKeyLabel || "Stored securely"}
+                  🔒 {targets.find((t) => t.id === editingId)?.apiKeyLabel || "Stored securely"}
                 </div>
                 <Button
                   variant="ghost"
@@ -498,9 +524,11 @@ export function TargetConfig() {
               <Input
                 id="api-key"
                 type="password"
-                placeholder={editingId && targets.find(t => t.id === editingId)?.apiKeyId
-                  ? "Enter new key to replace stored key"
-                  : PROVIDER_PRESETS[provider].placeholder}
+                placeholder={
+                  editingId && targets.find((t) => t.id === editingId)?.apiKeyId
+                    ? "Enter new key to replace stored key"
+                    : PROVIDER_PRESETS[provider]?.placeholder || "sk-..."
+                }
                 value={apiKey}
                 onChange={(e) => setApiKey(e.target.value)}
                 className="bg-background font-mono text-sm"
@@ -539,22 +567,18 @@ export function TargetConfig() {
                     variant="ghost"
                     size="sm"
                     onClick={() =>
-                      setModelInputMode(
-                        modelInputMode === "select" ? "manual" : "select"
-                      )
+                      setModelInputMode(modelInputMode === "select" ? "manual" : "select")
                     }
                     className="h-7 px-2 text-xs text-muted-foreground"
                   >
-                    {modelInputMode === "select"
-                      ? "Type manually"
-                      : "Use dropdown"}
+                    {modelInputMode === "select" ? "Type manually" : "Use dropdown"}
                   </Button>
                 )}
               </div>
             </div>
 
             {fetchError && (
-              <p className="text-xs text-redpincer">{fetchError}</p>
+              <p className="text-xs text-destructive">{fetchError}</p>
             )}
 
             {modelInputMode === "select" && fetchedModels.length > 0 ? (
@@ -620,8 +644,8 @@ export function TargetConfig() {
                   </>
                 ) : (
                   <>
-                    <XCircle className="h-4 w-4 text-redpincer" />
-                    <span className="text-sm text-redpincer">
+                    <XCircle className="h-4 w-4 text-destructive" />
+                    <span className="text-sm text-destructive">
                       {testResult.error || "Connection failed"}
                     </span>
                   </>
@@ -637,18 +661,13 @@ export function TargetConfig() {
             <Button
               onClick={saveTarget}
               disabled={!canSave}
-              className="flex-1 gap-2 bg-redpincer font-semibold text-redpincer-foreground hover:bg-redpincer/90"
+              className="flex-1 bg-purple-600 font-semibold text-white hover:bg-purple-700"
             >
-              <Target className="h-4 w-4" />
+              <Target className="mr-2 h-4 w-4" />
               {editingId ? "Update Target" : "Save Target"}
             </Button>
             {editingId && (
-              <Button
-                variant="outline"
-                onClick={cancelEdit}
-                className="gap-2"
-              >
-                <X className="h-4 w-4" />
+              <Button variant="outline" onClick={cancelEdit}>
                 Cancel
               </Button>
             )}
@@ -667,68 +686,110 @@ export function TargetConfig() {
           </CardHeader>
           <CardContent>
             <div className="space-y-2">
-              {targets.map((target) => (
-                <div
-                  key={target.id}
-                  className={`flex items-center justify-between rounded-lg border p-3 ${
-                    editingId === target.id
-                      ? "border-redpincer bg-redpincer/5"
-                      : "border-border bg-background"
-                  }`}
-                >
-                  <div className="flex items-center gap-3">
-                    <span
-                      className={`inline-block h-2.5 w-2.5 rounded-full ${
-                        target.connected ? "bg-success" : "bg-muted-foreground"
-                      }`}
-                    />
-                    <div>
-                      <p className="text-sm font-medium">{target.name}</p>
-                      <p className="font-mono text-xs text-muted-foreground">
-                        {target.model} &middot; {target.provider}
-                      </p>
+              {targets.map((target) => {
+                const isActive = activeTargetId === target.id;
+                return (
+                  <div
+                    key={target.id}
+                    className={`flex items-center justify-between rounded-lg border p-3.5 transition-colors ${
+                      isActive
+                        ? "border-purple-500/60 bg-purple-500/5 ring-1 ring-purple-500/30"
+                        : editingId === target.id
+                          ? "border-purple-500 bg-purple-500/5"
+                          : "border-border bg-background hover:border-border/80"
+                    }`}
+                  >
+                    <div className="flex items-center gap-3">
+                      <span
+                        className={`inline-block h-2.5 w-2.5 rounded-full ${
+                          target.connected ? "bg-emerald-400" : "bg-muted-foreground"
+                        }`}
+                      />
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <p className="text-sm font-semibold text-foreground">{target.name}</p>
+                          {isActive && (
+                            <Badge variant="outline" className="border-purple-500/40 bg-purple-500/15 text-purple-300 text-[10px] py-0 px-1.5 font-medium">
+                              Active
+                            </Badge>
+                          )}
+                        </div>
+                        <p className="font-mono text-xs text-muted-foreground mt-0.5">
+                          {target.model} &middot; {target.provider}
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-1.5">
+                      <Button
+                        variant={isActive ? "secondary" : "outline"}
+                        size="sm"
+                        onClick={() => setActiveTarget(isActive ? null : target.id)}
+                        className="h-7 text-xs px-2.5 gap-1 text-muted-foreground hover:text-foreground"
+                        title={isActive ? "Clear active target" : "Set as active target"}
+                      >
+                        <Check className={`h-3 w-3 ${isActive ? "text-emerald-400" : "opacity-40"}`} />
+                        {isActive ? "Active" : "Set Active"}
+                      </Button>
+
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => {
+                          setActiveTarget(target.id);
+                          setView("assessments");
+                        }}
+                        className="h-7 text-xs px-2.5 gap-1 border-purple-500/40 bg-purple-500/10 text-purple-300 hover:bg-purple-500/20"
+                        title="Start assessment for this target"
+                      >
+                        <Play className="h-3 w-3" />
+                        Assess
+                      </Button>
+
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => duplicateTarget(target.id)}
+                        className="h-7 w-7 p-0 text-muted-foreground hover:text-foreground"
+                        title="Duplicate target"
+                      >
+                        <Copy className="h-3.5 w-3.5" />
+                      </Button>
+
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => startEditing(target)}
+                        disabled={editingId === target.id}
+                        className="h-7 w-7 p-0 text-muted-foreground hover:text-foreground"
+                        title="Edit target"
+                      >
+                        <Pencil className="h-3.5 w-3.5" />
+                      </Button>
+
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => removeTarget(target.id)}
+                        className="h-7 w-7 p-0 text-muted-foreground hover:text-red-400"
+                        title="Delete target"
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </Button>
                     </div>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <Badge
-                      variant={target.connected ? "default" : "secondary"}
-                      className={
-                        target.connected
-                          ? "bg-success/20 text-success"
-                          : "bg-muted text-muted-foreground"
-                      }
-                    >
-                      {target.connected ? "Connected" : "Untested"}
-                    </Badge>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => startEditing(target)}
-                      disabled={editingId === target.id}
-                      className="h-8 w-8 p-0 text-muted-foreground hover:text-foreground"
-                    >
-                      <Pencil className="h-4 w-4" />
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => removeTarget(target.id)}
-                      className="h-8 w-8 p-0 text-muted-foreground hover:text-redpincer"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </CardContent>
         </Card>
       )}
+
       {/* Red Team LLM Config */}
-      <Card className="border-lobster/30 bg-card">
+      <Card className="border-purple-500/30 bg-card">
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-lg">
-            <Brain className="h-5 w-5 text-lobster" />
+            <Brain className="h-5 w-5 text-purple-400" />
             Red Team LLM
           </CardTitle>
           <CardDescription>
@@ -756,7 +817,7 @@ export function TargetConfig() {
                   <Button variant="ghost" size="sm" onClick={startEditingRedTeam} className="h-8 w-8 p-0 text-muted-foreground hover:text-foreground">
                     <Pencil className="h-4 w-4" />
                   </Button>
-                  <Button variant="ghost" size="sm" onClick={removeRedTeam} className="h-8 w-8 p-0 text-muted-foreground hover:text-redpincer">
+                  <Button variant="ghost" size="sm" onClick={removeRedTeam} className="h-8 w-8 p-0 text-muted-foreground hover:text-red-400">
                     <Trash2 className="h-4 w-4" />
                   </Button>
                 </div>
@@ -773,12 +834,12 @@ export function TargetConfig() {
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="openai">OpenAI</SelectItem>
-                    <SelectItem value="anthropic">Anthropic</SelectItem>
+                    <SelectItem value="anthropic">Anthropic Claude</SelectItem>
                     <SelectItem value="openrouter">OpenRouter</SelectItem>
                     <SelectItem value="xai">xAI</SelectItem>
                     <SelectItem value="kimi">Kimi Code</SelectItem>
                     <SelectItem value="nous">Nous</SelectItem>
-                    <SelectItem value="custom">Custom</SelectItem>
+                    <SelectItem value="custom">Custom (OpenAI Compatible)</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -798,10 +859,10 @@ export function TargetConfig() {
               {/* API Key */}
               <div className="space-y-2">
                 <Label htmlFor="rt-api-key">API Key</Label>
-                {rtEditing && redTeamConfig?.apiKeyId && !rtApiKey.trim() && !forceRtApiKeyInput ? (
+                {redTeamConfig?.apiKeyId && !rtApiKey.trim() && !forceRtApiKeyInput ? (
                   <div className="flex items-center gap-2">
                     <div className="flex-1 rounded-md border border-border bg-background px-3 py-2 font-mono text-sm text-muted-foreground">
-                      🔒 {redTeamConfig.apiKeyLabel || "Stored securely"}
+                      🔒 {redTeamConfig?.apiKeyLabel || "Stored securely"}
                     </div>
                     <Button
                       variant="ghost"
@@ -819,7 +880,11 @@ export function TargetConfig() {
                   <Input
                     id="rt-api-key"
                     type="password"
-                    placeholder={rtEditing && redTeamConfig?.apiKeyId ? "Enter new key to replace stored key" : PROVIDER_PRESETS[rtProvider].placeholder}
+                    placeholder={
+                      redTeamConfig?.apiKeyId
+                        ? "Enter new key to replace stored key"
+                        : PROVIDER_PRESETS[rtProvider]?.placeholder || "sk-..."
+                    }
                     value={rtApiKey}
                     onChange={(e) => setRtApiKey(e.target.value)}
                     className="bg-background font-mono text-sm"
@@ -841,9 +906,15 @@ export function TargetConfig() {
                         className="h-7 gap-1.5 px-2 text-xs"
                       >
                         {rtFetchingModels ? (
-                          <><Loader2 className="h-3 w-3 animate-spin" />Fetching...</>
+                          <>
+                            <Loader2 className="h-3 w-3 animate-spin" />
+                            Fetching...
+                          </>
                         ) : (
-                          <><Download className="h-3 w-3" />Fetch Models</>
+                          <>
+                            <Download className="h-3 w-3" />
+                            Fetch Models
+                          </>
                         )}
                       </Button>
                     )}
@@ -851,7 +922,9 @@ export function TargetConfig() {
                       <Button
                         variant="ghost"
                         size="sm"
-                        onClick={() => setRtModelInputMode(rtModelInputMode === "select" ? "manual" : "select")}
+                        onClick={() =>
+                          setRtModelInputMode(rtModelInputMode === "select" ? "manual" : "select")
+                        }
                         className="h-7 px-2 text-xs text-muted-foreground"
                       >
                         {rtModelInputMode === "select" ? "Type manually" : "Use dropdown"}
@@ -860,7 +933,7 @@ export function TargetConfig() {
                   </div>
                 </div>
 
-                {rtFetchError && <p className="text-xs text-redpincer">{rtFetchError}</p>}
+                {rtFetchError && <p className="text-xs text-destructive">{rtFetchError}</p>}
 
                 {rtModelInputMode === "select" && rtFetchedModels.length > 0 ? (
                   <Select value={rtModel} onValueChange={setRtModel}>
@@ -869,7 +942,9 @@ export function TargetConfig() {
                     </SelectTrigger>
                     <SelectContent className="max-h-60">
                       {rtFetchedModels.map((m) => (
-                        <SelectItem key={m} value={m} className="font-mono text-sm">{m}</SelectItem>
+                        <SelectItem key={m} value={m} className="font-mono text-sm">
+                          {m}
+                        </SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
@@ -888,15 +963,45 @@ export function TargetConfig() {
 
               {/* Test Connection */}
               <div className="flex items-center gap-3">
-                <Button variant="outline" onClick={testRtConnection} disabled={!rtEndpoint.trim() || !rtModel.trim() || (rtProvider !== "custom" && !rtApiKey.trim() && !rtHasVaultKey) || rtTesting} className="gap-2">
-                  {rtTesting ? (<><Loader2 className="h-4 w-4 animate-spin" />Testing...</>) : (<><Wifi className="h-4 w-4" />Test Connection</>)}
+                <Button
+                  variant="outline"
+                  onClick={testRtConnection}
+                  disabled={
+                    !rtEndpoint.trim() ||
+                    !rtModel.trim() ||
+                    (rtProvider !== "custom" && !rtApiKey.trim() && !rtHasVaultKey) ||
+                    rtTesting
+                  }
+                  className="gap-2"
+                >
+                  {rtTesting ? (
+                    <>
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                      Testing...
+                    </>
+                  ) : (
+                    <>
+                      <Wifi className="h-4 w-4" />
+                      Test Connection
+                    </>
+                  )}
                 </Button>
                 {rtTestResult && (
                   <div className="flex items-center gap-2">
                     {rtTestResult.success ? (
-                      <><CheckCircle className="h-4 w-4 text-success" /><span className="text-sm text-success">Connected ({rtTestResult.latency}ms)</span></>
+                      <>
+                        <CheckCircle className="h-4 w-4 text-success" />
+                        <span className="text-sm text-success">
+                          Connected ({rtTestResult.latency}ms)
+                        </span>
+                      </>
                     ) : (
-                      <><XCircle className="h-4 w-4 text-redpincer" /><span className="text-sm text-redpincer">{rtTestResult.error || "Connection failed"}</span></>
+                      <>
+                        <XCircle className="h-4 w-4 text-destructive" />
+                        <span className="text-sm text-destructive">
+                          {rtTestResult.error || "Connection failed"}
+                        </span>
+                      </>
                     )}
                   </div>
                 )}
@@ -904,26 +1009,18 @@ export function TargetConfig() {
 
               <Separator />
 
-              {/* Save / Cancel */}
+              {/* Actions */}
               <div className="flex gap-2">
                 <Button
                   onClick={saveRedTeam}
                   disabled={!rtCanSave}
-                  className="flex-1 gap-2 bg-lobster font-semibold text-white hover:bg-lobster/90"
+                  className="flex-1 gap-2 bg-purple-600 font-semibold text-white hover:bg-purple-700"
                 >
                   <Brain className="h-4 w-4" />
                   {rtEditing ? "Update Red Team LLM" : "Save Red Team LLM"}
                 </Button>
                 {rtEditing && (
-                  <Button
-                    variant="outline"
-                    onClick={() => {
-                      setForceRtApiKeyInput(false);
-                      setRtEditing(false);
-                    }}
-                    className="gap-2"
-                  >
-                    <X className="h-4 w-4" />
+                  <Button variant="outline" onClick={() => setRtEditing(false)}>
                     Cancel
                   </Button>
                 )}

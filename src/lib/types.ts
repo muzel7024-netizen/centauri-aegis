@@ -20,9 +20,12 @@ export interface AnalysisResult {
   indicators: string[];
 }
 
+export type TargetStatus = "active" | "testing" | "unreachable" | "unconfigured";
+
 export interface TargetConfig {
   id: string;
   name: string;
+  description?: string;
   endpoint: string;
   /** @deprecated Use apiKeyId instead. Kept for backward compatibility during migration. */
   apiKey?: string;
@@ -33,6 +36,13 @@ export interface TargetConfig {
   model: string;
   provider: "openai" | "anthropic" | "openrouter" | "xai" | "kimi" | "nous" | "custom";
   connected: boolean;
+  notes?: string;
+  systemPrompt?: string;
+  temperature?: number;
+  maxTokens?: number;
+  status?: TargetStatus;
+  createdAt?: number;
+  updatedAt?: number;
 }
 
 export type ModelTarget = "gpt" | "claude" | "llama" | "universal";
@@ -69,6 +79,8 @@ export interface AttackResult {
   durationMs: number;
   success: boolean;
   analysis: AnalysisResult;
+  assessmentId?: string;
+  targetId?: string;
 }
 
 export interface AttackRun {
@@ -80,6 +92,85 @@ export interface AttackRun {
   startTime: number;
   endTime?: number;
   status: "running" | "completed" | "cancelled";
+  assessmentId?: string;
+}
+
+// ─── Assessment Types ──────────────────────────────────────────────────────────
+
+export type AssessmentStatus =
+  | "draft"
+  | "ready"
+  | "running"
+  | "stopped"
+  | "completed"
+  | "failed";
+
+export interface AssessmentConfig {
+  categories: AttackCategory[];
+  payloadSelection: "all" | "category" | "custom";
+  customPayloadIds?: string[];
+  includeVariants: boolean;
+  variantTypes?: string[];
+  chainIds?: string[];
+  adaptiveEnabled: boolean;
+  adaptiveIterations?: number;
+  evolveEnabled: boolean;
+  evolveGenerations?: number;
+  concurrency: number;
+}
+
+export interface AssessmentSummary {
+  totalTests: number;
+  completedTests: number;
+  breachCount: number;
+  breachRate: number;
+  meanLatencyMs: number;
+  scoreGrade: "A+" | "A" | "B" | "C" | "D" | "F";
+  riskLevel: "CRITICAL" | "HIGH" | "MEDIUM" | "LOW" | "MINIMAL";
+  findingsCount: {
+    critical: number;
+    high: number;
+    medium: number;
+    low: number;
+  };
+}
+
+export interface Assessment {
+  id: string;
+  name: string;
+  description?: string;
+  targetId: string;
+  targetName: string;
+  status: AssessmentStatus;
+  createdAt: number;
+  updatedAt: number;
+  startedAt?: number;
+  completedAt?: number;
+  configuration: AssessmentConfig;
+  runIds: string[];
+  summary?: AssessmentSummary;
+}
+
+// ─── Finding Types ────────────────────────────────────────────────────────────
+
+export type FindingSeverity = "critical" | "high" | "medium" | "low";
+export type FindingStatus = "open" | "reviewed" | "resolved";
+
+export interface Finding {
+  id: string;
+  assessmentId: string;
+  targetId: string;
+  title: string;
+  category: AttackCategory;
+  severity: FindingSeverity;
+  confidence: number; // 0.0 - 1.0
+  description: string;
+  evidence: string[];
+  affectedTests: string[];
+  remediation: string;
+  status: FindingStatus;
+  createdAt: number;
+  updatedAt: number;
 }
 
 export interface LLMRequest {

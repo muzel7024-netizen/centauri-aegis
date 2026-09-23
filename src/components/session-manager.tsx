@@ -44,7 +44,7 @@ import {
 import { toast } from "sonner";
 
 export function SessionManager() {
-  const { targets, runs, selectedCategories, activeTargetId, setActiveRun, setView } =
+  const { targets, runs, assessments, findings, selectedCategories, activeTargetId, setActiveRun, setView } =
     useStore();
 
   // Import state
@@ -79,6 +79,8 @@ export function SessionManager() {
     const session = exportSession({
       targets,
       runs,
+      assessments,
+      findings,
       selectedCategories,
       activeTargetId,
     });
@@ -117,23 +119,31 @@ export function SessionManager() {
       useStore.setState({
         targets: importedSession.targets,
         runs: importedSession.runs,
+        assessments: importedSession.assessments || [],
+        findings: importedSession.findings || [],
         selectedCategories: importedSession.selectedCategories,
         activeTargetId: importedSession.activeTargetId,
         activeRunId: null,
       });
       toast.success(
-        `Replaced with ${importedSession.targets.length} targets, ${importedSession.runs.length} runs`
+        `Replaced with ${importedSession.targets.length} targets, ${importedSession.runs.length} runs, ${(importedSession.assessments || []).length} assessments`
       );
     } else {
       // Merge: add new items, skip duplicates
-      const merged = mergeSession({ targets, runs }, importedSession);
+      const merged = mergeSession({ targets, runs, assessments, findings }, importedSession);
       const newTargets = merged.targets.length - targets.length;
       const newRuns = merged.runs.length - runs.length;
+      const newAssessments = merged.assessments.length - assessments.length;
+      const newFindings = merged.findings.length - findings.length;
       useStore.setState({
         targets: merged.targets,
         runs: merged.runs,
+        assessments: merged.assessments,
+        findings: merged.findings,
       });
-      toast.success(`Merged: ${newTargets} new targets, ${newRuns} new runs added`);
+      toast.success(
+        `Merged: ${newTargets} targets, ${newRuns} runs, ${newAssessments} assessments, ${newFindings} findings`
+      );
     }
 
     // Reset import state
@@ -148,6 +158,8 @@ export function SessionManager() {
     useStore.setState({
       targets: [],
       runs: [],
+      assessments: [],
+      findings: [],
       activeTargetId: null,
       activeRunId: null,
       selectedCategories: ["injection", "jailbreak", "extraction", "bypass", "tool_abuse", "multi_turn", "encoding"],

@@ -18,7 +18,6 @@ import {
   Link2,
   Sparkles,
   FileText,
-  Activity,
   AlertTriangle,
   CheckCircle2,
   ArrowRight,
@@ -32,6 +31,8 @@ export function DashboardOverview() {
     targets,
     activeTargetId,
     runs,
+    assessments,
+    findings,
     setView,
     setActiveRun,
   } = useStore();
@@ -48,6 +49,13 @@ export function DashboardOverview() {
     totalAttacksExecuted > 0
       ? ((totalBreaches / totalAttacksExecuted) * 100).toFixed(1)
       : "0.0";
+
+  // Assessment & Finding KPIs
+  const activeAssessmentsCount = assessments.filter((a) => a.status === "running" || a.status === "ready").length;
+  const completedAssessmentsCount = assessments.filter((a) => a.status === "completed").length;
+  const openFindings = findings.filter((f) => f.status === "open");
+  const criticalFindings = openFindings.filter((f) => f.severity === "critical").length;
+  const highFindings = openFindings.filter((f) => f.severity === "high").length;
 
   const recentRuns = [...runs]
     .sort((a, b) => b.startTime - a.startTime)
@@ -89,19 +97,38 @@ export function DashboardOverview() {
             Manage Targets
           </Button>
           <Button
+            variant="outline"
             size="sm"
-            onClick={() => setView("attacks")}
+            onClick={() => setView("findings")}
+            className="border-border hover:bg-card gap-2 text-xs"
+          >
+            <AlertTriangle className="h-3.5 w-3.5 text-amber-400" />
+            Findings
+            {openFindings.length > 0 && (
+              <Badge variant="outline" className="border-amber-500/40 bg-amber-500/10 text-amber-300 text-[10px] px-1 py-0 h-4">
+                {openFindings.length}
+              </Badge>
+            )}
+          </Button>
+          <Button
+            size="sm"
+            onClick={() => setView("assessments")}
             className="bg-aegis hover:bg-aegis/90 text-white gap-2 text-xs shadow-md shadow-purple-950/40"
           >
-            <Play className="h-3.5 w-3.5" />
-            Launch Testing
+            <Shield className="h-3.5 w-3.5" />
+            Assessments
+            {activeAssessmentsCount > 0 && (
+              <Badge variant="outline" className="border-white/30 bg-white/20 text-white text-[10px] px-1 py-0 h-4">
+                {activeAssessmentsCount}
+              </Badge>
+            )}
           </Button>
         </div>
       </div>
 
       {/* Primary KPI Deck */}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <Card className="border-border/60 bg-card/60 backdrop-blur-sm">
+        <Card className="border-border/60 bg-card/60 backdrop-blur-sm cursor-pointer hover:border-purple-500/40 transition-colors" onClick={() => setView("config")}>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
               Active Target
@@ -120,36 +147,49 @@ export function DashboardOverview() {
           </CardContent>
         </Card>
 
-        <Card className="border-border/60 bg-card/60 backdrop-blur-sm">
+        <Card className="border-border/60 bg-card/60 backdrop-blur-sm cursor-pointer hover:border-purple-500/40 transition-colors" onClick={() => setView("assessments")}>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
-              Total Executions
+              Assessments
             </CardTitle>
-            <Activity className="h-4 w-4 text-purple-400" />
+            <Shield className="h-4 w-4 text-purple-400" />
           </CardHeader>
           <CardContent>
-            <div className="text-xl font-bold font-mono text-foreground">
-              {totalAttacksExecuted.toLocaleString()}
+            <div className="text-xl font-bold font-mono text-foreground flex items-baseline gap-2">
+              {assessments.length}
+              {activeAssessmentsCount > 0 && (
+                <span className="text-xs font-sans text-purple-400 font-normal">
+                  ({activeAssessmentsCount} active)
+                </span>
+              )}
             </div>
             <p className="text-xs text-muted-foreground mt-1">
-              Across {runs.length} test {runs.length === 1 ? "run" : "runs"}
+              {completedAssessmentsCount} completed &middot; {totalAttacksExecuted.toLocaleString()} total attacks
             </p>
           </CardContent>
         </Card>
 
-        <Card className="border-border/60 bg-card/60 backdrop-blur-sm">
+        <Card className="border-border/60 bg-card/60 backdrop-blur-sm cursor-pointer hover:border-amber-500/40 transition-colors" onClick={() => setView("findings")}>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
-              Vulnerabilities
+              Security Findings
             </CardTitle>
             <AlertTriangle className="h-4 w-4 text-amber-400" />
           </CardHeader>
           <CardContent>
-            <div className="text-xl font-bold font-mono text-amber-400">
-              {totalBreaches.toLocaleString()}
+            <div className="text-xl font-bold font-mono text-amber-400 flex items-baseline gap-2">
+              {openFindings.length}
+              <span className="text-xs font-sans text-muted-foreground font-normal">
+                open
+              </span>
             </div>
             <p className="text-xs text-muted-foreground mt-1">
-              Successful jailbreaks & bypasses
+              {criticalFindings > 0 ? (
+                <span className="text-rose-400 font-semibold">{criticalFindings} Critical</span>
+              ) : (
+                <span>0 Critical</span>
+              )}
+              {" "}&middot; {highFindings} High &middot; {totalBreaches} breaches
             </p>
           </CardContent>
         </Card>
@@ -235,7 +275,53 @@ export function DashboardOverview() {
           <Layers className="h-4 w-4 text-purple-400" />
           Testing & Research Workflows
         </h2>
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+          <Card
+            onClick={() => setView("assessments")}
+            className="group cursor-pointer border-border/60 bg-card/60 transition-all hover:border-purple-500/40 hover:bg-card/90"
+          >
+            <CardHeader className="pb-2">
+              <div className="flex items-center justify-between">
+                <div className="flex h-9 w-9 items-center justify-center rounded-md border border-purple-500/20 bg-purple-500/10 text-purple-400">
+                  <Shield className="h-4 w-4" />
+                </div>
+                <ArrowRight className="h-4 w-4 text-muted-foreground transition-transform group-hover:translate-x-1 group-hover:text-purple-400" />
+              </div>
+              <CardTitle className="text-base font-semibold mt-3 flex items-center justify-between">
+                <span>Assessments</span>
+                <Badge variant="outline" className="text-[10px] border-purple-500/30 text-purple-400">
+                  Workspace
+                </Badge>
+              </CardTitle>
+              <CardDescription className="text-xs line-clamp-2">
+                Scoped test plans, execution runners, live telemetry, and automated finding synthesis.
+              </CardDescription>
+            </CardHeader>
+          </Card>
+
+          <Card
+            onClick={() => setView("findings")}
+            className="group cursor-pointer border-border/60 bg-card/60 transition-all hover:border-amber-500/40 hover:bg-card/90"
+          >
+            <CardHeader className="pb-2">
+              <div className="flex items-center justify-between">
+                <div className="flex h-9 w-9 items-center justify-center rounded-md border border-amber-500/20 bg-amber-500/10 text-amber-400">
+                  <AlertTriangle className="h-4 w-4" />
+                </div>
+                <ArrowRight className="h-4 w-4 text-muted-foreground transition-transform group-hover:translate-x-1 group-hover:text-amber-400" />
+              </div>
+              <CardTitle className="text-base font-semibold mt-3 flex items-center justify-between">
+                <span>Findings Register</span>
+                <Badge variant="outline" className="text-[10px] border-amber-500/30 text-amber-400">
+                  Register
+                </Badge>
+              </CardTitle>
+              <CardDescription className="text-xs line-clamp-2">
+                Empirically verified vulnerabilities, response evidence, affected probes, and remediations.
+              </CardDescription>
+            </CardHeader>
+          </Card>
+
           <Card
             onClick={() => setView("attacks")}
             className="group cursor-pointer border-border/60 bg-card/60 transition-all hover:border-purple-500/40 hover:bg-card/90"
@@ -243,7 +329,7 @@ export function DashboardOverview() {
             <CardHeader className="pb-2">
               <div className="flex items-center justify-between">
                 <div className="flex h-9 w-9 items-center justify-center rounded-md border border-purple-500/20 bg-purple-500/10 text-purple-400">
-                  <Shield className="h-4 w-4" />
+                  <Play className="h-4 w-4" />
                 </div>
                 <ArrowRight className="h-4 w-4 text-muted-foreground transition-transform group-hover:translate-x-1 group-hover:text-purple-400" />
               </div>
@@ -311,7 +397,7 @@ export function DashboardOverview() {
                 Executive Reports
               </CardTitle>
               <CardDescription className="text-xs line-clamp-2">
-                Export comprehensive SARIF, CSV, and JSON audit documents.
+                Export comprehensive SARIF, CSV, and Markdown audit documents.
               </CardDescription>
             </CardHeader>
           </Card>

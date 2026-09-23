@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useContext, useEffect, useState } from "react";
+import { createContext, useContext, useEffect, useState, useSyncExternalStore } from "react";
 
 type Theme = "dark" | "light" | "system";
 
@@ -8,12 +8,16 @@ interface ThemeContextType {
   theme: Theme;
   resolvedTheme: "dark" | "light";
   setTheme: (theme: Theme) => void;
+  mounted: boolean;
 }
+
+const emptySubscribe = () => () => {};
 
 const ThemeContext = createContext<ThemeContextType>({
   theme: "dark",
   resolvedTheme: "dark",
   setTheme: () => {},
+  mounted: false,
 });
 
 export function useTheme() {
@@ -28,6 +32,7 @@ function getSystemTheme(): "dark" | "light" {
 }
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
+  const mounted = useSyncExternalStore(emptySubscribe, () => true, () => false);
   const [theme, setThemeState] = useState<Theme>(() => {
     if (typeof window === "undefined") return "dark";
     const saved = (localStorage.getItem("centauri-aegis-theme") || localStorage.getItem("redpincer-theme")) as Theme | null;
@@ -58,7 +63,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
   };
 
   return (
-    <ThemeContext.Provider value={{ theme, resolvedTheme, setTheme }}>
+    <ThemeContext.Provider value={{ theme, resolvedTheme, setTheme, mounted }}>
       {children}
     </ThemeContext.Provider>
   );

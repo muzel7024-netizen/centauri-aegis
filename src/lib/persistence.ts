@@ -2,13 +2,15 @@ import type {
   TargetConfig,
   AttackRun,
   AttackCategory,
+  Assessment,
+  Finding,
 } from "./types";
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
 export const STORAGE_KEY = "centauri-aegis-state";
 export const LEGACY_STORAGE_KEY = "redpincer-state";
-export const SESSION_VERSION = "1.0.0";
+export const SESSION_VERSION = "1.1.0";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -19,6 +21,8 @@ export interface CentauriAegisSession {
   runs: AttackRun[];
   selectedCategories: AttackCategory[];
   activeTargetId: string | null;
+  assessments?: Assessment[];
+  findings?: Finding[];
 }
 
 // Backward-compatibility alias
@@ -38,7 +42,7 @@ const VALID_CATEGORIES: AttackCategory[] = [
 
 export function validateSession(
   data: unknown
-): { valid: boolean; errors: string[] } {
+): { valid: boolean; errors: string[]; session?: CentauriAegisSession } {
   const errors: string[] = [];
 
   if (data === null || typeof data !== "object") {
@@ -103,7 +107,26 @@ export function validateSession(
     }
   }
 
-  return { valid: errors.length === 0, errors };
+  // assessments check (optional, for backward compatibility)
+  if (obj.assessments !== undefined && !Array.isArray(obj.assessments)) {
+    errors.push("'assessments' must be an array when present");
+  }
+
+  // findings check (optional, for backward compatibility)
+  if (obj.findings !== undefined && !Array.isArray(obj.findings)) {
+    errors.push("'findings' must be an array when present");
+  }
+
+  const session =
+    errors.length === 0
+      ? ({
+          ...obj,
+          assessments: Array.isArray(obj.assessments) ? obj.assessments : [],
+          findings: Array.isArray(obj.findings) ? obj.findings : [],
+        } as unknown as CentauriAegisSession)
+      : undefined;
+
+  return { valid: errors.length === 0, errors, session };
 }
 
 // ─── Export / Import ──────────────────────────────────────────────────────────
@@ -113,6 +136,8 @@ export function exportSession(state: {
   runs: AttackRun[];
   selectedCategories: AttackCategory[];
   activeTargetId: string | null;
+  assessments?: Assessment[];
+  findings?: Finding[];
 }): CentauriAegisSession {
   return {
     version: SESSION_VERSION,
@@ -121,6 +146,8 @@ export function exportSession(state: {
     runs: state.runs,
     selectedCategories: state.selectedCategories,
     activeTargetId: state.activeTargetId,
+    assessments: state.assessments || [],
+    findings: state.findings || [],
   };
 }
 
@@ -221,18 +248,38 @@ export function formatBytes(bytes: number): string {
  * Merge an imported session into existing state, skipping duplicates by id.
  */
 export function mergeSession(
-  existing: { targets: TargetConfig[]; runs: AttackRun[] },
+  existing: {
+    targets: TargetConfig[];
+    runs: AttackRun[];
+    assessments?: Assessment[];
+    findings?: Finding[];
+  },
   imported: CentauriAegisSession
-): { targets: TargetConfig[]; runs: AttackRun[] } {
+): {
+  targets: TargetConfig[];
+  runs: AttackRun[];
+  assessments: Assessment[];
+  findings: Finding[];
+} {
   const existingTargetIds = new Set(existing.targets.map((t) => t.id));
   const existingRunIds = new Set(existing.runs.map((r) => r.id));
+  const existingAssessmentIds = new Set((existing.assessments || []).map((a) => a.id));
+  const existingFindingIds = new Set((existing.findings || []).map((f) => f.id));
 
   const newTargets = imported.targets.filter((t) => !existingTargetIds.has(t.id));
   const newRuns = imported.runs.filter((r) => !existingRunIds.has(r.id));
+  const newAssessments = (imported.assessments || []).filter(
+    (a) => !existingAssessmentIds.has(a.id)
+  );
+  const newFindings = (imported.findings || []).filter(
+    (f) => !existingFindingIds.has(f.id)
+  );
 
   return {
     targets: [...existing.targets, ...newTargets],
     runs: [...existing.runs, ...newRuns],
+    assessments: [...(existing.assessments || []), ...newAssessments],
+    findings: [...(existing.findings || []), ...newFindings],
   };
 }
 

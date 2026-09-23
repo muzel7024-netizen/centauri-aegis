@@ -19,6 +19,8 @@ import { ScoringConfig } from "@/components/scoring-config";
 import { DashboardOverview } from "@/components/dashboard-overview";
 import { SettingsView } from "@/components/settings-view";
 import { AboutView } from "@/components/about-view";
+import { AssessmentWorkspace } from "@/components/assessment-workspace";
+import { FindingsView } from "@/components/findings-view";
 import { KeyboardShortcutsDialog } from "@/components/keyboard-shortcuts-dialog";
 
 export default function Home() {
@@ -31,6 +33,8 @@ export default function Home() {
       <main className="flex-1 overflow-y-auto">
         {view === "dashboard" && <DashboardOverview />}
         {view === "config" && <TargetConfig />}
+        {view === "assessments" && <AssessmentWorkspace />}
+        {view === "findings" && <FindingsView />}
         {view === "attacks" && <AttackModules />}
         {view === "results" && <ResultsDashboard />}
         {view === "reports" && <ReportGenerator />}

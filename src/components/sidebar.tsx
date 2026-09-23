@@ -37,6 +37,7 @@ import {
   LayoutDashboard,
   Settings,
   Info,
+  AlertTriangle,
 } from "lucide-react";
 import { useAuth } from "@/lib/use-auth";
 import { ThemeToggle } from "@/components/theme-toggle";
@@ -105,6 +106,8 @@ export function Sidebar() {
     targets,
     activeTargetId,
     setActiveTarget,
+    assessments,
+    findings,
     selectedCategories,
     toggleCategory,
     isRunning,
@@ -286,7 +289,45 @@ export function Sidebar() {
                 }`}
               >
                 <Target className="h-3.5 w-3.5 text-purple-400" />
-                Target Config
+                Target Workspace
+              </button>
+
+              <button
+                onClick={() => setView("assessments")}
+                className={`flex items-center justify-between rounded-md px-2.5 py-1.5 text-xs font-medium transition-colors hover:bg-sidebar-accent ${
+                  view === "assessments"
+                    ? "bg-purple-500/15 text-purple-300 font-semibold border-l-2 border-aegis"
+                    : "text-sidebar-foreground"
+                }`}
+              >
+                <div className="flex items-center gap-2">
+                  <Shield className="h-3.5 w-3.5 text-purple-400" />
+                  <span>Assessments</span>
+                </div>
+                {assessments.length > 0 && (
+                  <span className="font-mono text-[10px] text-purple-300 bg-purple-500/20 px-1.5 rounded">
+                    {assessments.length}
+                  </span>
+                )}
+              </button>
+
+              <button
+                onClick={() => setView("findings")}
+                className={`flex items-center justify-between rounded-md px-2.5 py-1.5 text-xs font-medium transition-colors hover:bg-sidebar-accent ${
+                  view === "findings"
+                    ? "bg-purple-500/15 text-purple-300 font-semibold border-l-2 border-aegis"
+                    : "text-sidebar-foreground"
+                }`}
+              >
+                <div className="flex items-center gap-2">
+                  <AlertTriangle className="h-3.5 w-3.5 text-purple-400" />
+                  <span>Findings</span>
+                </div>
+                {findings.length > 0 && (
+                  <span className="font-mono text-[10px] text-amber-300 bg-amber-500/20 px-1.5 rounded">
+                    {findings.length}
+                  </span>
+                )}
               </button>
 
               <button

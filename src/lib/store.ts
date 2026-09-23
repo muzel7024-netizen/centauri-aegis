@@ -5,11 +5,17 @@ import type {
   AttackCategory,
   AttackRun,
   AttackResult,
+  Assessment,
+  Finding,
 } from "./types";
+import { generateId } from "./uuid";
+import { generateFindingsFromResults, calculateAssessmentSummary } from "./findings";
 
 export type ViewName =
   | "dashboard"
   | "config"
+  | "assessments"
+  | "findings"
   | "attacks"
   | "results"
   | "reports"
@@ -32,7 +38,24 @@ interface AppState {
   addTarget: (target: TargetConfig) => void;
   updateTarget: (id: string, updates: Partial<TargetConfig>) => void;
   removeTarget: (id: string) => void;
+  duplicateTarget: (id: string) => void;
   setActiveTarget: (id: string | null) => void;
+
+  // Assessments
+  assessments: Assessment[];
+  activeAssessmentId: string | null;
+  addAssessment: (assessment: Assessment) => void;
+  updateAssessment: (id: string, updates: Partial<Assessment>) => void;
+  deleteAssessment: (id: string) => void;
+  duplicateAssessment: (id: string) => void;
+  setActiveAssessment: (id: string | null) => void;
+
+  // Findings
+  findings: Finding[];
+  addFinding: (finding: Finding) => void;
+  updateFinding: (id: string, updates: Partial<Finding>) => void;
+  deleteFinding: (id: string) => void;
+  generateFindingsForAssessment: (assessmentId: string) => void;
 
   // Attack selection
   selectedCategories: AttackCategory[];
@@ -77,7 +100,9 @@ export const useStore = create<AppState>()(
       targets: [],
       activeTargetId: null,
       addTarget: (target) =>
-        set((state) => ({ targets: [...state.targets, target] })),
+        set((state) => ({
+          targets: [...state.targets, target],
+        })),
       updateTarget: (id, updates) =>
         set((state) => ({
           targets: state.targets.map((t) =>
@@ -90,7 +115,124 @@ export const useStore = create<AppState>()(
           activeTargetId:
             state.activeTargetId === id ? null : state.activeTargetId,
         })),
+      duplicateTarget: (id) =>
+        set((state) => {
+          const target = state.targets.find((t) => t.id === id);
+          if (!target) return state;
+          const newTarget: TargetConfig = {
+            ...target,
+            id: generateId(),
+            name: `${target.name} (Copy)`,
+            createdAt: Date.now(),
+            updatedAt: Date.now(),
+          };
+          return {
+            targets: [...state.targets, newTarget],
+            activeTargetId: newTarget.id,
+          };
+        }),
       setActiveTarget: (id) => set({ activeTargetId: id }),
+
+      // Assessments
+      assessments: [],
+      activeAssessmentId: null,
+      addAssessment: (assessment) =>
+        set((state) => ({
+          assessments: [assessment, ...state.assessments],
+          activeAssessmentId: assessment.id,
+        })),
+      updateAssessment: (id, updates) =>
+        set((state) => ({
+          assessments: state.assessments.map((a) =>
+            a.id === id ? { ...a, ...updates, updatedAt: Date.now() } : a
+          ),
+        })),
+      deleteAssessment: (id) =>
+        set((state) => ({
+          assessments: state.assessments.filter((a) => a.id !== id),
+          activeAssessmentId:
+            state.activeAssessmentId === id ? null : state.activeAssessmentId,
+          findings: state.findings.filter((f) => f.assessmentId !== id),
+        })),
+      duplicateAssessment: (id) =>
+        set((state) => {
+          const existing = state.assessments.find((a) => a.id === id);
+          if (!existing) return state;
+          const duplicated: Assessment = {
+            ...existing,
+            id: generateId(),
+            name: `${existing.name} (Copy)`,
+            status: "draft",
+            createdAt: Date.now(),
+            updatedAt: Date.now(),
+            startedAt: undefined,
+            completedAt: undefined,
+            runIds: [],
+            summary: undefined,
+          };
+          return {
+            assessments: [duplicated, ...state.assessments],
+            activeAssessmentId: duplicated.id,
+          };
+        }),
+      setActiveAssessment: (id) => set({ activeAssessmentId: id }),
+
+      // Findings
+      findings: [],
+      addFinding: (finding) =>
+        set((state) => ({
+          findings: [finding, ...state.findings],
+        })),
+      updateFinding: (id, updates) =>
+        set((state) => ({
+          findings: state.findings.map((f) =>
+            f.id === id ? { ...f, ...updates, updatedAt: Date.now() } : f
+          ),
+        })),
+      deleteFinding: (id) =>
+        set((state) => ({
+          findings: state.findings.filter((f) => f.id !== id),
+        })),
+      generateFindingsForAssessment: (assessmentId) =>
+        set((state) => {
+          const assessment = state.assessments.find((a) => a.id === assessmentId);
+          if (!assessment) return state;
+
+          const linkedRuns = state.runs.filter((r) =>
+            assessment.runIds.includes(r.id)
+          );
+          const allResults = linkedRuns.flatMap((r) => r.results);
+
+          const derivedFindings = generateFindingsFromResults(
+            assessment.id,
+            assessment.targetId,
+            allResults
+          );
+
+          // Retain findings from other assessments, replace for this assessment
+          const otherFindings = state.findings.filter(
+            (f) => f.assessmentId !== assessmentId
+          );
+          const updatedFindings = [...derivedFindings, ...otherFindings];
+
+          // Compute quantitative summary
+          const summary = calculateAssessmentSummary(
+            assessment,
+            state.runs,
+            derivedFindings
+          );
+
+          const updatedAssessments = state.assessments.map((a) =>
+            a.id === assessmentId
+              ? { ...a, summary, updatedAt: Date.now() }
+              : a
+          );
+
+          return {
+            findings: updatedFindings,
+            assessments: updatedAssessments,
+          };
+        }),
 
       // Attack selection
       selectedCategories: ["injection", "jailbreak", "extraction", "bypass", "tool_abuse", "multi_turn", "encoding"],
@@ -210,6 +352,9 @@ export const useStore = create<AppState>()(
             })()
           : null,
         activeTargetId: state.activeTargetId,
+        assessments: state.assessments,
+        activeAssessmentId: state.activeAssessmentId,
+        findings: state.findings,
         selectedCategories: state.selectedCategories,
         runs: state.runs,
         activeRunId: state.activeRunId,
