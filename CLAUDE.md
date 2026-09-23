@@ -1,10 +1,10 @@
 # CLAUDE.md
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+This file provides architectural guidance when working with code in this repository.
 
 ## What This Is
 
-RedPincer is an AI/LLM red-teaming suite for testing model safety. It sends attack payloads (prompt injection, jailbreak, extraction, bypass) to LLM endpoints, analyzes responses with a heuristic engine, and reports vulnerabilities. Built for authorized security testing only.
+Centauri Aegis is an AI security testing and research platform designed for automated adversarial red-teaming, jailbreak resistance evaluation, and safety auditing of Large Language Models and AI systems. It sends targeted attack payloads across 7 threat categories to model endpoints, evaluates responses using a zero-overhead heuristic classification engine, synthesizes empirical findings, and exports compliance-grade reports. Built strictly for authorized security testing and research.
 
 ## Commands
 
@@ -13,112 +13,63 @@ npm run dev      # Start dev server (http://localhost:3000)
 npm run build    # Production build
 npm run start    # Serve production build
 npm run lint     # ESLint (v9 flat config)
+npm test         # Run test suite via Vitest (390 tests)
+npm run test:watch    # Watch mode
+npm run test:coverage # Run with coverage
 ```
 
-Docker: `docker build -t redpincer . && docker run -p 3000:3000 redpincer`
+Docker: `docker build -t centauri-aegis . && docker run -p 3000:3000 centauri-aegis`
 
-**Testing:** Vitest + jsdom. Run `npm test` (single run), `npm run test:watch` (watch mode), `npm run test:coverage` (with coverage). Tests live in `src/lib/__tests__/` (14 test files, 357 tests). Vitest globals are enabled — `describe`/`it`/`expect` need no imports. Coverage tracks `src/lib/**/*.ts` excluding `src/lib/attacks/**`. Use `npm ci` (not `npm install`) to respect the lockfile.
+**Testing:** Vitest + jsdom. Tests live in `src/lib/__tests__/` (19 test files). Vitest globals are enabled. Use `npm ci` (not `npm install`) to respect package-lock.json.
 
 ## Architecture
 
-**Stack:** Next.js 16 + React 19 + TypeScript (strict) + Tailwind CSS 4 + shadcn/ui (new-york style) + Zustand 5
+**Stack:** Next.js 16 App Router + React 19 + TypeScript (strict) + Tailwind CSS 4 + shadcn/ui + Zustand 5
 
-**All components are client-side** (`"use client"` directive). There are no server components. The app uses a single-page layout where `src/app/page.tsx` switches views based on `store.view` state. Views: `config | attacks | results | reports | chains | session | editor | comparison | adaptive | heatmap | regression | scoring`
+**All components are client-side** (`"use client"` directive). The app uses a modular single-page layout where `src/app/page.tsx` switches views based on `store.view` state. Views:
+`config | attacks | results | reports | chains | session | editor | comparison | adaptive | evolve | heatmap | regression | scoring | assessments | findings | settings | about`
 
 ### Data Flow
 
-1. User configures LLM target (endpoint, API key, model, provider) in `TargetConfig`
-2. User selects attack categories/payloads and hits RUN
-3. `POST /api/attack` streams NDJSON — one `AttackResult` per payload
-4. Each result includes heuristic `AnalysisResult` (pattern-matching, no LLM grading)
-5. Results stored in Zustand → persisted to localStorage (`"redpincer-state"`)
+1. User configures LLM target (endpoint, API key, model, provider) in Target Configuration
+2. Target API keys are immediately vaulted server-side via `POST /api/keys` returning an opaque handle (`apiKeyId`)
+3. User selects attack categories/payloads and executes an assessment
+4. Runner dispatches requests to `POST /api/attack` (streaming NDJSON) or sequential chains (`POST /api/chain`)
+5. Each result includes a heuristic `AnalysisResult` (pattern-matching classifier across 11 languages, no LLM grading)
+6. Results and findings are persisted in Zustand store (`"centauri-aegis-state"`) with legacy fallback support
+7. Reports and findings are exported to Markdown, CSV, and SARIF 2.1.0
 
 ### Key Modules
 
 | Module | Purpose |
 |---|---|
-| `src/lib/store.ts` | Zustand store (`useStore` hook) with persist middleware. Persisted via `partialize`: targets, activeTargetId, selectedCategories, runs, activeRunId, concurrency. NOT persisted: view, isRunning. |
-| `src/lib/types.ts` | All TypeScript interfaces and enums. Core types: `TargetConfig`, `AttackPayload`, `AttackResult`, `AnalysisResult`, `AttackRun`, `AttackChain` |
-| `src/lib/llm-client.ts` | Multi-provider client. OpenAI/OpenRouter use chat.completions format; Anthropic uses Messages API with top-level `system` param. 30s timeout. |
-| `src/lib/analysis.ts` | Heuristic response classifier with refusal, compliance, explanation, and hedging pattern detection in 11 languages (EN, ES, FR, DE, PT, RU, ZH, JA, KO, AR, IT). Context-aware analysis prevents false positives (e.g., decoding base64 + refusing = refusal, not breach). Outputs classification + severity score (1-10) + confidence (0-1). |
-| `src/lib/chains.ts` | Sequential multi-step attacks. Steps support `{{previous_response}}` and `{{step:stepId}}` template variables. Response transforms: full, extract_json, extract_code, first_line, last_paragraph. |
-| `src/lib/variants.ts` | 20 payload transformations (case, unicode homoglyphs, base64, ROT13, leetspeak, zero-width spaces, etc.) |
-| `src/lib/attacks/*.ts` | 222 payloads across 7 categories with id format `inj-001`, `jb-001`, `ext-001`, `byp-001`, `ta-001`, `mt-001`, `enc-001` |
-| `src/lib/adaptive.ts` | Weakness analysis engine — examines run results to identify vulnerability patterns and generate follow-up strategies |
-| `src/lib/scoring.ts` | Custom scoring rubric system — weighted scoring by category, severity, classification with letter grades |
-| `src/lib/keyboard-shortcuts.ts` | Shortcut definitions, view mappings, input detection, formatting utilities |
-| `src/lib/use-keyboard-shortcuts.ts` | React hook for global keyboard shortcut handling (dispatches custom events for run/stop) |
-| `src/lib/persistence.ts` | Session import/export, validation, merge (dedup by id), localStorage helpers, sanitization (strips API keys), size utilities |
-| `src/lib/export.ts` | Structured data export — JSON (full results), CSV (flat table), SARIF v2.1.0 (industry standard for security tools) |
+| `src/lib/store.ts` | Central Zustand store (`useStore` hook) with persist middleware. Persisted: targets, activeTargetId, selectedCategories, runs, activeRunId, concurrency, assessments, findings. NOT persisted: view, isRunning, cancelActiveExecution. Plaintext `apiKey` stripped via `partialize`. |
+| `src/lib/types.ts` | Core TypeScript interfaces: `TargetConfig`, `AttackPayload`, `AttackResult`, `AnalysisResult`, `AttackRun`, `AttackChain`, `Assessment`, `Finding`. |
+| `src/lib/llm-client.ts` | Multi-provider client for OpenAI, Anthropic, Ollama, and Custom endpoints with timeout and cancellation controls. |
+| `src/lib/analysis.ts` | Heuristic response classifier with refusal, compliance, explanation, and leak detection across 11 languages. |
+| `src/lib/findings.ts` | Empirical vulnerability synthesizer — groups breaches by category and severity into structured findings. |
+| `src/lib/chains.ts` | Sequential multi-step attack pipelines with dynamic variable interpolation (`{{previous_response}}`). |
+| `src/lib/variants.ts` | 20 payload transformations (case, unicode homoglyphs, base64, ROT13, leetspeak, etc.). |
+| `src/lib/attacks/*.ts` | 221 curated payloads across 7 threat categories (`inj-*`, `jb-*`, `ext-*`, `byp-*`, `ta-*`, `mt-*`, `enc-*`). |
+| `src/lib/evolve/runner.ts` | Genetic algorithm mutation engine with fitness evaluation and lineage tracking. |
+| `src/lib/adaptive.ts` | Weakness profiler generating automated follow-up attack strategies. |
+| `src/lib/scoring.ts` | Custom weighted scoring rubrics with letter grade outputs (A+ to F). |
+| `src/lib/persistence.ts` | Session import/export, schema validation, merge deduplication, and legacy namespace migration. |
+| `src/lib/export.ts` | Export engine for JSON, CSV, and SARIF 2.1.0 formatted findings. |
 
-### API Routes
+### Visual Theme & Tokens
 
-- `POST /api/attack` — Streams attack results as NDJSON. Supports AbortController for stop functionality. Accepts `{endpoint, apiKey, model, provider, categories?, payloadIds?, concurrency?}`. Concurrency (1-10, default 1) controls parallel LLM requests — higher values run faster but may trigger provider rate limits.
-- `POST /api/chain` — Executes chain steps sequentially with template resolution
-- `POST /api/test-connection` — Validates LLM endpoint connectivity
-- `POST /api/models` — Fetches available models from provider API (OpenAI, Anthropic hardcoded list, OpenRouter)
-- `POST /api/generate-payload` — Uses target LLM to generate new attack payloads via meta-prompting
-- `POST /api/generate-adaptive` — Uses target LLM to generate follow-up attacks based on weakness profile
-- `POST /api/explain` — Uses target LLM to explain why an attack result was classified as it was
-- `POST /api/mutate-payload` — Uses target LLM to mutate a blocked payload into a new bypass attempt
-- `POST /api/summarize-run` — Uses target LLM to generate executive summary of an attack run
-- `POST/DELETE/GET /api/keys` — API key vault CRUD (store, remove, check existence)
-
-### Styling
-
-- Dark mode is hardcoded (`.dark` class on `<html>`)
-- Custom OKLCH color tokens in `src/app/globals.css`: `redpincer` (red), `lobster` (orange), `success` (green), `warning` (yellow)
-- Use `cn()` from `src/lib/utils.ts` (clsx + tailwind-merge) for conditional classes
-- Icons from `lucide-react`, toasts from `sonner`
+- Theme: Graphite / Charcoal / Slate / Steel-Blue (`--background: #08090B`, elevated cards `--card: #12151A`, primary accent `--primary: #5B8DB8` / `--aegis: #5B8DB8`).
+- Semantic tokens: `--destructive: #C94A4A` (rose), `--warning: #C9973E` (amber), `--success: #3FA66B` (emerald).
+- No emojis anywhere in the interface; Lucide SVG icons exclusively.
 
 ### Authentication
 
-Auth is **opt-in** via environment variables. When `PINCER_USERNAME` and `PINCER_PASSWORD` are both set, all routes are protected by session-based auth with HMAC-signed cookies. Set `PINCER_AUTH_DISABLED=true` to explicitly disable. See `.env.example`.
+Auth is opt-in via environment variables:
+- `AEGIS_AUTH_ENABLED=true`
+- `AEGIS_USERNAME` and `AEGIS_PASSWORD`
+- Fallback support for legacy `PINCER_*` environment variables is preserved for seamless deployment upgrades.
 
-| Module | Purpose |
-|---|---|
-| `src/lib/auth.ts` | Core auth logic — credential validation (timing-safe), HMAC session tokens, config |
-| `src/lib/use-auth.ts` | Client-side React hook for auth status + logout |
-| `src/middleware.ts` | Next.js middleware — redirects unauthenticated requests to `/login`, returns 401 for API routes |
-| `src/app/login/page.tsx` | Login page with form |
-| `src/app/api/auth/login/route.ts` | POST — validates credentials, sets httpOnly session cookie |
-| `src/app/api/auth/logout/route.ts` | POST — clears session cookie |
-| `src/app/api/auth/status/route.ts` | GET — returns auth state (enabled, authenticated, username) |
+### Server-Side Key Vault
 
-### API Key Vault
-
-API keys are stored server-side in an encrypted in-memory vault (AES-256-GCM), not in localStorage. Client-side only stores an opaque `apiKeyId` and a masked `apiKeyLabel` (e.g., "sk-...abc"). Keys are encrypted with `PINCER_KEY_SECRET` (falls back to `PINCER_SESSION_SECRET` / `PINCER_PASSWORD`). On server restart, the vault is empty — users re-enter keys.
-
-| Module | Purpose |
-|---|---|
-| `src/lib/key-vault.ts` | AES-256-GCM encrypted storage, key CRUD, `resolveApiKey()` for backward compat |
-| `src/lib/resolve-key.ts` | Shared helper for API routes — resolves `apiKeyId` or legacy `apiKey` |
-| `src/lib/target-utils.ts` | Client-side helper — `getTargetKeyFields(target)` for API request bodies |
-| `src/app/api/keys/route.ts` | POST (store key → keyId), DELETE (remove), GET (check existence) |
-
-All API routes accept both `apiKeyId` (vault reference) and `apiKey` (plaintext, backward compat). The store's `partialize` strips plaintext `apiKey` before persisting to localStorage.
-
-### Rate Limiting
-
-All API routes are rate-limited via in-memory sliding window (enforced in `src/middleware.ts`). Always active — no configuration needed. Resets on server restart.
-
-| Tier | Routes | Limit |
-|---|---|---|
-| `auth` | `/api/auth/*` | 5 req / 60s (brute-force protection) |
-| `attack` | `/api/attack`, `/api/chain`, `/api/generate-adaptive` | 10 req / 60s |
-| `api` | All other `/api/*` | 30 req / 60s |
-
-Rate limit headers (`X-RateLimit-Limit`, `X-RateLimit-Remaining`, `X-RateLimit-Reset`, `Retry-After`) are included on all API responses. 429 responses include `retryAfter` in the JSON body.
-
-| Module | Purpose |
-|---|---|
-| `src/lib/rate-limit.ts` | Rate limiter class, tier config, route-to-tier mapping, client key extraction, header helpers |
-
-## Conventions
-
-- Path alias: `@/*` maps to `./src/*`
-- Use `import type` for TypeScript-only imports
-- shadcn/ui components live in `src/components/ui/` — add new ones via `npx shadcn add <component>`
-- Provider enum values: `"openai" | "anthropic" | "openrouter" | "custom"`
-- Attack categories: `"injection" | "jailbreak" | "extraction" | "bypass" | "tool_abuse" | "multi_turn" | "encoding"`
-- Run a single test file: `npx vitest run src/lib/__tests__/analysis.test.ts`
+API keys are stored server-side in an encrypted in-memory vault (`AES-256-GCM`). Client-side state retains only the opaque `apiKeyId` and masked `apiKeyLabel` (e.g., `sk-...abc`). Plaintext keys are never stored in browser `localStorage`.

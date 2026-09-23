@@ -38,6 +38,7 @@ import {
   Settings,
   Info,
   AlertTriangle,
+  Loader2,
 } from "lucide-react";
 import { useAuth } from "@/lib/use-auth";
 import { ThemeToggle } from "@/components/theme-toggle";
@@ -89,7 +90,7 @@ function RunProgressDisplay({
         </span>
         <span className="text-muted-foreground">{percent}%</span>
       </div>
-      <Progress value={percent} className="h-2 [&>[data-slot=progress-indicator]]:bg-redpincer" />
+      <Progress value={percent} className="h-2 [&>[data-slot=progress-indicator]]:bg-aegis" />
       <div className="flex items-center justify-between text-[10px] text-muted-foreground">
         <span>{formatDuration(elapsed)} elapsed</span>
         {completed > 0 && completed < total && (
@@ -125,10 +126,19 @@ export function Sidebar() {
     setRunProgress,
     incrementRunProgress,
     redTeamConfig,
+    cancelActiveExecution,
+    setCancelActiveExecution,
   } = useStore();
 
   const { authEnabled, username, logout } = useAuth();
   const abortRef = useRef<AbortController | null>(null);
+  const [isStopping, setIsStopping] = useState(false);
+
+  useEffect(() => {
+    if (!isRunning) {
+      setIsStopping(false);
+    }
+  }, [isRunning]);
 
   const canRun =
     activeTargetId !== null && selectedCategories.length > 0 && !isRunning;
@@ -150,6 +160,12 @@ export function Sidebar() {
   }, []);
 
   const stopAttacks = () => {
+    if (isStopping) return;
+    setIsStopping(true);
+    if (cancelActiveExecution) {
+      cancelActiveExecution();
+      return;
+    }
     if (abortRef.current) {
       abortRef.current.abort();
       abortRef.current = null;
@@ -236,8 +252,10 @@ export function Sidebar() {
         completeRun(runId);
       }
       setIsRunning(false);
+      setIsStopping(false);
       setRunProgress(null);
       abortRef.current = null;
+      setCancelActiveExecution(null);
     }
   };
 
@@ -249,7 +267,7 @@ export function Sidebar() {
     <aside className="flex h-screen w-[280px] shrink-0 flex-col border-r border-border bg-sidebar text-sidebar-foreground">
       {/* Centauri Aegis Brand Header */}
       <div className="flex items-center gap-3 px-4 py-4 border-b border-border/60">
-        <CentauriAegisLogo size={32} className="drop-shadow-[0_0_12px_rgba(157,78,221,0.3)] shrink-0" />
+        <CentauriAegisLogo size={32} className="drop-shadow-[0_0_12px_rgba(91,141,184,0.3)] shrink-0" />
         <div className="flex flex-col">
           <h1 className="text-sm font-bold tracking-tight text-foreground font-mono">
             CENTAURI <span className="text-aegis">AEGIS</span>
@@ -272,11 +290,11 @@ export function Sidebar() {
                 onClick={() => setView("dashboard")}
                 className={`flex items-center gap-2 rounded-md px-2.5 py-1.5 text-xs font-medium transition-colors hover:bg-sidebar-accent ${
                   view === "dashboard"
-                    ? "bg-purple-500/15 text-purple-300 font-semibold border-l-2 border-aegis"
+                    ? "bg-aegis/15 text-aegis font-semibold border-l-2 border-aegis"
                     : "text-sidebar-foreground"
                 }`}
               >
-                <LayoutDashboard className="h-3.5 w-3.5 text-purple-400" />
+                <LayoutDashboard className="h-3.5 w-3.5 text-aegis" />
                 Dashboard
               </button>
 
@@ -284,11 +302,11 @@ export function Sidebar() {
                 onClick={() => setView("config")}
                 className={`flex items-center gap-2 rounded-md px-2.5 py-1.5 text-xs font-medium transition-colors hover:bg-sidebar-accent ${
                   view === "config"
-                    ? "bg-purple-500/15 text-purple-300 font-semibold border-l-2 border-aegis"
+                    ? "bg-aegis/15 text-aegis font-semibold border-l-2 border-aegis"
                     : "text-sidebar-foreground"
                 }`}
               >
-                <Target className="h-3.5 w-3.5 text-purple-400" />
+                <Target className="h-3.5 w-3.5 text-aegis" />
                 Target Workspace
               </button>
 
@@ -296,16 +314,16 @@ export function Sidebar() {
                 onClick={() => setView("assessments")}
                 className={`flex items-center justify-between rounded-md px-2.5 py-1.5 text-xs font-medium transition-colors hover:bg-sidebar-accent ${
                   view === "assessments"
-                    ? "bg-purple-500/15 text-purple-300 font-semibold border-l-2 border-aegis"
+                    ? "bg-aegis/15 text-aegis font-semibold border-l-2 border-aegis"
                     : "text-sidebar-foreground"
                 }`}
               >
                 <div className="flex items-center gap-2">
-                  <Shield className="h-3.5 w-3.5 text-purple-400" />
+                  <Shield className="h-3.5 w-3.5 text-aegis" />
                   <span>Assessments</span>
                 </div>
                 {assessments.length > 0 && (
-                  <span className="font-mono text-[10px] text-purple-300 bg-purple-500/20 px-1.5 rounded">
+                  <span className="font-mono text-[10px] text-aegis bg-aegis/20 px-1.5 rounded">
                     {assessments.length}
                   </span>
                 )}
@@ -315,12 +333,12 @@ export function Sidebar() {
                 onClick={() => setView("findings")}
                 className={`flex items-center justify-between rounded-md px-2.5 py-1.5 text-xs font-medium transition-colors hover:bg-sidebar-accent ${
                   view === "findings"
-                    ? "bg-purple-500/15 text-purple-300 font-semibold border-l-2 border-aegis"
+                    ? "bg-aegis/15 text-aegis font-semibold border-l-2 border-aegis"
                     : "text-sidebar-foreground"
                 }`}
               >
                 <div className="flex items-center gap-2">
-                  <AlertTriangle className="h-3.5 w-3.5 text-purple-400" />
+                  <AlertTriangle className="h-3.5 w-3.5 text-aegis" />
                   <span>Findings</span>
                 </div>
                 {findings.length > 0 && (
@@ -334,11 +352,11 @@ export function Sidebar() {
                 onClick={() => setView("session")}
                 className={`flex items-center gap-2 rounded-md px-2.5 py-1.5 text-xs font-medium transition-colors hover:bg-sidebar-accent ${
                   view === "session"
-                    ? "bg-purple-500/15 text-purple-300 font-semibold border-l-2 border-aegis"
+                    ? "bg-aegis/15 text-aegis font-semibold border-l-2 border-aegis"
                     : "text-sidebar-foreground"
                 }`}
               >
-                <Database className="h-3.5 w-3.5 text-purple-400" />
+                <Database className="h-3.5 w-3.5 text-aegis" />
                 Session Manager
               </button>
             </div>
@@ -349,7 +367,7 @@ export function Sidebar() {
                 <span>Active Target</span>
                 <button
                   onClick={() => setView("config")}
-                  className="text-purple-400 hover:text-purple-300 flex items-center gap-0.5"
+                  className="text-aegis hover:text-foreground flex items-center gap-0.5"
                 >
                   <Plus className="h-3 w-3" />
                   Add
@@ -367,7 +385,7 @@ export function Sidebar() {
                     onClick={() => setActiveTarget(target.id)}
                     className={`flex w-full items-center gap-2 rounded px-2 py-1 text-xs transition-colors hover:bg-sidebar-accent ${
                       activeTargetId === target.id
-                        ? "bg-purple-500/15 text-purple-300 font-medium"
+                        ? "bg-aegis/15 text-aegis font-medium"
                         : "text-muted-foreground"
                     }`}
                   >
@@ -392,10 +410,10 @@ export function Sidebar() {
                   onClick={() => setView("config")}
                   className="flex w-full items-center gap-1.5 rounded px-1.5 py-1 text-[11px] transition-colors hover:bg-sidebar-accent text-muted-foreground"
                 >
-                  <Brain className="h-3 w-3 text-purple-400 shrink-0" />
+                  <Brain className="h-3 w-3 text-aegis shrink-0" />
                   {redTeamConfig ? (
                     <>
-                      <span className="truncate text-purple-300">{redTeamConfig.model}</span>
+                      <span className="truncate text-foreground font-medium">{redTeamConfig.model}</span>
                       <span className={`ml-auto inline-block h-1.5 w-1.5 rounded-full ${redTeamConfig.connected ? "bg-emerald-400" : "bg-muted-foreground"}`} />
                     </>
                   ) : (
@@ -418,11 +436,11 @@ export function Sidebar() {
                 onClick={() => setView("attacks")}
                 className={`flex items-center gap-2 rounded-md px-2.5 py-1.5 text-xs font-medium transition-colors hover:bg-sidebar-accent ${
                   view === "attacks"
-                    ? "bg-purple-500/15 text-purple-300 font-semibold border-l-2 border-aegis"
+                    ? "bg-aegis/15 text-aegis font-semibold border-l-2 border-aegis"
                     : "text-sidebar-foreground"
                 }`}
               >
-                <Shield className="h-3.5 w-3.5 text-purple-400" />
+                <Shield className="h-3.5 w-3.5 text-aegis" />
                 Attack Modules
               </button>
 
@@ -430,11 +448,11 @@ export function Sidebar() {
                 onClick={() => setView("chains")}
                 className={`flex items-center gap-2 rounded-md px-2.5 py-1.5 text-xs font-medium transition-colors hover:bg-sidebar-accent ${
                   view === "chains"
-                    ? "bg-purple-500/15 text-purple-300 font-semibold border-l-2 border-aegis"
+                    ? "bg-aegis/15 text-aegis font-semibold border-l-2 border-aegis"
                     : "text-sidebar-foreground"
                 }`}
               >
-                <Link2 className="h-3.5 w-3.5 text-purple-400" />
+                <Link2 className="h-3.5 w-3.5 text-aegis" />
                 Attack Chains
               </button>
 
@@ -442,11 +460,11 @@ export function Sidebar() {
                 onClick={() => setView("adaptive")}
                 className={`flex items-center gap-2 rounded-md px-2.5 py-1.5 text-xs font-medium transition-colors hover:bg-sidebar-accent ${
                   view === "adaptive"
-                    ? "bg-purple-500/15 text-purple-300 font-semibold border-l-2 border-aegis"
+                    ? "bg-aegis/15 text-aegis font-semibold border-l-2 border-aegis"
                     : "text-sidebar-foreground"
                 }`}
               >
-                <Brain className="h-3.5 w-3.5 text-purple-400" />
+                <Brain className="h-3.5 w-3.5 text-aegis" />
                 Adaptive Runner
               </button>
 
@@ -454,11 +472,11 @@ export function Sidebar() {
                 onClick={() => setView("evolve")}
                 className={`flex items-center gap-2 rounded-md px-2.5 py-1.5 text-xs font-medium transition-colors hover:bg-sidebar-accent ${
                   view === "evolve"
-                    ? "bg-purple-500/15 text-purple-300 font-semibold border-l-2 border-aegis"
+                    ? "bg-aegis/15 text-aegis font-semibold border-l-2 border-aegis"
                     : "text-sidebar-foreground"
                 }`}
               >
-                <Sparkles className="h-3.5 w-3.5 text-purple-400" />
+                <Sparkles className="h-3.5 w-3.5 text-aegis" />
                 Evolve Engine
               </button>
 
@@ -466,11 +484,11 @@ export function Sidebar() {
                 onClick={() => setView("editor")}
                 className={`flex items-center gap-2 rounded-md px-2.5 py-1.5 text-xs font-medium transition-colors hover:bg-sidebar-accent ${
                   view === "editor"
-                    ? "bg-purple-500/15 text-purple-300 font-semibold border-l-2 border-aegis"
+                    ? "bg-aegis/15 text-aegis font-semibold border-l-2 border-aegis"
                     : "text-sidebar-foreground"
                 }`}
               >
-                <Edit3 className="h-3.5 w-3.5 text-purple-400" />
+                <Edit3 className="h-3.5 w-3.5 text-aegis" />
                 Payload Editor
               </button>
             </div>
@@ -510,11 +528,11 @@ export function Sidebar() {
                 onClick={() => setView("results")}
                 className={`flex items-center gap-2 rounded-md px-2.5 py-1.5 text-xs font-medium transition-colors hover:bg-sidebar-accent ${
                   view === "results"
-                    ? "bg-purple-500/15 text-purple-300 font-semibold border-l-2 border-aegis"
+                    ? "bg-aegis/15 text-aegis font-semibold border-l-2 border-aegis"
                     : "text-sidebar-foreground"
                 }`}
               >
-                <BarChart3 className="h-3.5 w-3.5 text-purple-400" />
+                <BarChart3 className="h-3.5 w-3.5 text-aegis" />
                 Results Dashboard
               </button>
 
@@ -522,11 +540,11 @@ export function Sidebar() {
                 onClick={() => setView("scoring")}
                 className={`flex items-center gap-2 rounded-md px-2.5 py-1.5 text-xs font-medium transition-colors hover:bg-sidebar-accent ${
                   view === "scoring"
-                    ? "bg-purple-500/15 text-purple-300 font-semibold border-l-2 border-aegis"
+                    ? "bg-aegis/15 text-aegis font-semibold border-l-2 border-aegis"
                     : "text-sidebar-foreground"
                 }`}
               >
-                <Calculator className="h-3.5 w-3.5 text-purple-400" />
+                <Calculator className="h-3.5 w-3.5 text-aegis" />
                 Scoring & Rubrics
               </button>
 
@@ -534,11 +552,11 @@ export function Sidebar() {
                 onClick={() => setView("heatmap")}
                 className={`flex items-center gap-2 rounded-md px-2.5 py-1.5 text-xs font-medium transition-colors hover:bg-sidebar-accent ${
                   view === "heatmap"
-                    ? "bg-purple-500/15 text-purple-300 font-semibold border-l-2 border-aegis"
+                    ? "bg-aegis/15 text-aegis font-semibold border-l-2 border-aegis"
                     : "text-sidebar-foreground"
                 }`}
               >
-                <Grid3X3 className="h-3.5 w-3.5 text-purple-400" />
+                <Grid3X3 className="h-3.5 w-3.5 text-aegis" />
                 Vulnerability Heatmap
               </button>
 
@@ -546,11 +564,11 @@ export function Sidebar() {
                 onClick={() => setView("regression")}
                 className={`flex items-center gap-2 rounded-md px-2.5 py-1.5 text-xs font-medium transition-colors hover:bg-sidebar-accent ${
                   view === "regression"
-                    ? "bg-purple-500/15 text-purple-300 font-semibold border-l-2 border-aegis"
+                    ? "bg-aegis/15 text-aegis font-semibold border-l-2 border-aegis"
                     : "text-sidebar-foreground"
                 }`}
               >
-                <GitBranch className="h-3.5 w-3.5 text-purple-400" />
+                <GitBranch className="h-3.5 w-3.5 text-aegis" />
                 Regression Suite
               </button>
 
@@ -558,11 +576,11 @@ export function Sidebar() {
                 onClick={() => setView("comparison")}
                 className={`flex items-center gap-2 rounded-md px-2.5 py-1.5 text-xs font-medium transition-colors hover:bg-sidebar-accent ${
                   view === "comparison"
-                    ? "bg-purple-500/15 text-purple-300 font-semibold border-l-2 border-aegis"
+                    ? "bg-aegis/15 text-aegis font-semibold border-l-2 border-aegis"
                     : "text-sidebar-foreground"
                 }`}
               >
-                <GitCompareArrows className="h-3.5 w-3.5 text-purple-400" />
+                <GitCompareArrows className="h-3.5 w-3.5 text-aegis" />
                 Run Comparison
               </button>
             </div>
@@ -580,11 +598,11 @@ export function Sidebar() {
                 onClick={() => setView("reports")}
                 className={`flex items-center gap-2 rounded-md px-2.5 py-1.5 text-xs font-medium transition-colors hover:bg-sidebar-accent ${
                   view === "reports"
-                    ? "bg-purple-500/15 text-purple-300 font-semibold border-l-2 border-aegis"
+                    ? "bg-aegis/15 text-aegis font-semibold border-l-2 border-aegis"
                     : "text-sidebar-foreground"
                 }`}
               >
-                <FileText className="h-3.5 w-3.5 text-purple-400" />
+                <FileText className="h-3.5 w-3.5 text-aegis" />
                 Executive Reports
               </button>
             </div>
@@ -602,11 +620,11 @@ export function Sidebar() {
                 onClick={() => setView("settings")}
                 className={`flex items-center gap-2 rounded-md px-2.5 py-1.5 text-xs font-medium transition-colors hover:bg-sidebar-accent ${
                   view === "settings"
-                    ? "bg-purple-500/15 text-purple-300 font-semibold border-l-2 border-aegis"
+                    ? "bg-aegis/15 text-aegis font-semibold border-l-2 border-aegis"
                     : "text-sidebar-foreground"
                 }`}
               >
-                <Settings className="h-3.5 w-3.5 text-purple-400" />
+                <Settings className="h-3.5 w-3.5 text-aegis" />
                 Settings & Security
               </button>
 
@@ -614,11 +632,11 @@ export function Sidebar() {
                 onClick={() => setView("about")}
                 className={`flex items-center gap-2 rounded-md px-2.5 py-1.5 text-xs font-medium transition-colors hover:bg-sidebar-accent ${
                   view === "about"
-                    ? "bg-purple-500/15 text-purple-300 font-semibold border-l-2 border-aegis"
+                    ? "bg-aegis/15 text-foreground font-semibold border-l-2 border-aegis"
                     : "text-sidebar-foreground"
                 }`}
               >
-                <Info className="h-3.5 w-3.5 text-purple-400" />
+                <Info className="h-3.5 w-3.5 text-aegis" />
                 About & Attribution
               </button>
             </div>
@@ -668,14 +686,19 @@ export function Sidebar() {
           <Button
             className="w-full gap-2 bg-destructive font-semibold text-destructive-foreground hover:bg-destructive/90"
             size="lg"
+            disabled={isStopping}
             onClick={stopAttacks}
           >
-            <Square className="h-4 w-4" />
-            STOP
+            {isStopping ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <Square className="h-4 w-4" />
+            )}
+            {isStopping ? "STOPPING..." : "STOP"}
           </Button>
         ) : (
           <Button
-            className="w-full gap-2 bg-aegis font-semibold text-white hover:bg-aegis/90 disabled:opacity-40 shadow-md shadow-purple-950/40"
+            className="w-full gap-2 bg-aegis font-semibold text-white hover:bg-aegis/90 disabled:opacity-40 shadow-md shadow-black/40"
             size="lg"
             disabled={!canRun}
             onClick={runAttacks}

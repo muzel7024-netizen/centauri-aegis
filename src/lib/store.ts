@@ -91,6 +91,8 @@ interface AppState {
   setView: (view: ViewName) => void;
   isRunning: boolean;
   setIsRunning: (running: boolean) => void;
+  cancelActiveExecution: (() => void) | null;
+  setCancelActiveExecution: (fn: (() => void) | null) => void;
 }
 
 export const useStore = create<AppState>()(
@@ -269,6 +271,8 @@ export const useStore = create<AppState>()(
               ? { ...r, status: "cancelled" as const, endTime: Date.now() }
               : r
           ),
+          isRunning: false,
+          runProgress: null,
         })),
       setActiveRun: (id) => set({ activeRunId: id }),
       deleteRun: (runId) =>
@@ -288,7 +292,13 @@ export const useStore = create<AppState>()(
       incrementRunProgress: () =>
         set((state) => ({
           runProgress: state.runProgress
-            ? { ...state.runProgress, completed: state.runProgress.completed + 1 }
+            ? {
+                ...state.runProgress,
+                completed: Math.min(
+                  state.runProgress.total,
+                  state.runProgress.completed + 1
+                ),
+              }
             : null,
         })),
 
@@ -307,6 +317,8 @@ export const useStore = create<AppState>()(
       setView: (view) => set({ view }),
       isRunning: false,
       setIsRunning: (running) => set({ isRunning: running }),
+      cancelActiveExecution: null,
+      setCancelActiveExecution: (fn) => set({ cancelActiveExecution: fn }),
     }),
     {
       name: "centauri-aegis-state",
@@ -315,6 +327,7 @@ export const useStore = create<AppState>()(
           if (typeof window === "undefined") return null;
           const current = localStorage.getItem(name);
           if (current) return current;
+          // Legacy compatibility only — do not use for new deployments.
           const legacy = localStorage.getItem("redpincer-state");
           if (legacy) {
             try {

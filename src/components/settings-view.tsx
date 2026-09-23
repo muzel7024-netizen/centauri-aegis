@@ -69,7 +69,7 @@ export function SettingsView() {
         <Card className="border-border/60 bg-card/60">
           <CardHeader>
             <div className="flex items-center gap-2">
-              <ShieldCheck className="h-5 w-5 text-purple-400" />
+              <ShieldCheck className="h-5 w-5 text-primary" />
               <CardTitle className="text-base font-semibold">
                 Network & Endpoint Security Guard (SSRF Protection)
               </CardTitle>
@@ -88,26 +88,26 @@ export function SettingsView() {
                   </Badge>
                 </div>
                 <p className="text-[11px] text-muted-foreground">
-                  Requests targeting <code className="text-purple-300 font-mono">169.254.169.254</code> and link-local metadata endpoints are unconditionally forbidden.
+                  Requests targeting <code className="text-primary font-mono">169.254.169.254</code> and link-local metadata endpoints are unconditionally forbidden.
                 </p>
               </div>
 
               <div className="rounded-lg border border-border/60 bg-background/50 p-3.5 space-y-1">
                 <div className="flex items-center justify-between">
                   <span className="text-xs font-medium text-foreground">Local & Private Subnets</span>
-                  <Badge variant="outline" className="border-purple-500/30 bg-purple-500/10 text-purple-400 text-[10px]">
+                  <Badge variant="outline" className="border-primary/30 bg-primary/10 text-primary text-[10px]">
                     POLICY CONTROLLED
                   </Badge>
                 </div>
                 <p className="text-[11px] text-muted-foreground">
-                  Localhost and RFC 1918 subnets are restricted in production unless enabled via <code className="text-purple-300 font-mono">AEGIS_ALLOW_PRIVATE_TARGETS=true</code>.
+                  Localhost and RFC 1918 subnets are restricted in production unless enabled via <code className="text-primary font-mono">AEGIS_ALLOW_PRIVATE_TARGETS=true</code>.
                 </p>
               </div>
             </div>
 
             <div className="rounded-lg border border-border/60 bg-background/50 p-3.5 space-y-2">
               <div className="flex items-center gap-2 text-xs font-semibold text-foreground">
-                <Lock className="h-3.5 w-3.5 text-purple-400" />
+                <Lock className="h-3.5 w-3.5 text-primary" />
                 In-Memory Server-Side Key Vault
               </div>
               <p className="text-xs text-muted-foreground">
@@ -121,7 +121,7 @@ export function SettingsView() {
         <Card className="border-border/60 bg-card/60">
           <CardHeader>
             <div className="flex items-center gap-2">
-              <Sliders className="h-5 w-5 text-purple-400" />
+              <Sliders className="h-5 w-5 text-primary" />
               <CardTitle className="text-base font-semibold">
                 Execution & Concurrency Controls
               </CardTitle>
@@ -134,7 +134,7 @@ export function SettingsView() {
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 rounded-lg border border-border/60 bg-background/50 p-4">
               <div className="space-y-0.5">
                 <label className="text-sm font-medium text-foreground flex items-center gap-2">
-                  <Zap className="h-4 w-4 text-purple-400" />
+                  <Zap className="h-4 w-4 text-primary" />
                   Default Attack Dispatch Concurrency
                 </label>
                 <p className="text-xs text-muted-foreground">
@@ -148,7 +148,7 @@ export function SettingsView() {
                   max={10}
                   value={concurrency}
                   onChange={(e) => setConcurrency(parseInt(e.target.value, 10))}
-                  className="h-2 w-32 cursor-pointer accent-purple-500 bg-secondary rounded-lg"
+                  className="h-2 w-32 cursor-pointer accent-aegis bg-secondary rounded-lg"
                 />
                 <span className="w-8 text-center font-mono text-sm font-bold text-foreground">
                   {concurrency}x
@@ -162,7 +162,7 @@ export function SettingsView() {
         <Card className="border-border/60 bg-card/60">
           <CardHeader>
             <div className="flex items-center gap-2">
-              <Database className="h-5 w-5 text-purple-400" />
+              <Database className="h-5 w-5 text-primary" />
               <CardTitle className="text-base font-semibold">
                 Client State & Storage Namespace
               </CardTitle>
@@ -175,7 +175,7 @@ export function SettingsView() {
             <div className="grid gap-3 sm:grid-cols-3">
               <div className="rounded-lg border border-border/60 bg-background/50 p-3">
                 <span className="text-[10px] uppercase tracking-wider text-muted-foreground">Canonical Storage Key</span>
-                <div className="font-mono text-xs font-semibold text-purple-300 mt-1">
+                <div className="font-mono text-xs font-semibold text-primary mt-1">
                   {STORAGE_KEY}
                 </div>
               </div>
@@ -216,7 +216,7 @@ export function SettingsView() {
         <Card className="border-border/60 bg-card/60">
           <CardHeader>
             <div className="flex items-center gap-2">
-              <Server className="h-5 w-5 text-purple-400" />
+              <Server className="h-5 w-5 text-primary" />
               <CardTitle className="text-base font-semibold">
                 Environment Configuration Reference
               </CardTitle>
@@ -237,27 +237,27 @@ export function SettingsView() {
                 </thead>
                 <tbody className="divide-y divide-border/40 font-mono">
                   <tr>
-                    <td className="py-2 text-purple-400">AEGIS_AUTH_ENABLED</td>
+                    <td className="py-2 text-primary">AEGIS_AUTH_ENABLED</td>
                     <td className="py-2 font-sans text-muted-foreground">Enforces password authentication on console</td>
                     <td className="py-2">false</td>
                   </tr>
                   <tr>
-                    <td className="py-2 text-purple-400">AEGIS_PASSWORD_HASH</td>
+                    <td className="py-2 text-primary">AEGIS_PASSWORD_HASH</td>
                     <td className="py-2 font-sans text-muted-foreground">SHA-256 hash of administrator console password</td>
                     <td className="py-2">None</td>
                   </tr>
                   <tr>
-                    <td className="py-2 text-purple-400">AEGIS_ALLOW_PRIVATE_TARGETS</td>
+                    <td className="py-2 text-primary">AEGIS_ALLOW_PRIVATE_TARGETS</td>
                     <td className="py-2 font-sans text-muted-foreground">Allows targeting localhost / RFC 1918 addresses in production</td>
                     <td className="py-2">false</td>
                   </tr>
                   <tr>
-                    <td className="py-2 text-purple-400">AEGIS_TRUSTED_PROXY</td>
+                    <td className="py-2 text-primary">AEGIS_TRUSTED_PROXY</td>
                     <td className="py-2 font-sans text-muted-foreground">Trusts X-Forwarded-For headers behind reverse proxies</td>
                     <td className="py-2">false</td>
                   </tr>
                   <tr>
-                    <td className="py-2 text-purple-400">AEGIS_KEY_SECRET</td>
+                    <td className="py-2 text-primary">AEGIS_KEY_SECRET</td>
                     <td className="py-2 font-sans text-muted-foreground">Static encryption key for persistent key vault instances</td>
                     <td className="py-2">Random byte entropy</td>
                   </tr>

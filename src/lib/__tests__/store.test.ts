@@ -224,11 +224,15 @@ describe("store", () => {
     });
 
     it("cancels a run", () => {
+      useStore.getState().setIsRunning(true);
+      useStore.getState().setRunProgress({ total: 10, completed: 5, startTime: Date.now() });
       useStore.getState().addRun(makeRun());
       useStore.getState().cancelRun("run-1");
       const run = useStore.getState().runs[0];
       expect(run.status).toBe("cancelled");
       expect(run.endTime).toBeDefined();
+      expect(useStore.getState().isRunning).toBe(false);
+      expect(useStore.getState().runProgress).toBeNull();
     });
 
     it("deletes a run", () => {
@@ -318,6 +322,32 @@ describe("store", () => {
       const p = useStore.getState().runProgress!;
       expect(p.total).toBe(50);
       expect(p.startTime).toBe(startTime);
+    });
+
+    it("clamps incrementRunProgress so completed cannot exceed total", () => {
+      useStore.getState().setRunProgress({ total: 5, completed: 4, startTime: Date.now() });
+      useStore.getState().incrementRunProgress();
+      expect(useStore.getState().runProgress?.completed).toBe(5);
+      useStore.getState().incrementRunProgress();
+      expect(useStore.getState().runProgress?.completed).toBe(5);
+    });
+  });
+
+  describe("cancelActiveExecution synchronization", () => {
+    it("registers, executes, and clears cancelActiveExecution callback", () => {
+      let cancelled = false;
+      const cancelFn = () => {
+        cancelled = true;
+      };
+      useStore.getState().setCancelActiveExecution(cancelFn);
+      expect(useStore.getState().cancelActiveExecution).toBe(cancelFn);
+
+      const activeFn = useStore.getState().cancelActiveExecution;
+      activeFn?.();
+      expect(cancelled).toBe(true);
+
+      useStore.getState().setCancelActiveExecution(null);
+      expect(useStore.getState().cancelActiveExecution).toBeNull();
     });
   });
 

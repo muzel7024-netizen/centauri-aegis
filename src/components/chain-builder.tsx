@@ -45,9 +45,9 @@ import {
 function severityBadgeClass(severity: Severity): string {
   switch (severity) {
     case "critical":
-      return "bg-redpincer/20 text-redpincer border-redpincer/30";
+      return "bg-destructive/20 text-destructive border-destructive/30";
     case "high":
-      return "bg-lobster/20 text-lobster border-lobster/30";
+      return "bg-amber-500/20 text-amber-400 border-amber-500/30";
     case "medium":
       return "bg-warning/20 text-warning border-warning/30";
     case "low":
@@ -58,13 +58,13 @@ function severityBadgeClass(severity: Severity): string {
 function categoryBadgeClass(category: AttackCategory): string {
   switch (category) {
     case "injection":
-      return "bg-purple-500/20 text-purple-400 border-purple-500/30";
+      return "bg-primary/20 text-primary border-primary/30";
     case "jailbreak":
-      return "bg-redpincer/20 text-redpincer border-redpincer/30";
+      return "bg-destructive/20 text-destructive border-destructive/30";
     case "extraction":
       return "bg-blue-500/20 text-blue-400 border-blue-500/30";
     case "bypass":
-      return "bg-lobster/20 text-lobster border-lobster/30";
+      return "bg-amber-500/20 text-amber-400 border-amber-500/30";
     case "tool_abuse":
       return "bg-amber-500/20 text-amber-400 border-amber-500/30";
     case "multi_turn":
@@ -242,7 +242,7 @@ export function ChainBuilder() {
       {/* Header */}
       <div>
         <h2 className="flex items-center gap-2 text-2xl font-bold text-foreground">
-          <Link2 className="h-6 w-6 text-redpincer" />
+          <Link2 className="h-6 w-6 text-primary" />
           Attack Chains
         </h2>
         <p className="mt-1 text-sm text-muted-foreground">
@@ -420,7 +420,7 @@ function ChainCard({
                               <>
                                 {" "}
                                 (transform:{" "}
-                                <span className="text-lobster">
+                                <span className="font-semibold text-primary">
                                   {step.transformResponse}
                                 </span>
                                 )
@@ -441,7 +441,7 @@ function ChainCard({
           <div className="flex items-center gap-2">
             <Button
               size="sm"
-              className="gap-1.5 bg-redpincer text-redpincer-foreground hover:bg-redpincer/90"
+              className="gap-1.5 bg-primary text-primary-foreground hover:bg-primary/90"
               disabled={!canRun}
               onClick={(e) => {
                 e.stopPropagation();
@@ -455,7 +455,7 @@ function ChainCard({
               <Button
                 size="sm"
                 variant="ghost"
-                className="gap-1.5 text-muted-foreground hover:text-redpincer"
+                className="gap-1.5 text-muted-foreground hover:text-destructive"
                 onClick={(e) => {
                   e.stopPropagation();
                   onDelete();
@@ -495,13 +495,13 @@ function ChainExecutionView({
                 <Loader2 className="h-4 w-4 animate-spin text-warning" />
               )}
               {exec.status === "completed" && exec.overallSuccess && (
-                <Check className="h-4 w-4 text-redpincer" />
+                <Check className="h-4 w-4 text-destructive" />
               )}
               {exec.status === "completed" && !exec.overallSuccess && (
                 <X className="h-4 w-4 text-success" />
               )}
               {exec.status === "error" && (
-                <X className="h-4 w-4 text-redpincer" />
+                <X className="h-4 w-4 text-destructive" />
               )}
               {exec.chainName}
             </CardTitle>
@@ -550,7 +550,7 @@ function ChainExecutionView({
                     result?.status === "success"
                       ? "border-success bg-success/20 text-success"
                       : result?.status === "error" || result?.status === "fail"
-                        ? "border-redpincer bg-redpincer/20 text-redpincer"
+                        ? "border-destructive bg-destructive/20 text-destructive"
                         : isCurrent
                           ? "border-warning bg-warning/20 text-warning animate-pulse"
                           : "border-border bg-background text-muted-foreground"
@@ -590,7 +590,7 @@ function ChainExecutionView({
                   className={`rounded-lg border transition-colors ${
                     result.status === "success"
                       ? "border-l-2 border-l-success border-t-border border-r-border border-b-border"
-                      : "border-l-2 border-l-redpincer border-t-border border-r-border border-b-border"
+                      : "border-l-2 border-l-destructive border-t-border border-r-border border-b-border"
                   } bg-background`}
                 >
                   <button
@@ -603,7 +603,7 @@ function ChainExecutionView({
                       {result.status === "success" ? (
                         <Check className="h-4 w-4 text-success" />
                       ) : (
-                        <X className="h-4 w-4 text-redpincer" />
+                        <X className="h-4 w-4 text-destructive" />
                       )}
                     </div>
                     <div className="min-w-0 flex-1">
@@ -627,7 +627,7 @@ function ChainExecutionView({
                         <p className="mb-1 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
                           Prompt Sent
                         </p>
-                        <pre className="whitespace-pre-wrap rounded border border-border bg-sidebar p-2 font-mono text-xs text-muted-foreground">
+                        <pre className="whitespace-pre-wrap break-words break-all rounded border border-border bg-sidebar p-2.5 font-mono text-xs text-muted-foreground max-h-60 overflow-y-auto overflow-x-hidden min-w-0 max-w-full">
                           {result.prompt}
                         </pre>
                       </div>
@@ -635,7 +635,7 @@ function ChainExecutionView({
                         <p className="mb-1 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
                           Response
                         </p>
-                        <pre className="whitespace-pre-wrap rounded border border-border bg-sidebar p-2 font-mono text-xs text-muted-foreground">
+                        <pre className="whitespace-pre-wrap break-words break-all rounded border border-border bg-sidebar p-2.5 font-mono text-xs text-muted-foreground max-h-60 overflow-y-auto overflow-x-hidden min-w-0 max-w-full">
                           {result.response || result.error || "(empty)"}
                         </pre>
                       </div>
@@ -666,7 +666,7 @@ function ChainExecutionView({
             <div
               className={`rounded-lg border p-3 text-sm ${
                 exec.overallSuccess
-                  ? "border-redpincer/30 bg-redpincer/10 text-redpincer"
+                  ? "border-destructive/30 bg-destructive/10 text-destructive"
                   : "border-success/30 bg-success/10 text-success"
               }`}
             >
@@ -883,7 +883,7 @@ function CustomChainEditor({
                   <button
                     onClick={() => removeStep(step.id)}
                     disabled={steps.length <= 1}
-                    className="rounded p-1 text-muted-foreground transition-colors hover:bg-accent hover:text-redpincer disabled:opacity-30"
+                    className="rounded p-1 text-muted-foreground transition-colors hover:bg-accent hover:text-destructive disabled:opacity-30"
                   >
                     <Trash2 className="h-3.5 w-3.5" />
                   </button>
@@ -930,7 +930,7 @@ function CustomChainEditor({
         <div className="flex items-center gap-2">
           <Button
             size="sm"
-            className="gap-1.5 bg-redpincer text-redpincer-foreground hover:bg-redpincer/90"
+            className="gap-1.5 bg-primary text-primary-foreground hover:bg-primary/90"
             disabled={!canSave}
             onClick={handleSave}
           >

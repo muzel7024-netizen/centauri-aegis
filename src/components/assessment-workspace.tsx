@@ -92,7 +92,7 @@ export function AssessmentWorkspace() {
         );
       case "ready":
         return (
-          <Badge variant="outline" className="border-purple-500/30 bg-purple-500/10 text-purple-300 font-mono text-[10px]">
+          <Badge variant="outline" className="border-[#5B8DB8]/30 bg-[#5B8DB8]/10 text-[#5B8DB8] font-mono text-[10px]">
             READY
           </Badge>
         );
@@ -120,7 +120,7 @@ export function AssessmentWorkspace() {
             <h1 className="text-2xl font-bold font-mono tracking-tight text-foreground">
               ASSESSMENT <span className="text-aegis">WORKSPACE</span>
             </h1>
-            <Badge variant="outline" className="border-purple-500/30 bg-purple-500/10 text-purple-400 font-mono text-xs">
+            <Badge variant="outline" className="border-[#5B8DB8]/30 bg-[#5B8DB8]/10 text-[#5B8DB8] font-mono text-xs">
               {assessments.length} Total
             </Badge>
           </div>
@@ -133,7 +133,7 @@ export function AssessmentWorkspace() {
           <Button
             size="sm"
             onClick={() => setWizardOpen(true)}
-            className="gap-2 bg-aegis hover:bg-aegis/90 text-white text-xs shadow-md shadow-purple-950/40"
+            className="gap-2 bg-aegis hover:bg-aegis/90 text-white text-xs shadow-md shadow-black/40"
           >
             <Plus className="h-3.5 w-3.5" />
             New Assessment
@@ -151,7 +151,7 @@ export function AssessmentWorkspace() {
               size="sm"
               onClick={() => setStatusFilter(st)}
               className={`h-7 text-xs capitalize ${
-                statusFilter === st ? "bg-purple-500/15 text-purple-300 font-medium" : "text-muted-foreground"
+                statusFilter === st ? "bg-[#5B8DB8]/15 text-[#5B8DB8] font-medium" : "text-muted-foreground"
               }`}
             >
               {st}
@@ -223,7 +223,7 @@ export function AssessmentWorkspace() {
 
                       <div className="flex flex-wrap items-center gap-3 text-xs text-muted-foreground pt-1">
                         <span className="flex items-center gap-1">
-                          <Target className="h-3 w-3 text-purple-400" />
+                          <Target className="h-3 w-3 text-[#5B8DB8]" />
                           Target: <strong className="text-foreground">{assessment.targetName}</strong>
                         </span>
 
@@ -241,7 +241,7 @@ export function AssessmentWorkspace() {
                         {assessment.configuration.includeVariants && (
                           <>
                             <span>&middot;</span>
-                            <Badge variant="outline" className="text-[10px] py-0 px-1 border-purple-500/30 text-purple-300">
+                            <Badge variant="outline" className="text-[10px] py-0 px-1 border-[#5B8DB8]/30 text-[#5B8DB8]">
                               Variants
                             </Badge>
                           </>
@@ -250,7 +250,7 @@ export function AssessmentWorkspace() {
                         {assessment.configuration.adaptiveEnabled && (
                           <>
                             <span>&middot;</span>
-                            <Badge variant="outline" className="text-[10px] py-0 px-1 border-purple-500/30 text-purple-300">
+                            <Badge variant="outline" className="text-[10px] py-0 px-1 border-[#5B8DB8]/30 text-[#5B8DB8]">
                               Adaptive
                             </Badge>
                           </>

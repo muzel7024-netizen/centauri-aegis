@@ -239,7 +239,7 @@ export function ComparisonDashboard() {
   return (
     <div className="flex flex-col gap-6 p-6">
       <div className="flex items-center gap-3">
-        <GitCompareArrows className="h-6 w-6 text-lobster" />
+        <GitCompareArrows className="h-6 w-6 text-primary" />
         <h2 className="text-2xl font-bold text-foreground">Multi-Target Comparison</h2>
       </div>
 
@@ -270,7 +270,7 @@ export function ComparisonDashboard() {
                       disabled={
                         !selectedTargetIds.includes(target.id) && selectedTargetIds.length >= 4
                       }
-                      className="border-muted-foreground data-[state=checked]:border-lobster data-[state=checked]:bg-lobster"
+                      className="border-muted-foreground data-[state=checked]:border-primary data-[state=checked]:bg-primary"
                     />
                     <span>{target.name}</span>
                     <Badge variant="outline" className="ml-auto text-xs">
@@ -300,14 +300,14 @@ export function ComparisonDashboard() {
                   <Checkbox
                     checked={selectedCategories.includes(cat)}
                     onCheckedChange={() => toggleCategory(cat)}
-                    className="border-muted-foreground data-[state=checked]:border-redpincer data-[state=checked]:bg-redpincer"
+                    className="border-muted-foreground data-[state=checked]:border-primary data-[state=checked]:bg-primary"
                   />
                   <span>{CATEGORY_LABELS[cat]}</span>
                 </label>
               ))}
             </div>
             <Button
-              className="mt-4 w-full gap-2 bg-lobster font-semibold text-white hover:bg-lobster/90 disabled:opacity-40"
+              className="mt-4 w-full gap-2 bg-primary font-semibold text-primary-foreground hover:bg-primary/90 disabled:opacity-40"
               disabled={!canRun}
               onClick={runComparison}
             >
@@ -355,11 +355,11 @@ export function ComparisonDashboard() {
       {summaries.length > 0 && (
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
           {mostVulnerable && (
-            <Card className="border-redpincer/30 bg-card">
+            <Card className="border-destructive/30 bg-card">
               <CardContent className="flex items-center gap-3 pt-4">
-                <ShieldAlert className="h-8 w-8 text-redpincer" />
+                <ShieldAlert className="h-8 w-8 text-destructive" />
                 <div>
-                  <p className="text-xs font-semibold uppercase tracking-wider text-redpincer">
+                  <p className="text-xs font-semibold uppercase tracking-wider text-destructive">
                     Most Vulnerable
                   </p>
                   <p className="text-lg font-bold text-foreground">{mostVulnerable.targetName}</p>
@@ -405,7 +405,7 @@ export function ComparisonDashboard() {
                   <span className="text-sm text-muted-foreground">breach rate</span>
                 </div>
                 <div className="flex gap-2 text-xs">
-                  <Badge variant="outline" className="border-redpincer/50 text-redpincer">
+                  <Badge variant="outline" className="border-destructive/50 text-destructive">
                     {summary.breached} breached
                   </Badge>
                   <Badge variant="outline" className="border-success/50 text-success">
@@ -428,7 +428,7 @@ export function ComparisonDashboard() {
                             className="h-full rounded-full transition-all"
                             style={{
                               width: `${pct}%`,
-                              backgroundColor: pct > 60 ? "hsl(var(--redpincer))" : pct > 30 ? "hsl(var(--warning))" : "hsl(var(--success))",
+                              backgroundColor: pct > 60 ? "hsl(var(--destructive))" : pct > 30 ? "hsl(var(--warning))" : "hsl(var(--success))",
                             }}
                           />
                         </div>
@@ -493,7 +493,7 @@ export function ComparisonDashboard() {
                               variant="outline"
                               className={
                                 result.success
-                                  ? "border-redpincer/50 bg-redpincer/10 text-redpincer"
+                                  ? "border-destructive/50 bg-destructive/10 text-destructive"
                                   : "border-success/50 bg-success/10 text-success"
                               }
                             >
@@ -510,7 +510,7 @@ export function ComparisonDashboard() {
                       Total Breached
                     </td>
                     {summaries.map((summary) => (
-                      <td key={summary.targetId} className="px-3 py-2 text-center text-redpincer">
+                      <td key={summary.targetId} className="px-3 py-2 text-center text-destructive">
                         {summary.breached} / {summary.totalPayloads}
                       </td>
                     ))}

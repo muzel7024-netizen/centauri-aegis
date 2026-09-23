@@ -6,91 +6,142 @@
 [![React](https://img.shields.io/badge/React-19-61DAFB?logo=react)](https://react.dev/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-Strict-3178C6?logo=typescript)](https://www.typescriptlang.org/)
 [![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-4-06B6D4?logo=tailwindcss)](https://tailwindcss.com/)
-[![License: MIT](https://img.shields.io/badge/License-MIT-purple.svg)](LICENSE)
+[![License: MIT](https://img.shields.io/badge/License-MIT-5B8DB8.svg)](LICENSE)
 
-Centauri Aegis is an advanced AI security testing and research console designed for adversarial red-teaming, jailbreak resistance evaluation, and automated safety auditing of Large Language Models and AI systems.
+Centauri Aegis is an enterprise-grade AI security testing and research platform engineered for automated adversarial evaluation, jailbreak resistance auditing, and safety compliance verification of Large Language Models (LLMs) and generative AI systems.
 
-Point Centauri Aegis at any model endpoint (OpenAI, Anthropic Claude, Ollama, vLLM, or Custom API), select your adversarial modules, and execute automated penetration testing assessments with real-time streaming results, zero-overhead heuristic classification, and compliance-ready exports.
+Centauri Aegis provides security engineers, red teams, and AI safety researchers with a systematic framework to probe model defenses, identify bypass vectors, synthesize actionable findings, and generate compliance-ready reports across leading commercial, open-weight, and self-hosted models.
 
 ---
 
 > [!WARNING]
-> **Centauri Aegis is engineered for authorized security testing and research only.** Use it to audit AI systems you own or have explicit authorization to assess. Never deploy adversarial techniques against external systems without prior written authorization.
+> **Authorized Security Testing and Research Notice**: Centauri Aegis is strictly designed for authorized security evaluation, vulnerability research, and defensive hardening. Always ensure you have explicit, documented authorization to test the target AI models and infrastructure.
 
 ---
 
-## Key Capabilities
+## Architecture & Core Modules
 
-### 1. Adversarial Attack Engine
-- **221 Curated Payloads** across 7 OWASP LLM Top 10 threat categories:
-  - Prompt Injection (direct system prompt override)
-  - Jailbreaks (persona hijacking, adversarial hypotheticals, DAN variants)
-  - System Prompt & Data Extraction
-  - Guardrail & Filter Bypasses
-  - Tool Abuse & Function Injection
-  - Multi-Turn Context Manipulation
-  - Obfuscation & Multi-Encoding Vectors (Base64, Rot13, Leetspeak, Unicode)
-- **Model-Specific Targeting**: Tailored adversarial suites for OpenAI GPT, Anthropic Claude, Meta Llama, and universal targets.
-- **Concurrent Dispatcher**: Adjustable parallelism (1 to 10 concurrent streams) with real-time ETA and rate-limiting resilience.
-- **Instant Abort**: Full cooperative cancellation on active network streams.
+```
+                    Target Configuration & In-Memory Key Vault
+                                       │
+                                       ▼
+                             Assessment Workspace
+                    [Campaign Scoping & Execution Dispatcher]
+                                       │
+                ┌──────────────────────┼──────────────────────┐
+                ▼                      ▼                      ▼
+        Adversarial Payloads     Attack Chains         Evolve Engine
+        (221 Curated Probes)   (Multi-Turn Logic)   (Genetic Mutations)
+                │                      │                      │
+                └──────────────────────┼──────────────────────┘
+                                       ▼
+                       Zero-Overhead Heuristic Classifier
+                     (11 Languages, Non-LLM Pattern Engine)
+                                       │
+                                       ▼
+                               Findings Register
+                     (Empirical Vulnerability Deduplication)
+                                       │
+                ┌──────────────────────┴──────────────────────┐
+                ▼                                             ▼
+        Executive Reports                              Standard Exports
+      (Markdown / Pen-Test)                          (SARIF 2.1.0 / CSV / JSON)
+```
 
-### 2. Genetic Evolve Engine
-- **Iterative Evolutionary Testing**: Genetic algorithm mutator that refines prompts across generations to find bypass paths.
-- **Fitness Scoring & Lineage Graph**: Tracks parent-child mutations, fitness scores, and classification outcomes.
-- **Export Lineage**: Save full mutation lineages directly to JSON and SARIF 2.1.0 finding formats.
+### 1. Assessment Workspace
+* **Structured Campaigns**: Organize assessments with distinct operational scopes, target model bindings, attack category matrices, and mutation configurations.
+* **Concurrent Dispatcher**: Calibrate parallel attack delivery from 1 to 10 concurrent streams with real-time telemetry, ETA estimations, and connection pool management.
+* **Immediate Cooperative Cancellation**: Cooperative abort controls instantly halt active network streams and in-flight probes without losing completed results.
 
-### 3. Attack Chains
-- **Multi-Stage Conversational Pipelines**: Orchestrate sequential steps where step responses feed into downstream templates.
-- **Dynamic Variable Slots**: Pass extracted secrets, session tokens, or model responses across consecutive turns.
+### 2. Empirical Findings Register
+* **Automated Finding Synthesis**: Successful attack breaches are aggregated and deduplicated into structured security findings by category and severity.
+* **Evidence Preservation**: Monospace, bounded evidence viewing stores raw model responses, detected indicators, and execution timings.
+* **Status Lifecycle**: Manage findings across standard security states: `Open`, `In Review`, `Mitigated`, `Accepted Risk`, and `False Positive`.
 
-### 4. Zero-Overhead Heuristic Analysis
-- **11-Language Behavioral Classifier**: Instant classification of refusals, partial compliance, full jailbreaks, and information leakage without incurring secondary LLM latency or token costs.
-- **Leakage & Canary Detection**: Detects system instructions, credit cards, credentials, internal API keys, and environment variables.
+### 3. Attack Categories & Curated Modules
+Centauri Aegis incorporates 221 curated payloads spanning 7 OWASP LLM Top 10 threat categories:
+* **Prompt Injection**: Subverting system instructions through direct adversarial directives and role overriding.
+* **Jailbreaks**: Complex persona adoption, hypothetical framing, adversarial role-playing, and alignment suppression.
+* **Data & Prompt Extraction**: Eliciting confidential system instructions, internal architecture details, and context data.
+* **Guardrail & Content Bypass**: Probing boundary filters and safety classifiers for restricted topics.
+* **Tool Abuse & Function Hijacking**: Exploiting function-calling schemas, parameter injection, and agentic multi-tool execution paths.
+* **Multi-Turn Context Manipulation**: Gradual trust establishment and progressive context shifts over consecutive turns.
+* **Multi-Encoding Vectors**: Hiding adversarial directives in Base64, Hex, ROT13, Leetspeak, and Unicode homoglyphs.
 
-### 5. Compliance & Reporting
-- **SARIF 2.1.0 Standard**: Direct integration with GitHub Advanced Security and enterprise vulnerability management suites.
-- **Executive & Pen-Test Reports**: Detailed 10-section assessment reports with CVSS-aligned risk ratings, category breakdown, and remediation recommendations.
-- **Export Formats**: JSON, CSV, and SARIF 2.1.0 with automatic sanitization of sensitive credentials.
+### 4. Advanced Testing Engines
+* **Multi-Turn Attack Chains**: Build complex conversational attack trees with dynamic variable slotting (`{{previous_response}}`, `{{step:stepId}}`) and output transforms (JSON extraction, regex filtering).
+* **Genetic Evolve Engine**: Algorithmic mutation engine using iterative feedback, fitness-directed prompt selection, and visual ancestor lineage tracking.
+* **Adaptive Testing**: Post-run analysis identifying model weakness clusters and synthesizing targeted follow-up probes.
+* **Regression Testing**: Baseline snapshot capture and automated differential testing to verify whether vulnerabilities have been mitigated across model versions.
+* **Multi-Target Comparison**: Run identical adversarial matrices concurrently across multiple models to benchmark relative safety postures.
 
-### 6. Security Hardening
-- **SSRF Transport Protection**: Unconditionally blocks access to cloud instance metadata (`169.254.169.254`). Restricts RFC 1918 private subnets in production unless explicitly authorized.
-- **In-Memory Server-Side Key Vault**: Target API keys are never stored in plaintext in the browser's `localStorage`. Credentials reside in an in-memory server vault backed by AES-256-GCM with process-bound entropy.
-- **Reverse Proxy Protection**: IP resolution for rate limiting strictly verifies trusted proxy headers.
+### 5. Zero-Overhead Heuristic Analysis & Scoring
+* **Multilingual Classification Engine**: Evaluates model outputs in 11 languages (English, Spanish, French, German, Portuguese, Russian, Chinese, Japanese, Korean, Arabic, Italian) to identify refusals, partial compliance, full jailbreaks, and leaks without token overhead.
+* **Custom Scoring Rubrics**: Configurable category and severity weightings yielding objective numerical safety scores and letter grades (A+ to F).
+
+### 6. Reports & Compliance Exports
+* **Executive Security Reports**: 10-section professional audit documents including executive summaries, risk matrices, detailed finding appendices, and targeted remediations.
+* **Standard SARIF 2.1.0 Output**: Full compatibility with GitHub Advanced Security, Microsoft Defender for Cloud, and enterprise SIEM platforms.
+* **Data Formats**: Structured JSON results and flat CSV tables for spreadsheet analysis.
 
 ---
 
-## Quick Start
+## Security Architecture
+
+### Strict SSRF Protection
+* **Cloud Instance Metadata (IMDS)**: Unconditionally blocks requests targeting `169.254.169.254` and link-local addresses across all providers.
+* **Private Network Controls**: Localhost and RFC 1918 subnets are restricted in production environments unless explicitly authorized via `AEGIS_ALLOW_PRIVATE_TARGETS=true`.
+
+### Server-Side In-Memory Key Vault
+* API keys are never stored in browser `localStorage`.
+* Target credentials are encrypted in-memory on the server using AES-256-GCM backed by process-bound entropy.
+* Browsers retain only opaque cryptographic handles (`apiKeyId`) and masked labels (`sk-...abc`).
+
+### Reverse Proxy & Authentication
+* Session-based authentication using HMAC-signed cookies and timing-safe credential verification.
+* Reverse proxy IP resolution strictly verifies trusted proxy headers when `AEGIS_TRUSTED_PROXY=true`.
+
+---
+
+## Installation & Setup
 
 ### Prerequisites
-- Node.js 20+ or 22+
-- npm 10+
+* **Node.js**: Version 20.x or 22.x LTS
+* **npm**: Version 10.x or later
 
-### Installation
+### Local Development
 
 ```bash
-# Clone or navigate to the repository
-cd pincer-main
+# Clone the repository
+git clone <repository-url>
+cd centauri-aegis
 
-# Install dependencies cleanly
+# Cleanly install dependencies
 npm ci
 
 # Start the development server
 npm run dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) in your browser.
+Navigate to `http://localhost:3000` to access the console.
 
 ### Production Build
 
 ```bash
+# Compile optimized Next.js bundle
 npm run build
+
+# Start production server
 npm start
 ```
 
 ### Docker Deployment
 
 ```bash
+# Build production container image
 docker build -t centauri-aegis .
+
+# Run container with private target support
 docker run -p 3000:3000 -e AEGIS_ALLOW_PRIVATE_TARGETS=true centauri-aegis
 ```
 
@@ -98,25 +149,25 @@ docker run -p 3000:3000 -e AEGIS_ALLOW_PRIVATE_TARGETS=true centauri-aegis
 
 ## Environment Configuration
 
-Configure console settings via `.env` or system environment variables:
+Configure the platform using a `.env` file or container environment variables:
 
 | Variable | Description | Default |
 | :--- | :--- | :--- |
-| `AEGIS_AUTH_ENABLED` | Enable password authentication on the console | `false` |
-| `AEGIS_USERNAME` | Administrator username for console access | `None` |
+| `AEGIS_AUTH_ENABLED` | Enforce login authentication on console routes | `false` |
+| `AEGIS_USERNAME` | Administrator username for console access | `admin` |
 | `AEGIS_PASSWORD` | Administrator password for console access | `None` |
-| `AEGIS_SESSION_SECRET` | HMAC signing secret for session cookies | Auto-derived from password |
-| `AEGIS_KEY_SECRET` | 32-byte secret for server-side key vault | Ephemeral random 256-bit key |
-| `AEGIS_ALLOW_PRIVATE_TARGETS` | Permit targeting localhost / private subnets in production | `false` |
-| `AEGIS_TRUSTED_PROXY` | Trust `X-Forwarded-For` headers behind reverse proxies | `false` |
+| `AEGIS_SESSION_SECRET` | HMAC signing secret for session cookies | Derived from password |
+| `AEGIS_KEY_SECRET` | 32-byte master encryption key for key vault | Process entropy |
+| `AEGIS_ALLOW_PRIVATE_TARGETS` | Allow targeting internal/private IP ranges in production | `false` |
+| `AEGIS_TRUSTED_PROXY` | Trust reverse proxy headers (`X-Forwarded-For`) | `false` |
 
-*(Legacy `PINCER_*` environment variables remain supported as backward-compatible fallbacks).*
+*(Note: Legacy `PINCER_*` environment variables remain supported as migration fallbacks).*
 
 ---
 
 ## Keyboard Shortcuts
 
-| Shortcut | Action |
+| Shortcut | View / Action |
 | :--- | :--- |
 | `Ctrl+1` | Target Configuration |
 | `Ctrl+2` | Attack Modules |
@@ -129,13 +180,37 @@ Configure console settings via `.env` or system environment variables:
 | `Ctrl+9` | Adaptive Runner |
 | `Ctrl+0` | Vulnerability Heatmap |
 | `Ctrl+Enter` | Execute Attack Run |
-| `Ctrl+.` | Stop Active Run |
-| `Ctrl+/` | View All Keyboard Shortcuts |
+| `Ctrl+.` | Stop Active Execution |
+| `Ctrl+/` | View Shortcuts Modal |
 
 ---
 
-## Developer Attribution & Upstream Heritage
+## Verification & Testing
 
-* **Lead Maintainer & Developer**: `rudrakshp20-hue (@NeelaBillota)`
-* **Upstream Project**: Built upon the open-source foundation of **Pincer / RedPincer** by `rustyorb`.
-* **License**: MIT License (see [LICENSE](LICENSE) and [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md)).
+Centauri Aegis includes a comprehensive test suite covering the heuristic analysis engine, key vault security, persistence migration, scoring rubrics, and assessment flows:
+
+```bash
+# Execute full Vitest suite (390+ tests)
+npm test
+
+# Run ESLint validation
+npm run lint
+
+# Run strict TypeScript type checks
+npx tsc --noEmit
+
+# Test production compilation
+npm run build
+```
+
+---
+
+## License & Attribution
+
+Centauri Aegis is released under the **MIT License**. See [LICENSE](LICENSE) for full legal terms.
+
+Third-party dependencies and upstream open-source attributions are documented in [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).
+
+* **Project**: Centauri Aegis
+* **Tagline**: AI Security Testing & Research
+* **Developer**: rudrakshp20-hue (@NeelaBillota)

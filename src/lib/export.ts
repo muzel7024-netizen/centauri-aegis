@@ -197,7 +197,7 @@ interface SARIFRun {
 interface SARIFDriver {
   name: string;
   version: string;
-  informationUri: string;
+  informationUri?: string;
   rules: SARIFRule[];
 }
 
@@ -295,7 +295,7 @@ export function exportRunAsSARIF(run: AttackRun): string {
           driver: {
             name: "Centauri Aegis",
             version: "1.0.0",
-            informationUri: "https://github.com/rustyorb/pincer",
+            informationUri: "https://github.com/rudrakshp20-hue/centauri-aegis",
             rules: [...ruleMap.values()],
           },
         },

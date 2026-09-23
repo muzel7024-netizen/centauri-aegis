@@ -34,18 +34,18 @@ export function CentauriAegisLogo({
     >
       <defs>
         <linearGradient id="aegis-outer" x1="6" y1="4" x2="42" y2="44" gradientUnits="userSpaceOnUse">
-          <stop offset="0%" stopColor="#9333EA" />
-          <stop offset="50%" stopColor="#6366F1" />
-          <stop offset="100%" stopColor="#3B82F6" />
+          <stop offset="0%" stopColor="#6D9FC9" />
+          <stop offset="50%" stopColor="#5B8DB8" />
+          <stop offset="100%" stopColor="#3A5A78" />
         </linearGradient>
         <linearGradient id="aegis-inner" x1="12" y1="10" x2="36" y2="38" gradientUnits="userSpaceOnUse">
-          <stop offset="0%" stopColor="#A855F7" stopOpacity="0.8" />
-          <stop offset="100%" stopColor="#4F46E5" stopOpacity="0.4" />
+          <stop offset="0%" stopColor="#5B8DB8" stopOpacity="0.8" />
+          <stop offset="100%" stopColor="#252A31" stopOpacity="0.4" />
         </linearGradient>
         <radialGradient id="centauri-core" cx="24" cy="22" r="10" gradientUnits="userSpaceOnUse">
           <stop offset="0%" stopColor="#FFFFFF" />
-          <stop offset="40%" stopColor="#C084FC" />
-          <stop offset="100%" stopColor="#7E22CE" stopOpacity="0" />
+          <stop offset="40%" stopColor="#A7AFBA" />
+          <stop offset="100%" stopColor="#303640" stopOpacity="0" />
         </radialGradient>
       </defs>
 
@@ -56,21 +56,21 @@ export function CentauriAegisLogo({
         strokeWidth="2.5"
         strokeLinecap="round"
         strokeLinejoin="round"
-        fill="#07070A"
+        fill="#08090B"
       />
 
       {/* Layered Inner Shield Geometries */}
       <path
         d="M24 8L37 15V24C37 31.5 31.5 37.8 24 40C16.5 37.8 11 31.5 11 24V15L24 8Z"
         fill="url(#aegis-inner)"
-        stroke="#8B5CF6"
+        stroke="#5B8DB8"
         strokeWidth="1"
         strokeOpacity="0.5"
       />
 
       {/* Astrometric Centauri Crosshairs / Security Coordinates */}
-      <line x1="24" y1="12" x2="24" y2="34" stroke="#D8B4FE" strokeWidth="1.5" strokeLinecap="round" strokeOpacity="0.8" />
-      <line x1="15" y1="22" x2="33" y2="22" stroke="#D8B4FE" strokeWidth="1.5" strokeLinecap="round" strokeOpacity="0.8" />
+      <line x1="24" y1="12" x2="24" y2="34" stroke="#A7AFBA" strokeWidth="1.5" strokeLinecap="round" strokeOpacity="0.8" />
+      <line x1="15" y1="22" x2="33" y2="22" stroke="#A7AFBA" strokeWidth="1.5" strokeLinecap="round" strokeOpacity="0.8" />
 
       {/* Geometric Diamond Core */}
       <polygon
@@ -92,9 +92,9 @@ export function CentauriAegisLogo({
       {symbolSvg}
       <div className="flex flex-col">
         <span className="font-sans text-base font-bold tracking-tight text-white leading-tight">
-          Centauri <span className="text-purple-400">Aegis</span>
+          Centauri <span className="text-[#5B8DB8]">Aegis</span>
         </span>
-        <span className="font-mono text-[9px] tracking-wider uppercase text-purple-300/70 font-medium">
+        <span className="font-mono text-[9px] tracking-wider uppercase text-muted-foreground font-medium">
           AI Security Testing &amp; Research
         </span>
       </div>

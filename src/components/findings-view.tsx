@@ -78,13 +78,13 @@ export function FindingsView() {
         );
       case "medium":
         return (
-          <Badge className="bg-purple-500/20 text-purple-300 border border-purple-500/40 uppercase font-mono text-[10px] px-2 py-0.5">
+          <Badge className="bg-[#5B8DB8]/20 text-[#5B8DB8] border border-[#5B8DB8]/40 uppercase font-mono text-[10px] px-2 py-0.5">
             MEDIUM
           </Badge>
         );
       default:
         return (
-          <Badge className="bg-blue-500/20 text-blue-300 border border-blue-500/40 uppercase font-mono text-[10px] px-2 py-0.5">
+          <Badge className="bg-slate-500/20 text-slate-300 border border-slate-500/40 uppercase font-mono text-[10px] px-2 py-0.5">
             LOW
           </Badge>
         );
@@ -101,7 +101,7 @@ export function FindingsView() {
         );
       case "reviewed":
         return (
-          <Badge variant="outline" className="border-blue-500/30 bg-blue-500/10 text-blue-300 text-[10px]">
+          <Badge variant="outline" className="border-[#5B8DB8]/30 bg-[#5B8DB8]/10 text-[#5B8DB8] text-[10px]">
             Reviewed
           </Badge>
         );
@@ -123,7 +123,7 @@ export function FindingsView() {
             <h1 className="text-2xl font-bold font-mono tracking-tight text-foreground">
               FINDINGS <span className="text-aegis">REGISTER</span>
             </h1>
-            <Badge variant="outline" className="border-purple-500/30 bg-purple-500/10 text-purple-400 font-mono text-xs">
+            <Badge variant="outline" className="border-[#5B8DB8]/30 bg-[#5B8DB8]/10 text-[#5B8DB8] font-mono text-xs">
               {findings.length} Vulnerabilities
             </Badge>
           </div>
@@ -139,14 +139,14 @@ export function FindingsView() {
             onClick={() => setView("assessments")}
             className="gap-2 border-border hover:bg-card text-xs"
           >
-            <Shield className="h-3.5 w-3.5 text-purple-400" />
+            <Shield className="h-3.5 w-3.5 text-[#5B8DB8]" />
             Assessments
           </Button>
           <Button
             variant="outline"
             size="sm"
             onClick={() => setView("reports")}
-            className="gap-2 border-border hover:bg-card text-xs text-purple-300"
+            className="gap-2 border-border hover:bg-card text-xs text-[#5B8DB8]"
           >
             Generate Report
           </Button>
@@ -185,7 +185,7 @@ export function FindingsView() {
         <Card className="border-border bg-card">
           <CardHeader className="pb-2">
             <CardDescription className="text-xs">Medium Severity</CardDescription>
-            <CardTitle className="text-2xl font-bold font-mono text-purple-300">
+            <CardTitle className="text-2xl font-bold font-mono text-[#5B8DB8]">
               {stats.medium}
             </CardTitle>
           </CardHeader>
@@ -212,7 +212,7 @@ export function FindingsView() {
                 onClick={() => setSeverityFilter(sev)}
                 className={`rounded px-2.5 py-1 capitalize transition-colors ${
                   severityFilter === sev
-                    ? "bg-purple-500/20 text-purple-300 font-medium"
+                    ? "bg-[#5B8DB8]/20 text-[#5B8DB8] font-medium"
                     : "text-muted-foreground hover:text-foreground"
                 }`}
               >
@@ -229,7 +229,7 @@ export function FindingsView() {
                 onClick={() => setStatusFilter(st)}
                 className={`rounded px-2.5 py-1 capitalize transition-colors ${
                   statusFilter === st
-                    ? "bg-purple-500/20 text-purple-300 font-medium"
+                    ? "bg-[#5B8DB8]/20 text-[#5B8DB8] font-medium"
                     : "text-muted-foreground hover:text-foreground"
                 }`}
               >
@@ -350,7 +350,7 @@ export function FindingsView() {
                           onClick={() =>
                             setExpandedFindingId(isExpanded ? null : finding.id)
                           }
-                          className="h-7 px-2 text-xs text-purple-300 hover:text-purple-200"
+                          className="h-7 px-2 text-xs text-[#5B8DB8] hover:text-[#6D9FC9]"
                         >
                           {isExpanded ? "Collapse" : "Details"}
                         </Button>
@@ -377,18 +377,18 @@ export function FindingsView() {
 
                     {/* Expandable Details Drawer */}
                     {isExpanded && (
-                      <div className="mt-2 space-y-4 rounded-lg border border-border/60 bg-background/50 p-4 text-xs">
+                      <div className="mt-2 space-y-4 rounded-lg border border-border/60 bg-background/50 p-4 text-xs min-w-0 max-w-full overflow-hidden">
                         {/* Evidence Section */}
                         {finding.evidence.length > 0 && (
-                          <div>
+                          <div className="min-w-0 max-w-full">
                             <h4 className="font-semibold text-foreground uppercase tracking-wider text-[11px] mb-2">
                               Empirical Model Evidence
                             </h4>
-                            <div className="space-y-1.5">
+                            <div className="space-y-1.5 min-w-0 max-w-full">
                               {finding.evidence.map((ev, idx) => (
                                 <div
                                   key={idx}
-                                  className="rounded border border-border/50 bg-background/80 p-2.5 font-mono text-[11px] text-purple-300 leading-relaxed"
+                                  className="rounded border border-border/50 bg-background/80 p-3 font-mono text-[11px] text-[#5B8DB8] leading-relaxed break-words break-all whitespace-pre-wrap max-h-56 overflow-y-auto overflow-x-hidden min-w-0 max-w-full"
                                 >
                                   &ldquo;{ev}&rdquo;
                                 </div>
@@ -424,7 +424,7 @@ export function FindingsView() {
                           <h4 className="font-semibold text-foreground uppercase tracking-wider text-[11px] mb-1">
                             Actionable Defensive Remediation
                           </h4>
-                          <p className="text-muted-foreground leading-relaxed text-xs bg-purple-950/20 border border-purple-500/20 rounded p-2.5 text-purple-200">
+                          <p className="text-foreground leading-relaxed text-xs bg-[#5B8DB8]/10 border border-[#5B8DB8]/20 rounded p-2.5">
                             {finding.remediation}
                           </p>
                         </div>

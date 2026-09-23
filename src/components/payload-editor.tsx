@@ -69,7 +69,7 @@ import { toast } from "sonner";
 // ── Constants ───────────────────────────────────────────────────────────────
 
 const STORAGE_KEY = "centauri-aegis-custom-payloads";
-const LEGACY_STORAGE_KEY = "redpincer-custom-payloads";
+const LEGACY_STORAGE_KEY = "redpincer-custom-payloads"; // Legacy compatibility only — do not use for new deployments.
 
 const CATEGORIES: AttackCategory[] = [
   "injection",
@@ -93,12 +93,12 @@ const VARIANT_CATEGORIES: { key: VariantCategory; label: string }[] = [
 const HIGHLIGHT_RULES: { pattern: RegExp; className: string }[] = [
   {
     pattern: /\b(ignore|override|bypass|disregard|forget)\b/gi,
-    className: "text-redpincer",
+    className: "text-destructive",
   },
   {
     pattern:
       /\b(system prompt|instructions|guidelines|restrictions)\b/gi,
-    className: "text-lobster",
+    className: "text-amber-400",
   },
   {
     pattern: /\b(hypothetically|imagine|pretend|roleplay)\b/gi,
@@ -115,9 +115,9 @@ const HIGHLIGHT_RULES: { pattern: RegExp; className: string }[] = [
 function severityColor(severity: Severity): string {
   switch (severity) {
     case "critical":
-      return "bg-redpincer/20 text-redpincer border-redpincer/30";
+      return "bg-destructive/20 text-destructive border-destructive/30";
     case "high":
-      return "bg-lobster/20 text-lobster border-lobster/30";
+      return "bg-amber-500/20 text-amber-400 border-amber-500/30";
     case "medium":
       return "bg-warning/20 text-warning border-warning/30";
     case "low":
@@ -128,13 +128,13 @@ function severityColor(severity: Severity): string {
 function categoryColor(category: AttackCategory): string {
   switch (category) {
     case "injection":
-      return "bg-purple-500/20 text-purple-400 border-purple-500/30";
+      return "bg-primary/20 text-primary border-primary/30";
     case "jailbreak":
-      return "bg-redpincer/20 text-redpincer border-redpincer/30";
+      return "bg-destructive/20 text-destructive border-destructive/30";
     case "extraction":
       return "bg-blue-500/20 text-blue-400 border-blue-500/30";
     case "bypass":
-      return "bg-lobster/20 text-lobster border-lobster/30";
+      return "bg-amber-500/20 text-amber-400 border-amber-500/30";
     case "tool_abuse":
       return "bg-amber-500/20 text-amber-400 border-amber-500/30";
     case "multi_turn":
@@ -151,9 +151,9 @@ function modelTargetColor(target: ModelTarget): string {
     case "gpt":
       return "bg-success/20 text-success border-success/30";
     case "claude":
-      return "bg-lobster/20 text-lobster border-lobster/30";
+      return "bg-amber-500/20 text-amber-400 border-amber-500/30";
     case "llama":
-      return "bg-purple-500/20 text-purple-400 border-purple-500/30";
+      return "bg-primary/20 text-primary border-primary/30";
     case "universal":
       return "bg-muted text-muted-foreground border-border";
   }
@@ -693,7 +693,7 @@ export function PayloadEditor() {
       {/* Header */}
       <div>
         <h2 className="flex items-center gap-2 text-2xl font-bold text-foreground">
-          <Edit3 className="h-6 w-6 text-redpincer" />
+          <Edit3 className="h-6 w-6 text-primary" />
           Payload Editor
         </h2>
         <p className="mt-1 text-sm text-muted-foreground">
@@ -736,7 +736,7 @@ export function PayloadEditor() {
                     key={p.id}
                     className={`group flex cursor-pointer items-start gap-2 rounded-md p-2 text-sm transition-colors hover:bg-accent/50 ${
                       editingId === p.id
-                        ? "bg-accent/50 ring-1 ring-redpincer/30"
+                        ? "bg-accent/50 ring-1 ring-primary/30"
                         : ""
                     }`}
                     onClick={() => selectPayload(p)}
@@ -771,7 +771,7 @@ export function PayloadEditor() {
                         e.stopPropagation();
                         deletePayload(p.id);
                       }}
-                      className="shrink-0 rounded p-1 text-muted-foreground opacity-0 transition-opacity hover:bg-destructive/20 hover:text-redpincer group-hover:opacity-100"
+                      className="shrink-0 rounded p-1 text-muted-foreground opacity-0 transition-opacity hover:bg-destructive/20 hover:text-destructive group-hover:opacity-100"
                     >
                       <Trash2 className="h-3.5 w-3.5" />
                     </button>
@@ -978,7 +978,7 @@ export function PayloadEditor() {
               <div className="flex flex-wrap gap-2">
                 <Button
                   onClick={savePayload}
-                  className="gap-2 bg-redpincer text-redpincer-foreground hover:bg-redpincer/90"
+                  className="gap-2 bg-primary text-primary-foreground hover:bg-primary/90"
                 >
                   <Save className="h-4 w-4" />
                   {editingId ? "Update Payload" : "Save Payload"}
@@ -1005,7 +1005,7 @@ export function PayloadEditor() {
                   onClick={generateWithAI}
                   disabled={!redTeamConfig || generating}
                   title={!redTeamConfig ? "Configure a Red Team LLM to use AI features" : undefined}
-                  className="gap-2 border-lobster/30 text-lobster hover:bg-lobster/10"
+                  className="gap-2 border-primary/30 text-primary hover:bg-primary/10"
                 >
                   {generating ? (
                     <Loader2 className="h-4 w-4 animate-spin" />
@@ -1040,7 +1040,7 @@ export function PayloadEditor() {
                 className="flex w-full items-center justify-between"
               >
                 <CardTitle className="flex items-center gap-2 text-sm">
-                  <Wand2 className="h-4 w-4 text-lobster" />
+                  <Wand2 className="h-4 w-4 text-primary" />
                   Generate Variants
                 </CardTitle>
                 {variantsOpen ? (
@@ -1073,7 +1073,7 @@ export function PayloadEditor() {
                             return next;
                           });
                         }}
-                        className="border-muted-foreground data-[state=checked]:border-lobster data-[state=checked]:bg-lobster"
+                        className="border-muted-foreground data-[state=checked]:border-primary data-[state=checked]:bg-primary"
                       />
                       {label}
                     </label>

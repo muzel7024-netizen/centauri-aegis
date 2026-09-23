@@ -173,7 +173,7 @@ export function AssessmentWizard({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 backdrop-blur-sm p-4">
-      <Card className="w-full max-w-2xl border-purple-500/30 bg-[#0e0d16] text-foreground shadow-2xl shadow-purple-950/50">
+      <Card className="w-full max-w-2xl border-border/80 bg-[#0D0F12] text-foreground shadow-2xl shadow-black/60">
         <CardHeader className="border-b border-border/40 pb-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2.5">
@@ -202,7 +202,7 @@ export function AssessmentWizard({
                 className={`flex h-6 w-6 items-center justify-center rounded-full text-xs font-semibold ${
                   step === 1
                     ? "bg-aegis text-white"
-                    : "bg-purple-500/20 text-purple-300"
+                    : "bg-primary/20 text-primary"
                 }`}
               >
                 1
@@ -220,7 +220,7 @@ export function AssessmentWizard({
                   step === 2
                     ? "bg-aegis text-white"
                     : step > 2
-                      ? "bg-purple-500/20 text-purple-300"
+                      ? "bg-primary/20 text-primary"
                       : "bg-muted text-muted-foreground"
                 }`}
               >
@@ -302,7 +302,7 @@ export function AssessmentWizard({
                             </div>
                           </div>
                           {isSelected && (
-                            <CheckCircle2 className="h-4 w-4 text-purple-400" />
+                            <CheckCircle2 className="h-4 w-4 text-primary" />
                           )}
                         </div>
                       );
@@ -347,7 +347,7 @@ export function AssessmentWizard({
                   <div className="flex gap-2">
                     <button
                       onClick={selectAllCategories}
-                      className="text-[11px] text-purple-400 hover:underline"
+                      className="text-[11px] text-primary hover:underline"
                     >
                       Select All
                     </button>
@@ -404,7 +404,7 @@ export function AssessmentWizard({
                       />
                       <span>Generate Multi-Variant Payloads (Obfuscation, Leetspeak, ROT13)</span>
                     </div>
-                    <Badge variant="outline" className="text-[10px] py-0 px-1 border-purple-500/30 text-purple-300">
+                    <Badge variant="outline" className="text-[10px] py-0 px-1 border-primary/30 text-primary">
                       +{totalVariantTypes}x Probes
                     </Badge>
                   </label>
@@ -417,7 +417,7 @@ export function AssessmentWizard({
                         className="data-[state=checked]:border-aegis data-[state=checked]:bg-aegis"
                       />
                       <div className="flex items-center gap-1.5">
-                        <Brain className="h-3.5 w-3.5 text-purple-400" />
+                        <Brain className="h-3.5 w-3.5 text-primary" />
                         <span>Adaptive Feedback Loop (Dynamic prompt mutation on refusals)</span>
                       </div>
                     </div>
@@ -431,7 +431,7 @@ export function AssessmentWizard({
                         className="data-[state=checked]:border-aegis data-[state=checked]:bg-aegis"
                       />
                       <div className="flex items-center gap-1.5">
-                        <Sparkles className="h-3.5 w-3.5 text-purple-400" />
+                        <Sparkles className="h-3.5 w-3.5 text-primary" />
                         <span>Evolutionary Mutation Engine (Genetic payload optimization)</span>
                       </div>
                     </div>
@@ -468,13 +468,13 @@ export function AssessmentWizard({
 
                 <div className="flex items-center justify-between">
                   <span className="text-xs font-semibold text-foreground">Total Estimated Probes</span>
-                  <Badge variant="outline" className="font-mono text-sm border-aegis/50 bg-aegis/15 text-purple-300 px-2 py-0.5">
+                  <Badge variant="outline" className="font-mono text-sm border-aegis/50 bg-aegis/15 text-primary px-2 py-0.5">
                     {estimatedTestCount} Test Probes
                   </Badge>
                 </div>
               </div>
 
-              <div className="rounded-md border border-purple-500/20 bg-purple-950/10 p-3 text-xs text-purple-300">
+              <div className="rounded-md border border-primary/20 bg-primary/5 p-3 text-xs text-primary">
                 You can save this assessment as a <strong>Draft</strong> to execute later, or <strong>Start Assessment</strong> to immediately begin streamed adversarial testing.
               </div>
             </div>
@@ -534,7 +534,7 @@ export function AssessmentWizard({
                 <Button
                   size="sm"
                   onClick={handleStartNow}
-                  className="gap-1.5 text-xs bg-aegis text-white hover:bg-aegis/90 shadow-md shadow-purple-950/50"
+                  className="gap-1.5 text-xs bg-aegis text-white hover:bg-aegis/90 shadow-md shadow-black/40"
                 >
                   <Play className="h-3.5 w-3.5" />
                   Start Assessment

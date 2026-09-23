@@ -11,7 +11,7 @@ import {
   formatBytes,
   mergeSession,
   sessionContainsApiKeys,
-  type RedPincerSession,
+  type CentauriAegisSession,
 } from "@/lib/persistence";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -48,7 +48,7 @@ export function SessionManager() {
     useStore();
 
   // Import state
-  const [importedSession, setImportedSession] = useState<RedPincerSession | null>(null);
+  const [importedSession, setImportedSession] = useState<CentauriAegisSession | null>(null);
   const [importErrors, setImportErrors] = useState<string[]>([]);
   const [importMode, setImportMode] = useState<"merge" | "replace">("merge");
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -197,7 +197,7 @@ export function SessionManager() {
       <Card className="border-border bg-card">
         <CardHeader className="pb-3">
           <CardTitle className="flex items-center gap-2 text-base">
-            <Database className="h-4 w-4 text-lobster" />
+            <Database className="h-4 w-4 text-primary" />
             Session Overview
           </CardTitle>
         </CardHeader>
@@ -246,7 +246,7 @@ export function SessionManager() {
       <Card className="border-border bg-card">
         <CardHeader className="pb-3">
           <CardTitle className="flex items-center gap-2 text-base">
-            <Download className="h-4 w-4 text-lobster" />
+            <Download className="h-4 w-4 text-primary" />
             Export Session
           </CardTitle>
         </CardHeader>
@@ -257,7 +257,7 @@ export function SessionManager() {
           </p>
           <div className="flex items-center gap-2 rounded-md border border-border bg-background px-3 py-2 text-sm text-muted-foreground">
             <FileJson className="h-4 w-4 shrink-0" />
-            <span>redpincer-session-{new Date().toISOString().slice(0, 10)}.json</span>
+            <span>centauri-aegis-session-{new Date().toISOString().slice(0, 10)}.json</span>
           </div>
           <div className="flex items-start gap-2 rounded-md bg-warning/10 px-3 py-2 text-xs text-warning">
             <AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0" />
@@ -274,7 +274,7 @@ export function SessionManager() {
       <Card className="border-border bg-card">
         <CardHeader className="pb-3">
           <CardTitle className="flex items-center gap-2 text-base">
-            <Upload className="h-4 w-4 text-lobster" />
+            <Upload className="h-4 w-4 text-primary" />
             Import Session
           </CardTitle>
         </CardHeader>
@@ -324,7 +324,7 @@ export function SessionManager() {
                     name="importMode"
                     checked={importMode === "merge"}
                     onChange={() => setImportMode("merge")}
-                    className="accent-redpincer"
+                    className="accent-primary"
                   />
                   <span className="text-foreground">Merge</span>
                   <span className="text-xs text-muted-foreground">
@@ -337,7 +337,7 @@ export function SessionManager() {
                     name="importMode"
                     checked={importMode === "replace"}
                     onChange={() => setImportMode("replace")}
-                    className="accent-redpincer"
+                    className="accent-primary"
                   />
                   <span className="text-foreground">Replace</span>
                   <span className="text-xs text-muted-foreground">
@@ -359,7 +359,7 @@ export function SessionManager() {
       <Card className="border-border bg-card">
         <CardHeader className="pb-3">
           <CardTitle className="flex items-center gap-2 text-base">
-            <History className="h-4 w-4 text-lobster" />
+            <History className="h-4 w-4 text-primary" />
             Run History
           </CardTitle>
         </CardHeader>
@@ -376,7 +376,7 @@ export function SessionManager() {
                   return (
                     <div
                       key={run.id}
-                      className="group flex items-center gap-3 rounded-md border border-border bg-background px-3 py-2.5 transition-colors hover:border-lobster/30"
+                      className="group flex items-center gap-3 rounded-md border border-border bg-background px-3 py-2.5 transition-colors hover:border-primary/30"
                     >
                       <button
                         onClick={() => handleViewRun(run.id)}
@@ -412,7 +412,7 @@ export function SessionManager() {
                               run.status === "completed"
                                 ? "bg-success/20 text-success"
                                 : run.status === "running"
-                                  ? "bg-lobster/20 text-lobster"
+                                  ? "bg-primary/20 text-primary"
                                   : "bg-muted text-muted-foreground"
                             }
                           >

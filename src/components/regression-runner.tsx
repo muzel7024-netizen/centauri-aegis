@@ -82,9 +82,9 @@ interface RegressionRun {
 // ---------------------------------------------------------------------------
 
 const BASELINES_KEY = "centauri-aegis-baselines";
-const LEGACY_BASELINES_KEY = "redpincer-baselines";
+const LEGACY_BASELINES_KEY = "redpincer-baselines"; // Legacy compatibility only — do not use for new deployments.
 const REGRESSION_RUNS_KEY = "centauri-aegis-regression-runs";
-const LEGACY_REGRESSION_RUNS_KEY = "redpincer-regression-runs";
+const LEGACY_REGRESSION_RUNS_KEY = "redpincer-regression-runs"; // Legacy compatibility only — do not use for new deployments.
 
 function loadBaselines(): Baseline[] {
   if (typeof window === "undefined") return [];
@@ -122,7 +122,7 @@ const STATUS_CONFIG: Record<
   ComparisonStatus,
   { label: string; color: string; icon: typeof CheckCircle2 }
 > = {
-  still_vulnerable: { label: "Still Vulnerable", color: "text-redpincer border-redpincer/50", icon: XCircle },
+  still_vulnerable: { label: "Still Vulnerable", color: "text-destructive border-destructive/50", icon: XCircle },
   fixed: { label: "Fixed", color: "text-success border-success/50", icon: CheckCircle2 },
   new_vulnerability: { label: "New Vulnerability", color: "text-warning border-warning/50", icon: AlertTriangle },
   still_safe: { label: "Still Safe", color: "text-muted-foreground border-border", icon: ShieldCheck },
@@ -315,7 +315,7 @@ export function RegressionRunner() {
   return (
     <div className="flex flex-col gap-6 p-6">
       <div className="flex items-center gap-3">
-        <GitBranch className="h-6 w-6 text-lobster" />
+        <GitBranch className="h-6 w-6 text-primary" />
         <h2 className="text-2xl font-bold text-foreground">Attack Replay & Regression</h2>
       </div>
 
@@ -385,7 +385,7 @@ export function RegressionRunner() {
                   <div
                     key={baseline.id}
                     className={`flex items-center gap-2 rounded-md px-3 py-2 text-sm transition-colors hover:bg-muted cursor-pointer ${
-                      selectedBaselineId === baseline.id ? "bg-muted ring-1 ring-lobster" : ""
+                      selectedBaselineId === baseline.id ? "bg-muted ring-1 ring-primary" : ""
                     }`}
                     onClick={() => setSelectedBaselineId(baseline.id)}
                   >
@@ -401,7 +401,7 @@ export function RegressionRunner() {
                     <Button
                       variant="ghost"
                       size="sm"
-                      className="h-7 w-7 p-0 text-muted-foreground hover:text-redpincer"
+                      className="h-7 w-7 p-0 text-muted-foreground hover:text-destructive"
                       onClick={(e) => {
                         e.stopPropagation();
                         deleteBaseline(baseline.id);
@@ -419,9 +419,9 @@ export function RegressionRunner() {
 
       {/* Run Regression */}
       {selectedBaseline && (
-        <Card className="border-lobster/30 bg-card">
+        <Card className="border-border bg-card">
           <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-semibold uppercase tracking-wider text-lobster">
+            <CardTitle className="text-sm font-semibold uppercase tracking-wider text-primary">
               Run Regression Test
             </CardTitle>
           </CardHeader>
@@ -443,8 +443,8 @@ export function RegressionRunner() {
                     onClick={() => setSelectedTargetId(target.id)}
                     className={`rounded-md border px-3 py-1.5 text-sm transition-colors ${
                       (selectedTargetId || selectedBaseline.targetId) === target.id
-                        ? "border-lobster bg-lobster/10 text-lobster"
-                        : "border-border text-muted-foreground hover:border-lobster/50"
+                        ? "border-primary bg-primary/10 text-primary"
+                        : "border-border text-muted-foreground hover:border-primary/50"
                     }`}
                   >
                     {target.name}
@@ -461,7 +461,7 @@ export function RegressionRunner() {
             )}
 
             <Button
-              className="w-full gap-2 bg-lobster font-semibold text-white hover:bg-lobster/90 disabled:opacity-40"
+              className="w-full gap-2 bg-primary font-semibold text-primary-foreground hover:bg-primary/90 disabled:opacity-40"
               disabled={running || isRunning || connectedTargets.length === 0}
               onClick={runRegression}
             >
@@ -526,7 +526,7 @@ export function RegressionRunner() {
                     ? "text-success"
                     : latestRegression.score >= 40
                       ? "text-warning"
-                      : "text-redpincer"
+                      : "text-destructive"
                 }`}
               >
                 {latestRegression.score}%
@@ -602,7 +602,7 @@ export function RegressionRunner() {
                           ? "border-success/50 text-success"
                           : regRun.score >= 40
                             ? "border-warning/50 text-warning"
-                            : "border-redpincer/50 text-redpincer"
+                            : "border-destructive/50 text-destructive"
                       }
                     >
                       Score: {regRun.score}%

@@ -38,6 +38,7 @@ import {
   Copy,
   Play,
   Check,
+  Lock,
 } from "lucide-react";
 
 type Provider = TargetConfig["provider"];
@@ -437,7 +438,7 @@ export function TargetConfig() {
     <div className="mx-auto max-w-2xl space-y-6 p-6">
       <div>
         <h2 className="flex items-center gap-2 text-2xl font-bold text-foreground">
-          <Settings className="h-6 w-6 text-purple-400" />
+          <Settings className="h-6 w-6 text-primary" />
           Target Configuration
         </h2>
         <p className="mt-1 text-sm text-muted-foreground">
@@ -505,8 +506,9 @@ export function TargetConfig() {
             <Label htmlFor="api-key">API Key</Label>
             {editingId && targets.find((t) => t.id === editingId)?.apiKeyId && !apiKey.trim() && !forceApiKeyInput ? (
               <div className="flex items-center gap-2">
-                <div className="flex-1 rounded-md border border-border bg-background px-3 py-2 font-mono text-sm text-muted-foreground">
-                  🔒 {targets.find((t) => t.id === editingId)?.apiKeyLabel || "Stored securely"}
+                <div className="flex-1 flex items-center gap-1.5 rounded-md border border-border bg-background px-3 py-2 font-mono text-sm text-muted-foreground">
+                  <Lock className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+                  <span>{targets.find((t) => t.id === editingId)?.apiKeyLabel || "Stored securely"}</span>
                 </div>
                 <Button
                   variant="ghost"
@@ -661,7 +663,7 @@ export function TargetConfig() {
             <Button
               onClick={saveTarget}
               disabled={!canSave}
-              className="flex-1 bg-purple-600 font-semibold text-white hover:bg-purple-700"
+              className="flex-1 bg-aegis font-semibold text-white hover:bg-aegis/90"
             >
               <Target className="mr-2 h-4 w-4" />
               {editingId ? "Update Target" : "Save Target"}
@@ -693,9 +695,9 @@ export function TargetConfig() {
                     key={target.id}
                     className={`flex items-center justify-between rounded-lg border p-3.5 transition-colors ${
                       isActive
-                        ? "border-purple-500/60 bg-purple-500/5 ring-1 ring-purple-500/30"
+                        ? "border-primary/60 bg-primary/5 ring-1 ring-primary/30"
                         : editingId === target.id
-                          ? "border-purple-500 bg-purple-500/5"
+                          ? "border-primary bg-primary/5"
                           : "border-border bg-background hover:border-border/80"
                     }`}
                   >
@@ -709,7 +711,7 @@ export function TargetConfig() {
                         <div className="flex items-center gap-2">
                           <p className="text-sm font-semibold text-foreground">{target.name}</p>
                           {isActive && (
-                            <Badge variant="outline" className="border-purple-500/40 bg-purple-500/15 text-purple-300 text-[10px] py-0 px-1.5 font-medium">
+                            <Badge variant="outline" className="border-primary/40 bg-primary/15 text-primary text-[10px] py-0 px-1.5 font-medium">
                               Active
                             </Badge>
                           )}
@@ -739,7 +741,7 @@ export function TargetConfig() {
                           setActiveTarget(target.id);
                           setView("assessments");
                         }}
-                        className="h-7 text-xs px-2.5 gap-1 border-purple-500/40 bg-purple-500/10 text-purple-300 hover:bg-purple-500/20"
+                        className="h-7 text-xs px-2.5 gap-1 border-primary/40 bg-primary/10 text-primary hover:bg-primary/20"
                         title="Start assessment for this target"
                       >
                         <Play className="h-3 w-3" />
@@ -786,10 +788,10 @@ export function TargetConfig() {
       )}
 
       {/* Red Team LLM Config */}
-      <Card className="border-purple-500/30 bg-card">
+      <Card className="border-border bg-card">
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-lg">
-            <Brain className="h-5 w-5 text-purple-400" />
+            <Brain className="h-5 w-5 text-primary" />
             Red Team LLM
           </CardTitle>
           <CardDescription>
@@ -861,8 +863,9 @@ export function TargetConfig() {
                 <Label htmlFor="rt-api-key">API Key</Label>
                 {redTeamConfig?.apiKeyId && !rtApiKey.trim() && !forceRtApiKeyInput ? (
                   <div className="flex items-center gap-2">
-                    <div className="flex-1 rounded-md border border-border bg-background px-3 py-2 font-mono text-sm text-muted-foreground">
-                      🔒 {redTeamConfig?.apiKeyLabel || "Stored securely"}
+                    <div className="flex-1 flex items-center gap-1.5 rounded-md border border-border bg-background px-3 py-2 font-mono text-sm text-muted-foreground">
+                      <Lock className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+                      <span>{redTeamConfig?.apiKeyLabel || "Stored securely"}</span>
                     </div>
                     <Button
                       variant="ghost"
@@ -1014,7 +1017,7 @@ export function TargetConfig() {
                 <Button
                   onClick={saveRedTeam}
                   disabled={!rtCanSave}
-                  className="flex-1 gap-2 bg-purple-600 font-semibold text-white hover:bg-purple-700"
+                  className="flex-1 gap-2 bg-aegis font-semibold text-white hover:bg-aegis/90"
                 >
                   <Brain className="h-4 w-4" />
                   {rtEditing ? "Update Red Team LLM" : "Save Red Team LLM"}

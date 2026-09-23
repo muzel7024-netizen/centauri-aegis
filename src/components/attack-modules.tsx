@@ -31,6 +31,14 @@ import {
   Search,
   X,
   Filter,
+  Terminal,
+  ShieldOff,
+  Database,
+  ShieldAlert,
+  Wrench,
+  GitBranch,
+  Binary,
+  Layers,
 } from "lucide-react";
 
 const CATEGORIES: AttackCategory[] = [
@@ -60,22 +68,37 @@ const CATEGORY_DESCRIPTIONS: Record<AttackCategory, string> = {
     "Tests whether encoding or obfuscation techniques can circumvent content filters by hiding instructions in base64, hex, ROT13, unicode, and more.",
 };
 
-const CATEGORY_ICONS: Record<AttackCategory, string> = {
-  injection: "💉",
-  jailbreak: "🔓",
-  extraction: "🔍",
-  bypass: "🚧",
-  tool_abuse: "🔧",
-  multi_turn: "🔄",
-  encoding: "🔐",
-};
+function CategoryIcon({
+  category,
+  className = "h-4 w-4",
+}: {
+  category: AttackCategory;
+  className?: string;
+}) {
+  switch (category) {
+    case "injection":
+      return <Terminal className={className} />;
+    case "jailbreak":
+      return <ShieldOff className={className} />;
+    case "extraction":
+      return <Database className={className} />;
+    case "bypass":
+      return <ShieldAlert className={className} />;
+    case "tool_abuse":
+      return <Wrench className={className} />;
+    case "multi_turn":
+      return <GitBranch className={className} />;
+    case "encoding":
+      return <Binary className={className} />;
+  }
+}
 
 function severityColor(severity: Severity): string {
   switch (severity) {
     case "critical":
-      return "bg-redpincer/20 text-redpincer border-redpincer/30";
+      return "bg-destructive/20 text-destructive border-destructive/30";
     case "high":
-      return "bg-lobster/20 text-lobster border-lobster/30";
+      return "bg-amber-500/20 text-amber-400 border-amber-500/30";
     case "medium":
       return "bg-warning/20 text-warning border-warning/30";
     case "low":
@@ -272,7 +295,7 @@ export function AttackModules() {
     <div className="mx-auto max-w-3xl space-y-6 p-6">
       <div>
         <h2 className="flex items-center gap-2 text-2xl font-bold text-foreground">
-          <Shield className="h-6 w-6 text-redpincer" />
+          <Shield className="h-6 w-6 text-primary" />
           Attack Modules
         </h2>
         <p className="mt-1 text-sm text-muted-foreground">
@@ -334,7 +357,7 @@ export function AttackModules() {
                 onClick={() => setModelTargetFilter(modelTargetFilter === mt ? null : mt)}
                 className={`rounded-full px-2.5 py-0.5 text-[11px] font-medium border transition-colors ${
                   modelTargetFilter === mt
-                    ? "border-redpincer/50 bg-redpincer/20 text-redpincer"
+                    ? "border-primary/50 bg-primary/20 text-primary"
                     : "border-border text-muted-foreground hover:border-muted-foreground"
                 }`}
               >
@@ -351,7 +374,7 @@ export function AttackModules() {
                 </span>
                 <button
                   onClick={clearFilters}
-                  className="rounded px-2 py-0.5 text-[11px] text-redpincer hover:bg-redpincer/10 transition-colors"
+                  className="rounded px-2 py-0.5 text-[11px] text-destructive hover:bg-destructive/10 transition-colors"
                 >
                   Clear filters
                 </button>
@@ -364,18 +387,20 @@ export function AttackModules() {
       <div className="space-y-3">
         {/* Custom Payloads Section */}
         {filteredCustomPayloads.length > 0 && (
-          <Card className="border-lobster/30 bg-card">
+          <Card className="border-border bg-card">
             <CardHeader
               className="cursor-pointer select-none transition-colors hover:bg-accent/50"
               onClick={() => setCustomExpanded(!customExpanded)}
             >
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                  <span className="text-xl">🧩</span>
+                  <div className="flex h-8 w-8 items-center justify-center rounded-md border border-[#5B8DB8]/30 bg-[#5B8DB8]/10 text-[#5B8DB8] shrink-0">
+                    <Puzzle className="h-4 w-4" />
+                  </div>
                   <div>
                     <CardTitle className="text-base flex items-center gap-2">
                       Custom Payloads
-                      <Badge variant="outline" className="border-lobster/40 text-lobster text-[10px]">
+                      <Badge variant="outline" className="border-primary/40 text-primary text-[10px]">
                         {filteredCustomPayloads.length}
                         {hasActiveFilters && filteredCustomPayloads.length !== customPayloads.length && (
                           <span className="text-muted-foreground">/{customPayloads.length}</span>
@@ -404,7 +429,7 @@ export function AttackModules() {
                     <Checkbox
                       checked={selectedCustomIds.size === filteredCustomPayloads.length && filteredCustomPayloads.length > 0}
                       onCheckedChange={toggleSelectAll}
-                      className="border-muted-foreground data-[state=checked]:border-lobster data-[state=checked]:bg-lobster"
+                      className="border-muted-foreground data-[state=checked]:border-primary data-[state=checked]:bg-primary"
                     />
                     Select all ({filteredCustomPayloads.length})
                   </label>
@@ -412,7 +437,7 @@ export function AttackModules() {
                   {selectedCustomIds.size > 0 && (
                     <Button
                       size="sm"
-                      className="gap-1.5 bg-lobster text-white hover:bg-lobster/90 disabled:opacity-40 h-7 text-xs"
+                      className="gap-1.5 bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-40 h-7 text-xs"
                       disabled={runningCustom || isRunning || !activeTargetId}
                       onClick={runCustomPayloads}
                     >
@@ -432,7 +457,7 @@ export function AttackModules() {
                       <Checkbox
                         checked={selectedCustomIds.has(payload.id)}
                         onCheckedChange={() => toggleCustomSelect(payload.id)}
-                        className="mt-3 border-muted-foreground data-[state=checked]:border-lobster data-[state=checked]:bg-lobster"
+                        className="mt-3 border-muted-foreground data-[state=checked]:border-primary data-[state=checked]:bg-primary"
                       />
                       <div className="flex-1">
                         <PayloadItem
@@ -473,7 +498,9 @@ export function AttackModules() {
               >
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
-                    <span className="text-xl">{CATEGORY_ICONS[cat]}</span>
+                    <div className="flex h-8 w-8 items-center justify-center rounded-md border border-[#5B8DB8]/30 bg-[#5B8DB8]/10 text-[#5B8DB8] shrink-0">
+                      <CategoryIcon category={cat} className="h-4 w-4" />
+                    </div>
                     <div>
                       <CardTitle className="text-base">
                         {CATEGORY_LABELS[cat]}
@@ -485,12 +512,12 @@ export function AttackModules() {
                           <span className="text-muted-foreground"> / {totalInCategory} total</span>
                         )}
                         {criticalCount > 0 && (
-                          <span className="ml-2 text-redpincer">
+                          <span className="ml-2 text-destructive">
                             {criticalCount} critical
                           </span>
                         )}
                         {highCount > 0 && (
-                          <span className="ml-2 text-lobster">
+                          <span className="ml-2 text-warning">
                             {highCount} high
                           </span>
                         )}
@@ -543,7 +570,7 @@ export function AttackModules() {
               </p>
               <button
                 onClick={clearFilters}
-                className="mt-2 text-sm text-redpincer hover:underline"
+                className="mt-2 text-sm text-primary hover:underline"
               >
                 Clear all filters
               </button>

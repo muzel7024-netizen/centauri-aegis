@@ -68,9 +68,9 @@ const SEVERITY_LABELS: Record<Severity, string> = {
 };
 
 const RISK_COLORS: Record<RiskLevel, string> = {
-  critical: "text-redpincer",
-  high: "text-warning",
-  medium: "text-lobster",
+  critical: "text-destructive",
+  high: "text-rose-400",
+  medium: "text-amber-400",
   low: "text-muted-foreground",
   passing: "text-success",
 };
@@ -112,7 +112,7 @@ function SliderControl({
         step={step}
         value={value}
         onChange={(e) => onChange(parseFloat(e.target.value))}
-        className="flex-1 h-2 appearance-none rounded-full bg-muted accent-lobster cursor-pointer"
+        className="flex-1 h-2 appearance-none rounded-full bg-muted accent-primary cursor-pointer"
       />
       <span className="w-12 text-right text-sm font-mono text-muted-foreground">
         {value.toFixed(step < 1 ? 1 : 0)}
@@ -248,7 +248,7 @@ export function ScoringConfig() {
   return (
     <div className="flex flex-col gap-6 p-6">
       <div className="flex items-center gap-3">
-        <Calculator className="h-6 w-6 text-lobster" />
+        <Calculator className="h-6 w-6 text-primary" />
         <h2 className="text-2xl font-bold text-foreground">Custom Scoring Rubric</h2>
       </div>
 
@@ -450,9 +450,9 @@ export function ScoringConfig() {
         {/* Right: Preview & Saved */}
         <div className="flex flex-col gap-4">
           {/* Score Preview */}
-          <Card className="border-lobster/30 bg-card sticky top-6">
+          <Card className="border-border bg-card sticky top-6">
             <CardHeader className="pb-3">
-              <CardTitle className="flex items-center gap-2 text-sm font-semibold uppercase tracking-wider text-lobster">
+              <CardTitle className="flex items-center gap-2 text-sm font-semibold uppercase tracking-wider text-primary">
                 <Award className="h-4 w-4" />
                 Score Preview
               </CardTitle>
@@ -475,10 +475,10 @@ export function ScoringConfig() {
                         previewScore.grade.startsWith("A")
                           ? "border-success text-success"
                           : previewScore.grade.startsWith("B")
-                            ? "border-lobster text-lobster"
+                            ? "border-primary text-primary"
                             : previewScore.grade.startsWith("C")
                               ? "border-warning text-warning"
-                              : "border-redpincer text-redpincer"
+                              : "border-destructive text-destructive"
                       }`}
                     >
                       <p className="text-3xl font-bold">{previewScore.grade}</p>
@@ -496,7 +496,7 @@ export function ScoringConfig() {
                   {/* Stats */}
                   <div className="grid grid-cols-2 gap-2 text-center text-sm">
                     <div className="rounded border border-border p-2">
-                      <p className="text-lg font-bold text-redpincer">{previewScore.breachCount}</p>
+                      <p className="text-lg font-bold text-destructive">{previewScore.breachCount}</p>
                       <p className="text-xs text-muted-foreground">Breached</p>
                     </div>
                     <div className="rounded border border-border p-2">
@@ -524,7 +524,7 @@ export function ScoringConfig() {
                               width: `${cs.percentage}%`,
                               backgroundColor:
                                 cs.percentage > 60
-                                  ? "hsl(var(--redpincer))"
+                                  ? "hsl(var(--destructive))"
                                   : cs.percentage > 30
                                     ? "hsl(var(--warning))"
                                     : "hsl(var(--success))",
@@ -583,7 +583,7 @@ export function ScoringConfig() {
                         <Button
                           variant="ghost"
                           size="sm"
-                          className="h-7 w-7 p-0 text-muted-foreground hover:text-redpincer"
+                          className="h-7 w-7 p-0 text-muted-foreground hover:text-destructive"
                           onClick={() => handleDelete(r.name)}
                         >
                           <Trash2 className="h-3.5 w-3.5" />

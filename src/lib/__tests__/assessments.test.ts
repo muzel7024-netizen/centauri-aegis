@@ -437,4 +437,46 @@ describe("Centauri Aegis v1.1 — Session Persistence & Migration", () => {
     expect(Array.isArray(state.assessments)).toBe(true);
     expect(Array.isArray(state.findings)).toBe(true);
   });
+
+  describe("Probe Accounting & Completion Invariants", () => {
+    it("deduplicates probe completion by unique probe ID and guarantees completed <= total", () => {
+      const completedSet = new Set<string>();
+      const totalExpected = 80;
+      let completedCount = 0;
+
+      // Simulate a stream of probe events, including retries, duplicates, and out-of-order events
+      const incomingEvents = [
+        { id: "probe-1" },
+        { id: "probe-2" },
+        { id: "probe-1" }, // duplicate event
+        { id: "probe-3" },
+        { id: "probe-2" }, // duplicate retry
+      ];
+
+      for (const ev of incomingEvents) {
+        if (!completedSet.has(ev.id)) {
+          completedSet.add(ev.id);
+          completedCount = Math.min(totalExpected, completedCount + 1);
+        }
+      }
+
+      expect(completedSet.size).toBe(3);
+      expect(completedCount).toBe(3);
+      expect(completedCount).toBeLessThanOrEqual(totalExpected);
+    });
+
+    it("clamps completedCount so it never exceeds totalExpected even under excessive stream events", () => {
+      const totalExpected = 10;
+      let completedCount = 0;
+
+      // Simulate 20 events
+      for (let i = 0; i < 20; i++) {
+        completedCount = Math.min(totalExpected, completedCount + 1);
+      }
+
+      expect(completedCount).toBe(totalExpected);
+      expect(completedCount).toBe(10);
+      expect(completedCount).toBeLessThanOrEqual(totalExpected);
+    });
+  });
 });

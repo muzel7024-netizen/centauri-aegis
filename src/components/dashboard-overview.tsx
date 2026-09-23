@@ -66,13 +66,13 @@ export function DashboardOverview() {
       {/* Top Banner */}
       <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between border-b border-border/60 pb-6">
         <div className="flex items-center gap-4">
-          <CentauriAegisLogo size={48} className="drop-shadow-[0_0_15px_rgba(157,78,221,0.3)]" />
+          <CentauriAegisLogo size={48} className="drop-shadow-[0_0_15px_rgba(91,141,184,0.3)]" />
           <div>
             <div className="flex items-center gap-3">
               <h1 className="text-2xl font-bold tracking-tight text-foreground font-mono">
                 CENTAURI <span className="text-aegis">AEGIS</span>
               </h1>
-              <Badge variant="outline" className="border-purple-500/30 bg-purple-500/10 text-purple-400 font-mono text-xs">
+              <Badge variant="outline" className="border-[#5B8DB8]/30 bg-[#5B8DB8]/10 text-[#5B8DB8] font-mono text-xs">
                 v1.0.0-PRO
               </Badge>
               <span className="flex items-center gap-1.5 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-2.5 py-0.5 text-xs font-medium text-emerald-400">
@@ -93,7 +93,7 @@ export function DashboardOverview() {
             onClick={() => setView("config")}
             className="border-border hover:bg-card gap-2 text-xs"
           >
-            <Target className="h-3.5 w-3.5 text-purple-400" />
+            <Target className="h-3.5 w-3.5 text-[#5B8DB8]" />
             Manage Targets
           </Button>
           <Button
@@ -113,7 +113,7 @@ export function DashboardOverview() {
           <Button
             size="sm"
             onClick={() => setView("assessments")}
-            className="bg-aegis hover:bg-aegis/90 text-white gap-2 text-xs shadow-md shadow-purple-950/40"
+            className="bg-aegis hover:bg-aegis/90 text-white gap-2 text-xs shadow-md shadow-black/40"
           >
             <Shield className="h-3.5 w-3.5" />
             Assessments
@@ -128,12 +128,12 @@ export function DashboardOverview() {
 
       {/* Primary KPI Deck */}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <Card className="border-border/60 bg-card/60 backdrop-blur-sm cursor-pointer hover:border-purple-500/40 transition-colors" onClick={() => setView("config")}>
+        <Card className="border-border/60 bg-card/60 backdrop-blur-sm cursor-pointer hover:border-[#5B8DB8]/40 transition-colors" onClick={() => setView("config")}>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
               Active Target
             </CardTitle>
-            <Target className="h-4 w-4 text-purple-400" />
+            <Target className="h-4 w-4 text-[#5B8DB8]" />
           </CardHeader>
           <CardContent>
             <div className="text-xl font-bold truncate text-foreground">
@@ -147,18 +147,18 @@ export function DashboardOverview() {
           </CardContent>
         </Card>
 
-        <Card className="border-border/60 bg-card/60 backdrop-blur-sm cursor-pointer hover:border-purple-500/40 transition-colors" onClick={() => setView("assessments")}>
+        <Card className="border-border/60 bg-card/60 backdrop-blur-sm cursor-pointer hover:border-[#5B8DB8]/40 transition-colors" onClick={() => setView("assessments")}>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
               Assessments
             </CardTitle>
-            <Shield className="h-4 w-4 text-purple-400" />
+            <Shield className="h-4 w-4 text-[#5B8DB8]" />
           </CardHeader>
           <CardContent>
             <div className="text-xl font-bold font-mono text-foreground flex items-baseline gap-2">
               {assessments.length}
               {activeAssessmentsCount > 0 && (
-                <span className="text-xs font-sans text-purple-400 font-normal">
+                <span className="text-xs font-sans text-[#5B8DB8] font-normal">
                   ({activeAssessmentsCount} active)
                 </span>
               )}
@@ -199,10 +199,10 @@ export function DashboardOverview() {
             <CardTitle className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
               Global Breach Rate
             </CardTitle>
-            <BarChart3 className="h-4 w-4 text-purple-400" />
+            <BarChart3 className="h-4 w-4 text-primary" />
           </CardHeader>
           <CardContent>
-            <div className="text-xl font-bold font-mono text-purple-400">
+            <div className="text-xl font-bold font-mono text-primary">
               {overallBreachRate}%
             </div>
             <p className="text-xs text-muted-foreground mt-1">
@@ -216,7 +216,7 @@ export function DashboardOverview() {
       <Card className="border-border/60 bg-card/40">
         <CardContent className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 p-5">
           <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-purple-500/20 bg-purple-500/10 text-purple-400">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-primary/25 bg-primary/10 text-primary">
               <Shield className="h-5 w-5" />
             </div>
             <div>
@@ -272,24 +272,24 @@ export function DashboardOverview() {
       {/* Quick Launch Grid */}
       <div>
         <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground mb-3 flex items-center gap-2">
-          <Layers className="h-4 w-4 text-purple-400" />
+          <Layers className="h-4 w-4 text-primary" />
           Testing & Research Workflows
         </h2>
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
           <Card
             onClick={() => setView("assessments")}
-            className="group cursor-pointer border-border/60 bg-card/60 transition-all hover:border-purple-500/40 hover:bg-card/90"
+            className="group cursor-pointer border-border/60 bg-card/60 transition-all hover:border-primary/40 hover:bg-card/90"
           >
             <CardHeader className="pb-2">
               <div className="flex items-center justify-between">
-                <div className="flex h-9 w-9 items-center justify-center rounded-md border border-purple-500/20 bg-purple-500/10 text-purple-400">
+                <div className="flex h-9 w-9 items-center justify-center rounded-md border border-primary/25 bg-primary/10 text-primary">
                   <Shield className="h-4 w-4" />
                 </div>
-                <ArrowRight className="h-4 w-4 text-muted-foreground transition-transform group-hover:translate-x-1 group-hover:text-purple-400" />
+                <ArrowRight className="h-4 w-4 text-muted-foreground transition-transform group-hover:translate-x-1 group-hover:text-primary" />
               </div>
               <CardTitle className="text-base font-semibold mt-3 flex items-center justify-between">
                 <span>Assessments</span>
-                <Badge variant="outline" className="text-[10px] border-purple-500/30 text-purple-400">
+                <Badge variant="outline" className="text-[10px] border-primary/30 text-primary">
                   Workspace
                 </Badge>
               </CardTitle>
@@ -324,14 +324,14 @@ export function DashboardOverview() {
 
           <Card
             onClick={() => setView("attacks")}
-            className="group cursor-pointer border-border/60 bg-card/60 transition-all hover:border-purple-500/40 hover:bg-card/90"
+            className="group cursor-pointer border-border/60 bg-card/60 transition-all hover:border-primary/40 hover:bg-card/90"
           >
             <CardHeader className="pb-2">
               <div className="flex items-center justify-between">
-                <div className="flex h-9 w-9 items-center justify-center rounded-md border border-purple-500/20 bg-purple-500/10 text-purple-400">
+                <div className="flex h-9 w-9 items-center justify-center rounded-md border border-primary/25 bg-primary/10 text-primary">
                   <Play className="h-4 w-4" />
                 </div>
-                <ArrowRight className="h-4 w-4 text-muted-foreground transition-transform group-hover:translate-x-1 group-hover:text-purple-400" />
+                <ArrowRight className="h-4 w-4 text-muted-foreground transition-transform group-hover:translate-x-1 group-hover:text-primary" />
               </div>
               <CardTitle className="text-base font-semibold mt-3">
                 Attack Modules
@@ -344,14 +344,14 @@ export function DashboardOverview() {
 
           <Card
             onClick={() => setView("chains")}
-            className="group cursor-pointer border-border/60 bg-card/60 transition-all hover:border-purple-500/40 hover:bg-card/90"
+            className="group cursor-pointer border-border/60 bg-card/60 transition-all hover:border-primary/40 hover:bg-card/90"
           >
             <CardHeader className="pb-2">
               <div className="flex items-center justify-between">
-                <div className="flex h-9 w-9 items-center justify-center rounded-md border border-purple-500/20 bg-purple-500/10 text-purple-400">
+                <div className="flex h-9 w-9 items-center justify-center rounded-md border border-primary/25 bg-primary/10 text-primary">
                   <Link2 className="h-4 w-4" />
                 </div>
-                <ArrowRight className="h-4 w-4 text-muted-foreground transition-transform group-hover:translate-x-1 group-hover:text-purple-400" />
+                <ArrowRight className="h-4 w-4 text-muted-foreground transition-transform group-hover:translate-x-1 group-hover:text-primary" />
               </div>
               <CardTitle className="text-base font-semibold mt-3">
                 Attack Chains
@@ -364,14 +364,14 @@ export function DashboardOverview() {
 
           <Card
             onClick={() => setView("evolve")}
-            className="group cursor-pointer border-border/60 bg-card/60 transition-all hover:border-purple-500/40 hover:bg-card/90"
+            className="group cursor-pointer border-border/60 bg-card/60 transition-all hover:border-primary/40 hover:bg-card/90"
           >
             <CardHeader className="pb-2">
               <div className="flex items-center justify-between">
-                <div className="flex h-9 w-9 items-center justify-center rounded-md border border-purple-500/20 bg-purple-500/10 text-purple-400">
+                <div className="flex h-9 w-9 items-center justify-center rounded-md border border-primary/25 bg-primary/10 text-primary">
                   <Sparkles className="h-4 w-4" />
                 </div>
-                <ArrowRight className="h-4 w-4 text-muted-foreground transition-transform group-hover:translate-x-1 group-hover:text-purple-400" />
+                <ArrowRight className="h-4 w-4 text-muted-foreground transition-transform group-hover:translate-x-1 group-hover:text-primary" />
               </div>
               <CardTitle className="text-base font-semibold mt-3">
                 Evolve Engine
@@ -384,14 +384,14 @@ export function DashboardOverview() {
 
           <Card
             onClick={() => setView("reports")}
-            className="group cursor-pointer border-border/60 bg-card/60 transition-all hover:border-purple-500/40 hover:bg-card/90"
+            className="group cursor-pointer border-border/60 bg-card/60 transition-all hover:border-primary/40 hover:bg-card/90"
           >
             <CardHeader className="pb-2">
               <div className="flex items-center justify-between">
-                <div className="flex h-9 w-9 items-center justify-center rounded-md border border-purple-500/20 bg-purple-500/10 text-purple-400">
+                <div className="flex h-9 w-9 items-center justify-center rounded-md border border-primary/25 bg-primary/10 text-primary">
                   <FileText className="h-4 w-4" />
                 </div>
-                <ArrowRight className="h-4 w-4 text-muted-foreground transition-transform group-hover:translate-x-1 group-hover:text-purple-400" />
+                <ArrowRight className="h-4 w-4 text-muted-foreground transition-transform group-hover:translate-x-1 group-hover:text-primary" />
               </div>
               <CardTitle className="text-base font-semibold mt-3">
                 Executive Reports
@@ -418,7 +418,7 @@ export function DashboardOverview() {
               variant="ghost"
               size="sm"
               onClick={() => setView("results")}
-              className="text-xs gap-1 text-purple-400 hover:text-purple-300"
+              className="text-xs gap-1 text-primary hover:text-primary/80"
             >
               View Full Results
               <ExternalLink className="h-3 w-3" />
@@ -489,7 +489,7 @@ export function DashboardOverview() {
                                 ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-400"
                                 : r.status === "cancelled"
                                 ? "border-amber-500/30 bg-amber-500/10 text-amber-400"
-                                : "border-purple-500/30 bg-purple-500/10 text-purple-400"
+                                : "border-primary/30 bg-primary/10 text-primary"
                             }`}
                           >
                             {r.status}
@@ -507,7 +507,7 @@ export function DashboardOverview() {
                           <Button
                             variant="ghost"
                             size="sm"
-                            className="h-7 text-xs text-purple-400 hover:text-purple-300"
+                            className="h-7 text-xs text-primary hover:text-primary/80"
                             onClick={() => {
                               setActiveRun(r.id);
                               setView("results");

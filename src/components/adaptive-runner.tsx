@@ -180,7 +180,7 @@ export function AdaptiveRunner() {
   };
 
   const confidenceColor = (c: number) => {
-    if (c >= 0.8) return "text-redpincer";
+    if (c >= 0.8) return "text-destructive";
     if (c >= 0.5) return "text-warning";
     return "text-muted-foreground";
   };
@@ -188,7 +188,7 @@ export function AdaptiveRunner() {
   return (
     <div className="flex flex-col gap-6 p-6">
       <div className="flex items-center gap-3">
-        <Brain className="h-6 w-6 text-lobster" />
+        <Brain className="h-6 w-6 text-primary" />
         <h2 className="text-2xl font-bold text-foreground">Adaptive Attack Engine</h2>
       </div>
 
@@ -213,7 +213,7 @@ export function AdaptiveRunner() {
                     key={run.id}
                     onClick={() => setSelectedRunId(run.id)}
                     className={`flex items-center gap-3 rounded-md px-3 py-2 text-left text-sm transition-colors hover:bg-muted ${
-                      selectedRunId === run.id ? "bg-muted ring-1 ring-lobster" : ""
+                      selectedRunId === run.id ? "bg-muted ring-1 ring-primary" : ""
                     }`}
                   >
                     <Target className="h-4 w-4 text-muted-foreground" />
@@ -227,7 +227,7 @@ export function AdaptiveRunner() {
                       variant="outline"
                       className={
                         breached > 0
-                          ? "border-redpincer/50 text-redpincer"
+                          ? "border-destructive/50 text-destructive"
                           : "border-success/50 text-success"
                       }
                     >
@@ -250,7 +250,7 @@ export function AdaptiveRunner() {
             <Card className="border-border bg-card">
               <CardContent className="pt-4">
                 <div className="flex items-center gap-3 mb-3">
-                  <BarChart3 className="h-5 w-5 text-lobster" />
+                  <BarChart3 className="h-5 w-5 text-primary" />
                   <p className="text-sm font-semibold text-muted-foreground">Overall Breach Rate</p>
                 </div>
                 <p className="text-4xl font-bold text-foreground">
@@ -263,11 +263,11 @@ export function AdaptiveRunner() {
             </Card>
 
             {/* Weakest Category */}
-            <Card className="border-redpincer/30 bg-card">
+            <Card className="border-destructive/30 bg-card">
               <CardContent className="pt-4">
                 <div className="flex items-center gap-3 mb-3">
-                  <ShieldAlert className="h-5 w-5 text-redpincer" />
-                  <p className="text-sm font-semibold text-redpincer">Weakest Category</p>
+                  <ShieldAlert className="h-5 w-5 text-destructive" />
+                  <p className="text-sm font-semibold text-destructive">Weakest Category</p>
                 </div>
                 <p className="text-2xl font-bold text-foreground">
                   {profile.weakestCategory
@@ -330,7 +330,7 @@ export function AdaptiveRunner() {
                         variant="outline"
                         className={
                           cw.successRate >= 0.5
-                            ? "border-redpincer/50 text-redpincer"
+                            ? "border-destructive/50 text-destructive"
                             : cw.successRate >= 0.2
                               ? "border-warning/50 text-warning"
                               : "border-success/50 text-success"
@@ -411,17 +411,17 @@ export function AdaptiveRunner() {
 
           {/* Follow-up Plan */}
           {plan && (
-            <Card className="border-lobster/30 bg-card">
+            <Card className="border-border bg-card">
               <CardHeader className="pb-3">
                 <div className="flex items-center justify-between">
-                  <CardTitle className="flex items-center gap-2 text-sm font-semibold uppercase tracking-wider text-lobster">
+                  <CardTitle className="flex items-center gap-2 text-sm font-semibold uppercase tracking-wider text-primary">
                     <TrendingUp className="h-4 w-4" />
                     Adaptive Follow-up Plan
                   </CardTitle>
                   <Button
                     size="sm"
                     variant="outline"
-                    className="gap-1.5 border-lobster/40 text-lobster hover:bg-lobster/10 text-xs"
+                    className="gap-1.5 border-primary/40 text-primary hover:bg-primary/10 text-xs"
                     disabled={generatingAiPlan || running || isRunning || !redTeamConfig}
                     onClick={generateAiPlan}
                     title={!redTeamConfig ? "Configure a Red Team LLM to use AI features" : undefined}
@@ -447,7 +447,7 @@ export function AdaptiveRunner() {
                 </div>
 
                 {aiPlanError && (
-                  <p className="mb-3 rounded border border-redpincer/30 bg-redpincer/5 px-3 py-2 text-xs text-redpincer">
+                  <p className="mb-3 rounded border border-destructive/30 bg-destructive/5 px-3 py-2 text-xs text-destructive">
                     AI plan generation failed: {aiPlanError}
                   </p>
                 )}
@@ -456,17 +456,17 @@ export function AdaptiveRunner() {
                 {aiPlan && (
                   <div className="mb-4">
                     <div className="mb-2 flex items-center gap-2">
-                      <Sparkles className="h-3.5 w-3.5 text-lobster" />
-                      <span className="text-xs font-semibold uppercase tracking-wider text-lobster">
+                      <Sparkles className="h-3.5 w-3.5 text-primary" />
+                      <span className="text-xs font-semibold uppercase tracking-wider text-primary">
                         AI-Generated Plan ({aiPlan.length} attacks)
                       </span>
                     </div>
                     <ScrollArea className="max-h-[240px]">
                       <div className="flex flex-col gap-2">
                         {aiPlan.map((attack, i) => (
-                          <div key={i} className="rounded border border-lobster/20 bg-lobster/5 p-2 text-sm">
+                          <div key={i} className="rounded border border-primary/20 bg-primary/5 p-2 text-sm">
                             <div className="flex items-center gap-2">
-                              <Sparkles className="h-3.5 w-3.5 text-lobster" />
+                              <Sparkles className="h-3.5 w-3.5 text-primary" />
                               <span className="font-medium text-foreground">{attack.name}</span>
                               <Badge variant="outline" className="text-xs">
                                 {CATEGORY_LABELS[attack.category]}
@@ -475,7 +475,7 @@ export function AdaptiveRunner() {
                                 variant="outline"
                                 className={`text-xs ${
                                   attack.severity === "critical"
-                                    ? "border-redpincer/50 text-redpincer"
+                                    ? "border-destructive/50 text-destructive"
                                     : attack.severity === "high"
                                       ? "border-warning/50 text-warning"
                                       : "text-muted-foreground"
@@ -490,7 +490,7 @@ export function AdaptiveRunner() {
                       </div>
                     </ScrollArea>
                     <Button
-                      className="mt-3 w-full gap-2 bg-lobster font-semibold text-white hover:bg-lobster/90 disabled:opacity-40"
+                      className="mt-3 w-full gap-2 bg-primary font-semibold text-primary-foreground hover:bg-primary/90 disabled:opacity-40"
                       disabled={running || isRunning}
                       onClick={() => runFollowUp(aiPlan)}
                     >
@@ -521,7 +521,7 @@ export function AdaptiveRunner() {
                       {plan.attacks.map((attack, i) => (
                         <div key={i} className="rounded border border-border p-2 text-sm">
                           <div className="flex items-center gap-2">
-                            <Zap className="h-3.5 w-3.5 text-lobster" />
+                            <Zap className="h-3.5 w-3.5 text-primary" />
                             <span className="font-medium text-foreground">{attack.name}</span>
                             <Badge variant="outline" className="text-xs">
                               {CATEGORY_LABELS[attack.category]}
@@ -530,7 +530,7 @@ export function AdaptiveRunner() {
                               variant="outline"
                               className={`text-xs ${
                                 attack.severity === "critical"
-                                  ? "border-redpincer/50 text-redpincer"
+                                  ? "border-destructive/50 text-destructive"
                                   : attack.severity === "high"
                                     ? "border-warning/50 text-warning"
                                     : "text-muted-foreground"
@@ -547,7 +547,7 @@ export function AdaptiveRunner() {
 
                   {!aiPlan && (
                     <Button
-                      className="mt-4 w-full gap-2 bg-lobster font-semibold text-white hover:bg-lobster/90 disabled:opacity-40"
+                      className="mt-4 w-full gap-2 bg-primary font-semibold text-primary-foreground hover:bg-primary/90 disabled:opacity-40"
                       disabled={running || isRunning}
                       onClick={() => runFollowUp()}
                     >
@@ -589,7 +589,7 @@ export function AdaptiveRunner() {
                   </div>
                   <div className="rounded-lg border border-border p-3 text-center">
                     <p className="text-xs font-semibold uppercase text-muted-foreground">Follow-up</p>
-                    <p className="text-2xl font-bold text-redpincer">
+                    <p className="text-2xl font-bold text-destructive">
                       {Math.round(
                         (followUpResults.filter((r) => r.success).length /
                           followUpResults.length) *
@@ -607,7 +607,7 @@ export function AdaptiveRunner() {
                       className="flex items-center gap-2 rounded px-2 py-1 text-sm hover:bg-muted/30"
                     >
                       {result.success ? (
-                        <ShieldAlert className="h-3.5 w-3.5 text-redpincer" />
+                        <ShieldAlert className="h-3.5 w-3.5 text-destructive" />
                       ) : (
                         <ShieldCheck className="h-3.5 w-3.5 text-success" />
                       )}
@@ -616,7 +616,7 @@ export function AdaptiveRunner() {
                         variant="outline"
                         className={
                           result.success
-                            ? "border-redpincer/50 text-redpincer"
+                            ? "border-destructive/50 text-destructive"
                             : "border-success/50 text-success"
                         }
                       >

@@ -872,7 +872,7 @@ export function ReportGenerator() {
   if (!activeRun) {
     return (
       <div className="flex h-full flex-col items-center justify-center gap-4 p-6 text-muted-foreground">
-        <FileText className="h-16 w-16 opacity-30 text-purple-400" />
+        <FileText className="h-16 w-16 opacity-30 text-primary" />
         <p className="text-lg">No runs available</p>
         <p className="text-sm">
           Complete an assessment run to generate a report.
@@ -892,7 +892,7 @@ export function ReportGenerator() {
       {/* Header */}
       <div>
         <h2 className="flex items-center gap-2 text-2xl font-bold text-foreground">
-          <FileText className="h-6 w-6 text-purple-400" />
+          <FileText className="h-6 w-6 text-primary" />
           Executive Report Generator
         </h2>
         <p className="mt-1 text-sm text-muted-foreground">
@@ -907,7 +907,7 @@ export function ReportGenerator() {
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
               <div>
                 <CardTitle className="text-sm font-semibold flex items-center gap-2">
-                  <Shield className="h-4 w-4 text-purple-400" />
+                  <Shield className="h-4 w-4 text-primary" />
                   Assessment Context Filter
                 </CardTitle>
                 <CardDescription className="text-xs">
@@ -917,7 +917,7 @@ export function ReportGenerator() {
               <select
                 value={selectedAssessmentId}
                 onChange={(e) => setSelectedAssessmentId(e.target.value)}
-                className="bg-background border border-border rounded px-3 py-1.5 text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-purple-500 font-mono"
+                className="bg-background border border-border rounded px-3 py-1.5 text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-primary font-mono"
               >
                 <option value="all">Latest Test Run (All Results)</option>
                 {assessments.map((a) => (
@@ -962,7 +962,7 @@ export function ReportGenerator() {
               <p className="text-xs text-muted-foreground">Breached</p>
             </div>
             <div className="text-center">
-              <p className="text-2xl font-bold font-mono text-purple-400">
+              <p className="text-2xl font-bold font-mono text-primary">
                 {criticalFindings}
               </p>
               <p className="text-xs text-muted-foreground">Critical Vulnerabilities</p>
@@ -995,7 +995,7 @@ export function ReportGenerator() {
             onClick={generateAiSummary}
             disabled={generatingSummary || !redTeamConfig}
             title={!redTeamConfig ? "Configure a Red Team LLM to use AI features" : undefined}
-            className="gap-2 border-purple-500/40 text-purple-400 hover:bg-purple-500/10"
+            className="gap-2 border-primary/40 text-primary hover:bg-primary/10"
           >
             {generatingSummary ? (
               <Loader2 className="h-4 w-4 animate-spin" />
@@ -1020,7 +1020,7 @@ export function ReportGenerator() {
             <Button
               variant="outline"
               onClick={downloadReport}
-              className="gap-2 border-purple-500/40 text-purple-300 hover:bg-purple-500/10"
+              className="gap-2 border-primary/40 text-primary hover:bg-primary/10"
             >
               <Download className="h-4 w-4" />
               Download .md
@@ -1052,7 +1052,7 @@ export function ReportGenerator() {
             <Button
               variant="outline"
               onClick={downloadSARIF}
-              className="gap-2 border-purple-500/40 text-purple-400 hover:bg-purple-500/10"
+              className="gap-2 border-primary/40 text-primary hover:bg-primary/10"
             >
               <ShieldCheck className="h-4 w-4" />
               Export SARIF
@@ -1063,10 +1063,10 @@ export function ReportGenerator() {
 
       {/* AI Summary */}
       {aiSummary && (
-        <Card className="border-purple-500/30 bg-card">
+        <Card className="border-border bg-card">
           <CardHeader className="pb-2">
             <CardTitle className="flex items-center gap-2 text-sm font-semibold">
-              <Sparkles className="h-4 w-4 text-purple-400" />
+              <Sparkles className="h-4 w-4 text-primary" />
               AI Executive Summary
             </CardTitle>
           </CardHeader>
@@ -1083,7 +1083,7 @@ export function ReportGenerator() {
         <Card className="border-border bg-card">
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-sm font-medium">
-              <FileText className="h-4 w-4 text-purple-400" />
+              <FileText className="h-4 w-4 text-primary" />
               Report Preview
             </CardTitle>
           </CardHeader>
@@ -1123,7 +1123,7 @@ export function ReportGenerator() {
                     }}
                     className={`flex w-full items-center justify-between rounded-lg border p-3 text-left transition-colors hover:bg-accent/50 ${
                       isActive
-                        ? "border-purple-500/50 bg-accent/30"
+                        ? "border-primary/50 bg-accent/30"
                         : "border-border bg-background"
                     }`}
                   >

@@ -1,10 +1,14 @@
 # Third-Party Notices & Upstream Attribution
 
-Centauri Aegis incorporates open-source software and builds upon prior open-source work. This document records upstream attribution and licenses in compliance with respective terms.
+- **Current Product**: Centauri Aegis — AI Security Testing & Research
+- **Developer**: rudrakshp20-hue (@NeelaBillota)
+- **License**: MIT License ([LICENSE](LICENSE))
+
+Centauri Aegis incorporates open-source software and builds upon prior open-source work. This document records upstream attribution and third-party licenses in compliance with their respective terms.
 
 ---
 
-## Upstream Project: Pincer / RedPincer
+## Historical Upstream Component: Pincer / RedPincer
 
 * **Original Author**: rustyorb
 * **Original Repository**: https://github.com/rustyorb/pincer

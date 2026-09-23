@@ -93,9 +93,9 @@ const CLASSIFICATION_RANK: Record<AnalysisClassification, number> = {
 function severityBadgeClass(severity: Severity): string {
   switch (severity) {
     case "critical":
-      return "bg-redpincer/20 text-redpincer border-redpincer/30";
+      return "bg-destructive/20 text-destructive border-destructive/30";
     case "high":
-      return "bg-lobster/20 text-lobster border-lobster/30";
+      return "bg-amber-500/20 text-amber-400 border-amber-500/30";
     case "medium":
       return "bg-warning/20 text-warning border-warning/30";
     case "low":
@@ -106,13 +106,13 @@ function severityBadgeClass(severity: Severity): string {
 function categoryBadgeClass(category: AttackCategory): string {
   switch (category) {
     case "injection":
-      return "bg-purple-500/20 text-purple-400 border-purple-500/30";
+      return "bg-primary/20 text-primary border-primary/30";
     case "jailbreak":
-      return "bg-redpincer/20 text-redpincer border-redpincer/30";
+      return "bg-destructive/20 text-destructive border-destructive/30";
     case "extraction":
       return "bg-blue-500/20 text-blue-400 border-blue-500/30";
     case "bypass":
-      return "bg-lobster/20 text-lobster border-lobster/30";
+      return "bg-amber-500/20 text-amber-400 border-amber-500/30";
     case "tool_abuse":
       return "bg-amber-500/20 text-amber-400 border-amber-500/30";
     case "multi_turn":
@@ -131,9 +131,9 @@ function classificationBadgeClass(classification: AnalysisClassification): strin
     case "partial_compliance":
       return "bg-warning/20 text-warning border-warning/30";
     case "full_jailbreak":
-      return "bg-redpincer/20 text-redpincer border-redpincer/30";
+      return "bg-destructive/20 text-destructive border-destructive/30";
     case "information_leakage":
-      return "bg-lobster/20 text-lobster border-lobster/30";
+      return "bg-amber-500/20 text-amber-400 border-amber-500/30";
     case "error":
       return "bg-muted/20 text-muted-foreground border-border";
   }
@@ -158,8 +158,8 @@ function severityScoreColor(score: number): string {
   if (score <= 2) return "[&>div]:bg-success";
   if (score <= 4) return "[&>div]:bg-blue-500";
   if (score <= 6) return "[&>div]:bg-warning";
-  if (score <= 8) return "[&>div]:bg-lobster";
-  return "[&>div]:bg-redpincer";
+  if (score <= 8) return "[&>div]:bg-amber-500";
+  return "[&>div]:bg-destructive";
 }
 
 function statusIcon(result: AttackResult) {
@@ -167,7 +167,7 @@ function statusIcon(result: AttackResult) {
     return <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />;
   }
   if (result.success) {
-    return <AlertTriangle className="h-4 w-4 text-redpincer" />;
+    return <AlertTriangle className="h-4 w-4 text-destructive" />;
   }
   return <CheckCircle className="h-4 w-4 text-success" />;
 }
@@ -645,7 +645,7 @@ export function ResultsDashboard() {
       <div className="flex items-start justify-between gap-4">
         <div>
           <h2 className="flex items-center gap-2 text-2xl font-bold text-foreground">
-            <BarChart3 className="h-6 w-6 text-redpincer" />
+            <BarChart3 className="h-6 w-6 text-primary" />
             Results Dashboard
           </h2>
           <p className="mt-1 text-sm text-muted-foreground">
@@ -722,12 +722,12 @@ export function ResultsDashboard() {
           </CardContent>
         </Card>
 
-        <Card className="border-redpincer/30 bg-card">
+        <Card className="border-destructive/30 bg-card">
           <CardContent className="p-4">
-            <p className="text-xs font-medium uppercase tracking-wider text-redpincer">
+            <p className="text-xs font-medium uppercase tracking-wider text-destructive">
               Successful (Vulnerable)
             </p>
-            <p className="mt-1 text-3xl font-bold text-redpincer">
+            <p className="mt-1 text-3xl font-bold text-destructive">
               {successfulAttacks}
             </p>
             <p className="text-xs text-muted-foreground">{successRate}%</p>
@@ -779,7 +779,7 @@ export function ResultsDashboard() {
                 </div>
                 <Progress
                   value={stat.rate}
-                  className="h-2 bg-secondary [&>div]:bg-redpincer"
+                  className="h-2 bg-secondary [&>div]:bg-destructive"
                 />
               </div>
             ))}
@@ -981,7 +981,7 @@ export function ResultsDashboard() {
                 key={result.id}
                 className={`rounded-lg border bg-card transition-colors ${
                   result.success
-                    ? "border-l-2 border-l-redpincer border-t-border border-r-border border-b-border"
+                    ? "border-l-2 border-l-destructive border-t-border border-r-border border-b-border"
                     : "border-l-2 border-l-success border-t-border border-r-border border-b-border"
                 }`}
               >
@@ -1013,7 +1013,7 @@ export function ResultsDashboard() {
 
                   <span
                     className={`text-xs font-medium ${
-                      result.success ? "text-redpincer" : "text-success"
+                      result.success ? "text-destructive" : "text-success"
                     }`}
                   >
                     {result.success ? "BREACHED" : "BLOCKED"}
@@ -1036,7 +1036,7 @@ export function ResultsDashboard() {
                       <p className="mb-1 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
                         Prompt Sent
                       </p>
-                      <pre className="rounded border border-border bg-sidebar p-2 font-mono text-xs text-muted-foreground whitespace-pre-wrap">
+                      <pre className="rounded border border-border bg-sidebar p-2.5 font-mono text-xs text-muted-foreground whitespace-pre-wrap break-words break-all max-h-60 overflow-y-auto overflow-x-hidden min-w-0 max-w-full">
                         {result.prompt}
                       </pre>
                     </div>
@@ -1044,7 +1044,7 @@ export function ResultsDashboard() {
                       <p className="mb-1 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
                         Response
                       </p>
-                      <pre className="rounded border border-border bg-sidebar p-2 font-mono text-xs text-muted-foreground whitespace-pre-wrap">
+                      <pre className="rounded border border-border bg-sidebar p-2.5 font-mono text-xs text-muted-foreground whitespace-pre-wrap break-words break-all max-h-60 overflow-y-auto overflow-x-hidden min-w-0 max-w-full">
                         {result.response}
                       </pre>
                     </div>
@@ -1103,15 +1103,15 @@ export function ResultsDashboard() {
 
                         {/* Leaked Data */}
                         {result.analysis.leakedData.length > 0 && (
-                          <div className="rounded border border-redpincer/40 bg-redpincer/5 p-2">
-                            <p className="mb-1 text-xs font-semibold uppercase tracking-wider text-redpincer">
+                          <div className="rounded border border-destructive/40 bg-destructive/5 p-2">
+                            <p className="mb-1 text-xs font-semibold uppercase tracking-wider text-destructive">
                               Leaked Data ({result.analysis.leakedData.length})
                             </p>
                             <div className="space-y-1">
                               {result.analysis.leakedData.map((data, i) => (
                                 <pre
                                   key={i}
-                                  className="rounded bg-background/50 px-2 py-1 font-mono text-xs text-redpincer/80 whitespace-pre-wrap break-all"
+                                  className="rounded bg-background/50 px-2 py-1 font-mono text-xs text-destructive/80 whitespace-pre-wrap break-all"
                                 >
                                   {data}
                                 </pre>
@@ -1129,7 +1129,7 @@ export function ResultsDashboard() {
                           <Button
                             size="sm"
                             variant="outline"
-                            className="gap-1.5 border-redpincer/30 text-redpincer hover:bg-redpincer/10 text-xs h-7"
+                            className="gap-1.5 border-destructive/30 text-destructive hover:bg-destructive/10 text-xs h-7"
                             disabled={explaining[result.id] || !redTeamConfig}
                             title={!redTeamConfig ? "Configure a Red Team LLM to use AI features" : undefined}
                             onClick={() => explainBreach(result)}
@@ -1142,8 +1142,8 @@ export function ResultsDashboard() {
                             {explaining[result.id] ? "Analyzing…" : "Explain This Breach"}
                           </Button>
                         ) : (
-                          <div className="rounded border border-redpincer/20 bg-redpincer/5 p-3">
-                            <p className="mb-1 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-redpincer">
+                          <div className="rounded border border-destructive/20 bg-destructive/5 p-3">
+                            <p className="mb-1 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-destructive">
                               <Sparkles className="h-3 w-3" />
                               AI Security Analysis
                             </p>
@@ -1228,7 +1228,7 @@ export function ResultsDashboard() {
                                 </Button>
                               </div>
                             </div>
-                            <pre className="rounded bg-background/50 px-2 py-2 font-mono text-xs text-foreground whitespace-pre-wrap">
+                            <pre className="rounded bg-background/50 px-2.5 py-2 font-mono text-xs text-foreground whitespace-pre-wrap break-words break-all max-h-60 overflow-y-auto overflow-x-hidden min-w-0 max-w-full">
                               {mutations[result.id].mutatedPrompt}
                             </pre>
                           </div>

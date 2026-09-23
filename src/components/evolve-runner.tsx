@@ -51,7 +51,7 @@ function formatGenerationLabel(generation: number, totalGenerations: number): st
 }
 
 const CUSTOM_PAYLOADS_STORAGE_KEY = "centauri-aegis-custom-payloads";
-const LEGACY_CUSTOM_PAYLOADS_STORAGE_KEY = "redpincer-custom-payloads";
+const LEGACY_CUSTOM_PAYLOADS_STORAGE_KEY = "redpincer-custom-payloads"; // Legacy compatibility only — do not use for new deployments.
 
 function loadCustomPayloadsFromStorage(): AttackPayload[] {
   if (typeof window === "undefined") {
@@ -248,7 +248,7 @@ export function EvolveRunner() {
   return (
     <div className="flex flex-col gap-6 p-6">
       <div className="flex items-center gap-3">
-        <Sparkles className="h-6 w-6 text-lobster" />
+        <Sparkles className="h-6 w-6 text-primary" />
         <div>
           <h2 className="text-2xl font-bold text-foreground">Evolution Runner</h2>
           <p className="text-sm text-muted-foreground">
@@ -260,7 +260,7 @@ export function EvolveRunner() {
       <Card className="border-border bg-card">
         <CardHeader className="gap-3">
           <CardTitle className="flex items-center gap-2 text-base">
-            <Target className="h-4 w-4 text-lobster" />
+            <Target className="h-4 w-4 text-primary" />
             Active Target Context
           </CardTitle>
           <CardDescription>
@@ -271,7 +271,7 @@ export function EvolveRunner() {
           {activeTarget ? (
             <>
               <div className="flex flex-wrap gap-2 text-sm">
-                <Badge variant="outline" className="border-lobster/40 text-lobster">
+                <Badge variant="outline" className="border-primary/40 text-primary">
                   {activeTarget.name}
                 </Badge>
                 <Badge variant="outline">
@@ -377,7 +377,7 @@ export function EvolveRunner() {
               </Button>
             ) : (
               <Button
-                className="gap-2 bg-redpincer text-redpincer-foreground hover:bg-redpincer/90"
+                className="gap-2 bg-primary text-primary-foreground hover:bg-primary/90"
                 disabled={!canRun}
                 onClick={runEvolution}
               >
@@ -476,7 +476,7 @@ export function EvolveRunner() {
       <Card className="border-border bg-card">
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-base">
-            <TrendingUp className="h-4 w-4 text-lobster" />
+            <TrendingUp className="h-4 w-4 text-primary" />
             Generation Summaries
           </CardTitle>
           <CardDescription>

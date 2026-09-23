@@ -92,7 +92,7 @@ function LoginForm() {
       <button
         type="submit"
         disabled={loading || !username || !password}
-        className="inline-flex h-10 w-full items-center justify-center rounded-md bg-aegis px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-aegis/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 shadow-md shadow-purple-950/40"
+        className="inline-flex h-10 w-full items-center justify-center rounded-md bg-aegis px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-aegis/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 shadow-md shadow-black/40"
       >
         {loading ? (
           <>
@@ -114,7 +114,7 @@ export default function LoginPage() {
         {/* Header */}
         <div className="text-center space-y-3">
           <div className="flex justify-center">
-            <CentauriAegisLogo size={52} className="drop-shadow-[0_0_20px_rgba(157,78,221,0.35)]" />
+            <CentauriAegisLogo size={52} className="drop-shadow-[0_0_20px_rgba(91,141,184,0.35)]" />
           </div>
           <div>
             <h1 className="text-2xl font-bold tracking-tight text-foreground font-mono">
@@ -140,8 +140,8 @@ export default function LoginPage() {
         </div>
 
         <p className="text-center text-xs text-muted-foreground">
-          Console credentials configured via <code className="text-xs font-mono text-purple-300">AEGIS_USERNAME</code>{" "}
-          and <code className="text-xs font-mono text-purple-300">AEGIS_PASSWORD</code>.
+          Console credentials configured via <code className="text-xs font-mono text-primary">AEGIS_USERNAME</code>{" "}
+          and <code className="text-xs font-mono text-primary">AEGIS_PASSWORD</code>.
         </p>
       </div>
     </div>

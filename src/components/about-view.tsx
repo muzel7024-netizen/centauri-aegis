@@ -11,6 +11,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import {
   Shield,
+  ShieldCheck,
   Code2,
   Terminal,
   FileCheck2,
@@ -28,13 +29,13 @@ export function AboutView() {
     <div className="flex-1 space-y-6 p-8 max-w-5xl">
       {/* Hero Header */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center gap-5 border-b border-border/60 pb-8">
-        <CentauriAegisLogo size={64} className="drop-shadow-[0_0_25px_rgba(157,78,221,0.35)] shrink-0" />
+        <CentauriAegisLogo size={64} className="drop-shadow-[0_0_25px_rgba(91,141,184,0.35)] shrink-0" />
         <div className="space-y-1">
           <div className="flex flex-wrap items-center gap-3">
             <h1 className="text-3xl font-extrabold tracking-tight text-foreground font-mono">
               CENTAURI <span className="text-aegis">AEGIS</span>
             </h1>
-            <Badge variant="outline" className="border-purple-500/30 bg-purple-500/10 text-purple-400 font-mono text-xs">
+            <Badge variant="outline" className="border-primary/30 bg-primary/10 text-primary font-mono text-xs">
               v1.0.0
             </Badge>
             <Badge variant="outline" className="border-border bg-card/60 text-muted-foreground font-mono text-xs">
@@ -55,7 +56,7 @@ export function AboutView() {
         <Card className="border-border/60 bg-card/60">
           <CardHeader>
             <div className="flex items-center gap-2">
-              <Code2 className="h-5 w-5 text-purple-400" />
+              <Code2 className="h-5 w-5 text-primary" />
               <CardTitle className="text-base font-semibold">Project Metadata</CardTitle>
             </div>
             <CardDescription className="text-xs">
@@ -69,11 +70,11 @@ export function AboutView() {
             </div>
             <div className="flex justify-between py-1.5 border-b border-border/40">
               <span className="text-muted-foreground font-sans">Tagline</span>
-              <span className="text-purple-300">AI Security Testing & Research</span>
+              <span className="text-primary">AI Security Testing & Research</span>
             </div>
             <div className="flex justify-between py-1.5 border-b border-border/40">
               <span className="text-muted-foreground font-sans">Developer</span>
-              <span className="text-purple-400 font-semibold">rudrakshp20-hue (@NeelaBillota)</span>
+              <span className="text-primary font-semibold">rudrakshp20-hue (@NeelaBillota)</span>
             </div>
             <div className="flex justify-between py-1.5 border-b border-border/40">
               <span className="text-muted-foreground font-sans">Software License</span>
@@ -86,27 +87,27 @@ export function AboutView() {
           </CardContent>
         </Card>
 
-        {/* Upstream Heritage */}
+        {/* Software Licensing & Notices */}
         <Card className="border-border/60 bg-card/60">
           <CardHeader>
             <div className="flex items-center gap-2">
-              <GitBranch className="h-5 w-5 text-purple-400" />
-              <CardTitle className="text-base font-semibold">Upstream Attribution</CardTitle>
+              <ShieldCheck className="h-5 w-5 text-primary" />
+              <CardTitle className="text-base font-semibold">Licensing & Legal Information</CardTitle>
             </div>
             <CardDescription className="text-xs">
-              Acknowledging open source foundations and upstream linage
+              Open-source software licensing and compliance specifications
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-3 text-xs text-muted-foreground leading-relaxed">
             <p>
-              Centauri Aegis was developed from the open-source foundation of the <strong>Pincer / RedPincer</strong> project originally authored by <strong>rustyorb</strong>.
+              Centauri Aegis is released under the <strong>MIT License</strong>. You are free to use, inspect, modify, and distribute this software in accordance with the license terms.
             </p>
             <p>
-              In full compliance with the MIT License, original copyright notices and third-party dependency attributions are maintained in the repository under <code className="text-purple-300 font-mono">LICENSE</code> and <code className="text-purple-300 font-mono">THIRD_PARTY_NOTICES.md</code>.
+              Third-party open-source dependency licenses and required legal notices are maintained in the repository under <code className="text-primary font-mono">LICENSE</code> and <code className="text-primary font-mono">THIRD_PARTY_NOTICES.md</code>.
             </p>
-            <div className="rounded-md border border-purple-500/20 bg-purple-500/5 p-3 flex items-center gap-2.5 text-foreground mt-2">
-              <CheckCircle2 className="h-4 w-4 text-purple-400 shrink-0" />
-              <span>Full original test suite, MIT compliance, and architectural integrity preserved.</span>
+            <div className="rounded-md border border-primary/20 bg-primary/5 p-3 flex items-center gap-2.5 text-foreground mt-2">
+              <CheckCircle2 className="h-4 w-4 text-primary shrink-0" />
+              <span>Full test suite, MIT compliance, and architectural integrity preserved.</span>
             </div>
           </CardContent>
         </Card>
@@ -116,7 +117,7 @@ export function AboutView() {
       <Card className="border-border/60 bg-card/60">
         <CardHeader>
           <div className="flex items-center gap-2">
-            <Cpu className="h-5 w-5 text-purple-400" />
+            <Cpu className="h-5 w-5 text-primary" />
             <CardTitle className="text-base font-semibold">Core Engine Capabilities</CardTitle>
           </div>
           <CardDescription className="text-xs">
@@ -127,7 +128,7 @@ export function AboutView() {
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
             <div className="rounded-lg border border-border/50 bg-background/50 p-3.5 space-y-1">
               <span className="font-semibold text-xs text-foreground flex items-center gap-1.5">
-                <Shield className="h-3.5 w-3.5 text-purple-400" />
+                <Shield className="h-3.5 w-3.5 text-primary" />
                 221 Adversarial Payloads
               </span>
               <p className="text-[11px] text-muted-foreground">
@@ -137,7 +138,7 @@ export function AboutView() {
 
             <div className="rounded-lg border border-border/50 bg-background/50 p-3.5 space-y-1">
               <span className="font-semibold text-xs text-foreground flex items-center gap-1.5">
-                <Globe className="h-3.5 w-3.5 text-purple-400" />
+                <Globe className="h-3.5 w-3.5 text-primary" />
                 Multilingual Heuristics
               </span>
               <p className="text-[11px] text-muted-foreground">
@@ -147,7 +148,7 @@ export function AboutView() {
 
             <div className="rounded-lg border border-border/50 bg-background/50 p-3.5 space-y-1">
               <span className="font-semibold text-xs text-foreground flex items-center gap-1.5">
-                <Sparkles className="h-3.5 w-3.5 text-purple-400" />
+                <Sparkles className="h-3.5 w-3.5 text-primary" />
                 Genetic Evolve Engine
               </span>
               <p className="text-[11px] text-muted-foreground">
@@ -157,7 +158,7 @@ export function AboutView() {
 
             <div className="rounded-lg border border-border/50 bg-background/50 p-3.5 space-y-1">
               <span className="font-semibold text-xs text-foreground flex items-center gap-1.5">
-                <Layers className="h-3.5 w-3.5 text-purple-400" />
+                <Layers className="h-3.5 w-3.5 text-primary" />
                 Multi-Turn Attack Chains
               </span>
               <p className="text-[11px] text-muted-foreground">
@@ -167,7 +168,7 @@ export function AboutView() {
 
             <div className="rounded-lg border border-border/50 bg-background/50 p-3.5 space-y-1">
               <span className="font-semibold text-xs text-foreground flex items-center gap-1.5">
-                <FileCheck2 className="h-3.5 w-3.5 text-purple-400" />
+                <FileCheck2 className="h-3.5 w-3.5 text-primary" />
                 SARIF 2.1.0 & Compliance
               </span>
               <p className="text-[11px] text-muted-foreground">
@@ -177,7 +178,7 @@ export function AboutView() {
 
             <div className="rounded-lg border border-border/50 bg-background/50 p-3.5 space-y-1">
               <span className="font-semibold text-xs text-foreground flex items-center gap-1.5">
-                <Terminal className="h-3.5 w-3.5 text-purple-400" />
+                <Terminal className="h-3.5 w-3.5 text-primary" />
                 Air-Gapped & Provider Agnostic
               </span>
               <p className="text-[11px] text-muted-foreground">

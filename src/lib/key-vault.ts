@@ -37,9 +37,9 @@ function getEncryptionKey(): Buffer {
     process.env.AEGIS_KEY_SECRET ||
     process.env.AEGIS_SESSION_SECRET ||
     process.env.AEGIS_PASSWORD ||
-    process.env.PINCER_KEY_SECRET ||
-    process.env.PINCER_SESSION_SECRET ||
-    process.env.PINCER_PASSWORD;
+    process.env.PINCER_KEY_SECRET || // Legacy compatibility only — do not use for new deployments.
+    process.env.PINCER_SESSION_SECRET || // Legacy compatibility only
+    process.env.PINCER_PASSWORD; // Legacy compatibility only
 
   if (secret) {
     return createHash("sha256").update(secret).digest();

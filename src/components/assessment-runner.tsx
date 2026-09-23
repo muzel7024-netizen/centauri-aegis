@@ -7,6 +7,7 @@ import { CATEGORY_LABELS } from "@/lib/types";
 import { getTargetKeyFields } from "@/lib/target-utils";
 import { generateId } from "@/lib/uuid";
 import { generateFindingsFromResults, calculateAssessmentSummary } from "@/lib/findings";
+import { SHORTCUT_EVENTS } from "@/lib/use-keyboard-shortcuts";
 import {
   Card,
   CardContent,
@@ -59,6 +60,7 @@ export function AssessmentRunner({
     isRunning,
     setIsRunning,
     setView,
+    setCancelActiveExecution,
   } = useStore();
 
   const target = targets.find((t) => t.id === assessment.targetId);
@@ -73,8 +75,11 @@ export function AssessmentRunner({
   const [completedCount, setCompletedCount] = useState<number>(0);
   const [elapsedSeconds, setElapsedSeconds] = useState<number>(0);
   const [currentProbeName, setCurrentProbeName] = useState<string>("");
+  const [isStopping, setIsStopping] = useState<boolean>(false);
 
   const abortControllerRef = useRef<AbortController | null>(null);
+  const readerRef = useRef<ReadableStreamDefaultReader<Uint8Array> | null>(null);
+  const completedProbeIdsRef = useRef<Set<string>>(new Set());
   const timerRef = useRef<NodeJS.Timeout | null>(null);
 
   // Results for the currently active run
@@ -90,6 +95,49 @@ export function AssessmentRunner({
     assessment.targetId,
     results
   );
+
+  const stopExecution = () => {
+    if (isStopping) return;
+    setIsStopping(true);
+    if (readerRef.current) {
+      try {
+        readerRef.current.cancel();
+      } catch {
+        // Stream cancel ignored
+      }
+    }
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+    }
+  };
+
+  const stopExecutionRef = useRef<() => void>(stopExecution);
+  stopExecutionRef.current = stopExecution;
+
+  // Synchronize cancellation with global store
+  useEffect(() => {
+    if (isRunning) {
+      setCancelActiveExecution(() => stopExecutionRef.current());
+    } else {
+      setCancelActiveExecution(null);
+    }
+    return () => {
+      setCancelActiveExecution(null);
+    };
+  }, [isRunning, setCancelActiveExecution]);
+
+  // Synchronize cancellation with keyboard shortcut event
+  useEffect(() => {
+    const handleStopShortcut = () => {
+      if (isRunning) {
+        stopExecutionRef.current();
+      }
+    };
+    window.addEventListener(SHORTCUT_EVENTS.STOP_ATTACKS, handleStopShortcut);
+    return () => {
+      window.removeEventListener(SHORTCUT_EVENTS.STOP_ATTACKS, handleStopShortcut);
+    };
+  }, [isRunning]);
 
   const startExecution = async () => {
     if (!target) {
@@ -123,7 +171,9 @@ export function AssessmentRunner({
     });
 
     setIsRunning(true);
+    setIsStopping(false);
     setCompletedCount(0);
+    completedProbeIdsRef.current.clear();
     setElapsedSeconds(0);
 
     const controller = new AbortController();
@@ -153,11 +203,26 @@ export function AssessmentRunner({
       });
 
       const reader = res.body?.getReader();
+      readerRef.current = reader || null;
       const decoder = new TextDecoder();
       let buffer = "";
 
       while (reader) {
-        const { done, value } = await reader.read();
+        if (controller.signal.aborted) {
+          wasCancelled = true;
+          break;
+        }
+        let chunk;
+        try {
+          chunk = await reader.read();
+        } catch (e) {
+          if (controller.signal.aborted) {
+            wasCancelled = true;
+            break;
+          }
+          throw e;
+        }
+        const { done, value } = chunk;
         if (done) break;
 
         buffer += decoder.decode(value, { stream: true });
@@ -169,17 +234,26 @@ export function AssessmentRunner({
             try {
               const parsed = JSON.parse(line);
               if (parsed.type === "meta" && typeof parsed.totalPayloads === "number") {
-                setTotalExpected(parsed.totalPayloads);
-              } else {
-                const resultWithContext: AttackResult = {
-                  ...parsed,
-                  assessmentId: assessment.id,
-                  targetId: target.id,
-                };
-                addResult(runId, resultWithContext);
-                setCompletedCount((c) => c + 1);
-                if (resultWithContext.payloadName) {
-                  setCurrentProbeName(resultWithContext.payloadName);
+                const total = Math.max(0, parsed.totalPayloads);
+                setTotalExpected(total);
+                setCompletedCount((prev) => (total > 0 ? Math.min(total, prev) : prev));
+              } else if (parsed.id || parsed.payloadId) {
+                const probeId = (parsed.id || parsed.payloadId) as string;
+                if (!completedProbeIdsRef.current.has(probeId)) {
+                  completedProbeIdsRef.current.add(probeId);
+                  const resultWithContext: AttackResult = {
+                    ...parsed,
+                    assessmentId: assessment.id,
+                    targetId: target.id,
+                  };
+                  addResult(runId, resultWithContext);
+                  setCompletedCount((c) => {
+                    const next = c + 1;
+                    return totalExpected > 0 ? Math.min(totalExpected, next) : next;
+                  });
+                  if (resultWithContext.payloadName) {
+                    setCurrentProbeName(resultWithContext.payloadName);
+                  }
                 }
               }
             } catch {
@@ -198,7 +272,10 @@ export function AssessmentRunner({
     } finally {
       if (timerRef.current) clearInterval(timerRef.current);
       abortControllerRef.current = null;
+      readerRef.current = null;
       setIsRunning(false);
+      setIsStopping(false);
+      setCancelActiveExecution(null);
 
       if (wasCancelled) {
         cancelRun(runId);
@@ -206,7 +283,7 @@ export function AssessmentRunner({
           status: "stopped",
           updatedAt: Date.now(),
         });
-        toast.info("Assessment execution cancelled");
+        toast.info("Assessment execution stopped");
       } else {
         completeRun(runId);
         updateAssessment(assessment.id, {
@@ -221,18 +298,20 @@ export function AssessmentRunner({
     }
   };
 
-  const stopExecution = () => {
-    if (abortControllerRef.current) {
-      abortControllerRef.current.abort();
-    }
-  };
-
   useEffect(() => {
     if (autoStart && !isRunning && assessment.status !== "completed") {
       startExecution();
     }
     return () => {
       if (timerRef.current) clearInterval(timerRef.current);
+      if (readerRef.current) {
+        try {
+          readerRef.current.cancel();
+        } catch {
+          // ignore
+        }
+      }
+      setCancelActiveExecution(null);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -266,7 +345,7 @@ export function AssessmentRunner({
                     ? "border-amber-500/40 bg-amber-500/10 text-amber-400"
                     : assessment.status === "completed"
                       ? "border-emerald-500/40 bg-emerald-500/10 text-emerald-400"
-                      : "border-purple-500/40 bg-purple-500/10 text-purple-300"
+                      : "border-[#5B8DB8]/40 bg-[#5B8DB8]/10 text-[#5B8DB8]"
                 }`}
               >
                 {isRunning ? "RUNNING" : assessment.status}
@@ -284,16 +363,21 @@ export function AssessmentRunner({
               size="sm"
               variant="outline"
               onClick={stopExecution}
+              disabled={isStopping}
               className="gap-1.5 border-red-500/40 text-red-400 hover:bg-red-500/10 text-xs"
             >
-              <Square className="h-3.5 w-3.5" />
-              Stop Run
+              {isStopping ? (
+                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+              ) : (
+                <Square className="h-3.5 w-3.5" />
+              )}
+              {isStopping ? "Stopping..." : "Stop Run"}
             </Button>
           ) : (
             <Button
               size="sm"
               onClick={startExecution}
-              className="gap-1.5 bg-aegis hover:bg-aegis/90 text-white text-xs shadow-md shadow-purple-950/40"
+              className="gap-1.5 bg-aegis hover:bg-aegis/90 text-white text-xs shadow-md shadow-black/40"
             >
               <Play className="h-3.5 w-3.5" />
               {assessment.status === "completed" ? "Rerun Assessment" : "Execute Assessment"}
@@ -306,7 +390,7 @@ export function AssessmentRunner({
                 variant="outline"
                 size="sm"
                 onClick={() => setView("findings")}
-                className="gap-1.5 border-border hover:bg-card text-xs text-purple-300"
+                className="gap-1.5 border-border hover:bg-card text-xs text-[#5B8DB8]"
               >
                 <AlertTriangle className="h-3.5 w-3.5" />
                 View Findings ({liveFindings.length})
@@ -332,10 +416,10 @@ export function AssessmentRunner({
           <CardHeader className="pb-2">
             <CardDescription className="text-xs flex items-center justify-between">
               <span>Probes Completed</span>
-              <Activity className="h-3.5 w-3.5 text-purple-400" />
+              <Activity className="h-3.5 w-3.5 text-[#5B8DB8]" />
             </CardDescription>
             <CardTitle className="text-2xl font-bold font-mono">
-              {completedCount}
+              {totalExpected > 0 ? Math.min(completedCount, totalExpected) : completedCount}
               {totalExpected > 0 && (
                 <span className="text-xs text-muted-foreground font-normal"> / {totalExpected}</span>
               )}
@@ -369,7 +453,7 @@ export function AssessmentRunner({
           <CardHeader className="pb-2">
             <CardDescription className="text-xs flex items-center justify-between">
               <span>Elapsed Execution Time</span>
-              <Clock className="h-3.5 w-3.5 text-purple-400" />
+              <Clock className="h-3.5 w-3.5 text-[#5B8DB8]" />
             </CardDescription>
             <CardTitle className="text-2xl font-bold font-mono">
               {Math.floor(elapsedSeconds / 60)}m {elapsedSeconds % 60}s
@@ -386,9 +470,9 @@ export function AssessmentRunner({
           <CardHeader className="pb-2">
             <CardDescription className="text-xs flex items-center justify-between">
               <span>Derived Findings</span>
-              <Shield className="h-3.5 w-3.5 text-purple-400" />
+              <Shield className="h-3.5 w-3.5 text-[#5B8DB8]" />
             </CardDescription>
-            <CardTitle className="text-2xl font-bold font-mono text-purple-300">
+            <CardTitle className="text-2xl font-bold font-mono text-[#5B8DB8]">
               {liveFindings.length}
             </CardTitle>
           </CardHeader>
@@ -402,7 +486,7 @@ export function AssessmentRunner({
 
       {/* Active Probe Banner (when running) */}
       {isRunning && (
-        <div className="flex items-center gap-3 rounded-lg border border-purple-500/30 bg-purple-950/20 px-4 py-3 text-xs text-purple-300">
+        <div className="flex items-center gap-3 rounded-lg border border-[#5B8DB8]/30 bg-[#5B8DB8]/10 px-4 py-3 text-xs text-[#5B8DB8]">
           <Loader2 className="h-4 w-4 animate-spin text-aegis" />
           <div className="flex-1 truncate">
             Current Test Probe: <span className="font-mono text-foreground font-semibold">{currentProbeName || "Initializing..."}</span>
@@ -420,7 +504,7 @@ export function AssessmentRunner({
           <CardHeader className="border-b border-border/40 pb-3">
             <div className="flex items-center justify-between">
               <CardTitle className="text-sm font-semibold flex items-center gap-2">
-                <Activity className="h-4 w-4 text-purple-400" />
+                <Activity className="h-4 w-4 text-[#5B8DB8]" />
                 Live Execution Feed ({results.length})
               </CardTitle>
               <Badge variant="outline" className="text-[10px]">
@@ -480,10 +564,10 @@ export function AssessmentRunner({
           <CardHeader className="border-b border-border/40 pb-3">
             <div className="flex items-center justify-between">
               <CardTitle className="text-sm font-semibold flex items-center gap-2">
-                <AlertTriangle className="h-4 w-4 text-purple-400" />
+                <AlertTriangle className="h-4 w-4 text-[#5B8DB8]" />
                 Vulnerability Findings ({liveFindings.length})
               </CardTitle>
-              <Badge variant="outline" className="text-[10px] border-purple-500/30 text-purple-300">
+              <Badge variant="outline" className="text-[10px] border-[#5B8DB8]/30 text-[#5B8DB8]">
                 Derived
               </Badge>
             </div>
@@ -510,7 +594,7 @@ export function AssessmentRunner({
                               ? "bg-red-500/20 text-red-400 border border-red-500/30"
                               : f.severity === "high"
                                 ? "bg-amber-500/20 text-amber-400 border border-amber-500/30"
-                                : "bg-purple-500/20 text-purple-300 border border-purple-500/30"
+                                : "bg-[#5B8DB8]/20 text-[#5B8DB8] border border-[#5B8DB8]/30"
                           }`}
                         >
                           {f.severity}
@@ -522,8 +606,9 @@ export function AssessmentRunner({
                       </p>
 
                       {f.evidence.length > 0 && (
-                        <div className="rounded bg-background/80 p-2 font-mono text-[10px] text-purple-300 border border-border/50 line-clamp-2">
-                          Evidence: &ldquo;{f.evidence[0]}&rdquo;
+                        <div className="rounded bg-background/80 p-2.5 font-mono text-[11px] text-[#5B8DB8] border border-border/50 break-words break-all whitespace-pre-wrap max-h-36 overflow-y-auto min-w-0 max-w-full">
+                          <span className="font-semibold text-muted-foreground">Evidence: </span>
+                          &ldquo;{f.evidence[0]}&rdquo;
                         </div>
                       )}
                     </div>

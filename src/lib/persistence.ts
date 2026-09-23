@@ -9,7 +9,7 @@ import type {
 // ─── Constants ────────────────────────────────────────────────────────────────
 
 export const STORAGE_KEY = "centauri-aegis-state";
-export const LEGACY_STORAGE_KEY = "redpincer-state";
+export const LEGACY_STORAGE_KEY = "redpincer-state"; // Legacy compatibility only — do not use for new deployments.
 export const SESSION_VERSION = "1.1.0";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -25,7 +25,9 @@ export interface CentauriAegisSession {
   findings?: Finding[];
 }
 
-// Backward-compatibility alias
+/**
+ * @deprecated Legacy compatibility only — do not use for new deployments. Use CentauriAegisSession instead.
+ */
 export type RedPincerSession = CentauriAegisSession;
 
 // ─── Validation ───────────────────────────────────────────────────────────────
