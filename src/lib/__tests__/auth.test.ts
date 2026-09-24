@@ -202,11 +202,11 @@ describe("auth", () => {
     });
   });
 
-  describe("middleware authentication enforcement", () => {
+  describe("proxy authentication enforcement", () => {
     it("blocks forged aegis_session cookie with 401 on /api/attack", async () => {
       process.env.AEGIS_USERNAME = "admin";
       process.env.AEGIS_PASSWORD = "secretPassword123";
-      const { middleware } = await import("../../middleware");
+      const { proxy } = await import("../../proxy");
       const { NextRequest } = await import("next/server");
 
       const req = new NextRequest("http://localhost:3000/api/attack", {
@@ -216,7 +216,7 @@ describe("auth", () => {
         },
       });
 
-      const res = await middleware(req);
+      const res = await proxy(req);
       expect(res.status).toBe(401);
       const data = await res.json();
       expect(data.error).toBe("Invalid or expired session");
@@ -225,14 +225,14 @@ describe("auth", () => {
     it("blocks missing session cookie with 401 on /api/keys", async () => {
       process.env.AEGIS_USERNAME = "admin";
       process.env.AEGIS_PASSWORD = "secretPassword123";
-      const { middleware } = await import("../../middleware");
+      const { proxy } = await import("../../proxy");
       const { NextRequest } = await import("next/server");
 
       const req = new NextRequest("http://localhost:3000/api/keys", {
         method: "POST",
       });
 
-      const res = await middleware(req);
+      const res = await proxy(req);
       expect(res.status).toBe(401);
       const data = await res.json();
       expect(data.error).toBe("Authentication required");
@@ -241,7 +241,7 @@ describe("auth", () => {
     it("redirects forged session on page routes to /login", async () => {
       process.env.AEGIS_USERNAME = "admin";
       process.env.AEGIS_PASSWORD = "secretPassword123";
-      const { middleware } = await import("../../middleware");
+      const { proxy } = await import("../../proxy");
       const { NextRequest } = await import("next/server");
 
       const req = new NextRequest("http://localhost:3000/assessments", {
@@ -250,16 +250,16 @@ describe("auth", () => {
         },
       });
 
-      const res = await middleware(req);
+      const res = await proxy(req);
       expect(res.status).toBe(307);
       expect(res.headers.get("location")).toContain("/login?redirect=");
     });
 
-    it("permits valid session on /api/attack through middleware", async () => {
+    it("permits valid session on /api/attack through proxy", async () => {
       process.env.AEGIS_USERNAME = "admin";
       process.env.AEGIS_PASSWORD = "secretPassword123";
       const { createSessionToken } = await import("../auth");
-      const { middleware } = await import("../../middleware");
+      const { proxy } = await import("../../proxy");
       const { NextRequest } = await import("next/server");
 
       const validToken = await createSessionToken("admin");
@@ -270,7 +270,7 @@ describe("auth", () => {
         },
       });
 
-      const res = await middleware(req);
+      const res = await proxy(req);
       expect(res.status).toBe(200);
       expect(res.headers.has("X-RateLimit-Limit")).toBe(true);
     });

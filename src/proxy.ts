@@ -8,7 +8,7 @@ import {
 import { validateRequestAuth } from "@/lib/auth";
 
 /**
- * Middleware to handle:
+ * Proxy to handle:
  * 1. Rate limiting on API routes (always active)
  * 2. Authentication (opt-in via env vars)
  *
@@ -41,7 +41,7 @@ function isAuthExemptPath(pathname: string): boolean {
   return AUTH_EXEMPT_PATHS.some((p) => pathname.startsWith(p));
 }
 
-export async function middleware(request: NextRequest) {
+export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
   // Always allow fully public paths (no rate limiting, no auth)
