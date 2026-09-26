@@ -36,7 +36,7 @@ export function AboutView() {
               CENTAURI AEGIS
             </h1>
             <Badge variant="outline" className="border-border-strong bg-muted text-muted-foreground font-mono text-[10px] rounded-[2px]">
-              v1.0.0
+              v1.1.0
             </Badge>
             <Badge variant="outline" className="border-border bg-card text-muted-foreground font-mono text-[10px] rounded-[2px]">
               STABLE

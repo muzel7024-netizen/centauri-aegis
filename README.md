@@ -105,7 +105,13 @@ Centauri Aegis incorporates 221 curated payloads spanning 7 OWASP LLM Top 10 thr
 
 ## Installation & Setup
 
-### Prerequisites
+### Windows Quick Start (Portable Launcher)
+For standalone Windows deployments:
+1. Extract the release package `centauri-aegis-v1.1.0-windows-x64.zip`.
+2. Double-click `start-centauri.bat`.
+3. On first launch, administrator credentials will be generated and saved to `%LOCALAPPDATA%\CentauriAegis\credentials.json`, and the browser will open automatically.
+
+### Prerequisites (Source Build)
 * **Node.js**: Version 20.x or 22.x LTS
 * **npm**: Version 10.x or later
 
@@ -188,7 +194,7 @@ Configure the platform using a `.env` file or container environment variables:
 Centauri Aegis includes a comprehensive test suite covering the heuristic analysis engine, key vault security, persistence migration, scoring rubrics, and assessment flows:
 
 ```bash
-# Execute full Vitest suite (390+ tests)
+# Execute full Vitest suite (450+ tests)
 npm test
 
 # Run ESLint validation

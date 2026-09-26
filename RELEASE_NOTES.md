@@ -1,5 +1,33 @@
 # Centauri Aegis — Release Notes
 
+## Version 1.1.0 — Production Release
+
+Centauri Aegis v1.1.0 represents the first production release, introducing enterprise lifecycle synchronization, hardened STOP execution controls, authoritative probe progress telemetry, and a one-click authenticated Windows launcher.
+
+### What's New in v1.1.0
+
+#### 1. Authoritative Execution Lifecycle & Synchronization
+* **Unified Source of Truth**: Full bi-directional synchronization between `Assessment` and `AttackRun` entities across Assessment Workspace, Executive Reports, Findings, and Results.
+* **Cooperative STOP Cancellation**: Instant halting of in-flight execution streams and background worker loops via propagated `AbortSignal` and stream cancellation.
+* **Deterministic Probe Accounting**: Guaranteed numerator/denominator accounting directly derived from store-level terminal results (`results.length`), eliminating ephemeral counter resets across navigation and remounts.
+* **Terminal State Idempotency**: Immutable resolution ensuring cancelled runs cannot be overwritten by late completion callbacks, and vice versa.
+
+#### 2. Windows Portable Deployment & Launcher
+* **One-Click Launch**: Double-clickable `start-centauri.bat` launcher that automatically provisions or detects the Node.js runtime, generates local administrator credentials, and opens the console in the default browser.
+* **Local Storage Isolation**: User credentials securely persisted under `%LOCALAPPDATA%\CentauriAegis\credentials.json` with file-level permissions.
+* **Dedicated Reset Utility**: `reset-credentials.bat` for secure password rotation without disrupting existing assessment databases.
+
+#### 3. Security Hardening & SSRF Defense
+* **Strict IMDS Block**: Unconditional interception of requests to AWS/GCP/Azure instance metadata endpoints (`169.254.169.254`).
+* **Authenticated Session Cookies**: Cryptographically verified HMAC-SHA256 session tokens.
+* **Rate Limiting & Proxy Protection**: Token bucket rate limiter with trusted proxy validation.
+
+#### 4. Interface & Ergonomics
+* **Grey Ghost / Matte Black Theme**: AMOLED and Slate dark theme paired with an accessible, high-contrast Light Mode.
+* **Keyboard Shortcut Matrix**: Rapid keyboard navigation (`Ctrl+1` through `Ctrl+0`, `Ctrl+Enter`, `Ctrl+.`).
+
+---
+
 ## Version 1.0.0 — Baseline Release
 
 Centauri Aegis is an independent AI security testing and research platform engineered for automated adversarial evaluation, jailbreak resistance auditing, and safety assessment of modern Large Language Models and AI systems.
