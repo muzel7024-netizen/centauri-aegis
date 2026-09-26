@@ -55,9 +55,9 @@ export function SettingsView() {
   return (
     <div className="flex-1 space-y-6 p-8 max-w-5xl">
       {/* Header */}
-      <div className="border-b border-border/60 pb-6">
+      <div className="border-b border-border pb-6">
         <h1 className="text-2xl font-bold tracking-tight text-foreground font-mono">
-          SYSTEM <span className="text-aegis">SETTINGS</span>
+          SYSTEM <span className="text-primary">SETTINGS</span>
         </h1>
         <p className="text-sm text-muted-foreground mt-1">
           Configure security guards, execution parameters, storage namespaces, and environment policies.
@@ -66,7 +66,7 @@ export function SettingsView() {
 
       <div className="grid gap-6">
         {/* Security & SSRF Protection */}
-        <Card className="border-border/60 bg-card/60">
+        <Card className="border-border bg-card">
           <CardHeader>
             <div className="flex items-center gap-2">
               <ShieldCheck className="h-5 w-5 text-primary" />
@@ -80,10 +80,10 @@ export function SettingsView() {
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="grid gap-3 sm:grid-cols-2">
-              <div className="rounded-lg border border-border/60 bg-background/50 p-3.5 space-y-1">
+              <div className="rounded-[3px] border border-border bg-muted/50 p-3.5 space-y-1">
                 <div className="flex items-center justify-between">
                   <span className="text-xs font-medium text-foreground">Cloud Metadata (IMDS)</span>
-                  <Badge variant="outline" className="border-emerald-500/30 bg-emerald-500/10 text-emerald-400 text-[10px]">
+                  <Badge variant="outline" className="border-success/40 bg-success/15 text-success text-[10px] font-mono">
                     BLOCKED
                   </Badge>
                 </div>
@@ -92,10 +92,10 @@ export function SettingsView() {
                 </p>
               </div>
 
-              <div className="rounded-lg border border-border/60 bg-background/50 p-3.5 space-y-1">
+              <div className="rounded-[3px] border border-border bg-muted/50 p-3.5 space-y-1">
                 <div className="flex items-center justify-between">
                   <span className="text-xs font-medium text-foreground">Local & Private Subnets</span>
-                  <Badge variant="outline" className="border-primary/30 bg-primary/10 text-primary text-[10px]">
+                  <Badge variant="outline" className="border-border-strong bg-muted text-foreground text-[10px] font-mono">
                     POLICY CONTROLLED
                   </Badge>
                 </div>
@@ -105,7 +105,7 @@ export function SettingsView() {
               </div>
             </div>
 
-            <div className="rounded-lg border border-border/60 bg-background/50 p-3.5 space-y-2">
+            <div className="rounded-[3px] border border-border bg-muted/50 p-3.5 space-y-2">
               <div className="flex items-center gap-2 text-xs font-semibold text-foreground">
                 <Lock className="h-3.5 w-3.5 text-primary" />
                 In-Memory Server-Side Key Vault
@@ -118,7 +118,7 @@ export function SettingsView() {
         </Card>
 
         {/* Execution & Concurrency */}
-        <Card className="border-border/60 bg-card/60">
+        <Card className="border-border bg-card">
           <CardHeader>
             <div className="flex items-center gap-2">
               <Sliders className="h-5 w-5 text-primary" />
@@ -131,7 +131,7 @@ export function SettingsView() {
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 rounded-lg border border-border/60 bg-background/50 p-4">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 rounded-[3px] border border-border bg-muted/50 p-4">
               <div className="space-y-0.5">
                 <label className="text-sm font-medium text-foreground flex items-center gap-2">
                   <Zap className="h-4 w-4 text-primary" />
@@ -148,7 +148,7 @@ export function SettingsView() {
                   max={10}
                   value={concurrency}
                   onChange={(e) => setConcurrency(parseInt(e.target.value, 10))}
-                  className="h-2 w-32 cursor-pointer accent-aegis bg-secondary rounded-lg"
+                  className="h-1.5 w-32 cursor-pointer accent-primary bg-muted rounded-[2px]"
                 />
                 <span className="w-8 text-center font-mono text-sm font-bold text-foreground">
                   {concurrency}x
@@ -159,7 +159,7 @@ export function SettingsView() {
         </Card>
 
         {/* Storage & State Namespace */}
-        <Card className="border-border/60 bg-card/60">
+        <Card className="border-border bg-card">
           <CardHeader>
             <div className="flex items-center gap-2">
               <Database className="h-5 w-5 text-primary" />
@@ -173,20 +173,20 @@ export function SettingsView() {
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="grid gap-3 sm:grid-cols-3">
-              <div className="rounded-lg border border-border/60 bg-background/50 p-3">
-                <span className="text-[10px] uppercase tracking-wider text-muted-foreground">Canonical Storage Key</span>
+              <div className="rounded-[3px] border border-border bg-muted/50 p-3">
+                <span className="text-[10px] uppercase tracking-wider text-muted-foreground font-mono">Canonical Storage Key</span>
                 <div className="font-mono text-xs font-semibold text-primary mt-1">
                   {STORAGE_KEY}
                 </div>
               </div>
-              <div className="rounded-lg border border-border/60 bg-background/50 p-3">
-                <span className="text-[10px] uppercase tracking-wider text-muted-foreground">Session Schema</span>
+              <div className="rounded-[3px] border border-border bg-muted/50 p-3">
+                <span className="text-[10px] uppercase tracking-wider text-muted-foreground font-mono">Session Schema</span>
                 <div className="font-mono text-xs font-semibold text-foreground mt-1">
                   v{SESSION_VERSION}
                 </div>
               </div>
-              <div className="rounded-lg border border-border/60 bg-background/50 p-3">
-                <span className="text-[10px] uppercase tracking-wider text-muted-foreground">Storage Consumed</span>
+              <div className="rounded-[3px] border border-border bg-muted/50 p-3">
+                <span className="text-[10px] uppercase tracking-wider text-muted-foreground font-mono">Storage Consumed</span>
                 <div className="font-mono text-xs font-semibold text-foreground mt-1">
                   {formatBytes(storageBytes)}
                 </div>
@@ -213,7 +213,7 @@ export function SettingsView() {
         </Card>
 
         {/* Environment Variable Directory */}
-        <Card className="border-border/60 bg-card/60">
+        <Card className="border-border bg-card">
           <CardHeader>
             <div className="flex items-center gap-2">
               <Server className="h-5 w-5 text-primary" />

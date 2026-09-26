@@ -102,7 +102,7 @@ function severityColor(severity: Severity): string {
     case "medium":
       return "bg-warning/20 text-warning border-warning/30";
     case "low":
-      return "bg-blue-500/20 text-blue-400 border-blue-500/30";
+      return "bg-muted-foreground/15 text-muted-foreground border-muted-foreground/30";
   }
 }
 
@@ -335,7 +335,7 @@ export function AttackModules() {
               <button
                 key={s}
                 onClick={() => toggleSeverityFilter(s)}
-                className={`rounded-full px-2.5 py-0.5 text-[11px] font-medium border transition-colors ${
+                className={`rounded-[2px] px-2 py-0.5 text-[11px] font-mono border transition-colors ${
                   severityFilters.has(s)
                     ? severityColor(s)
                     : "border-border text-muted-foreground hover:border-muted-foreground"
@@ -353,7 +353,7 @@ export function AttackModules() {
               <button
                 key={mt}
                 onClick={() => setModelTargetFilter(modelTargetFilter === mt ? null : mt)}
-                className={`rounded-full px-2.5 py-0.5 text-[11px] font-medium border transition-colors ${
+                className={`rounded-[2px] px-2 py-0.5 text-[11px] font-mono border transition-colors ${
                   modelTargetFilter === mt
                     ? "border-primary/50 bg-primary/20 text-primary"
                     : "border-border text-muted-foreground hover:border-muted-foreground"
@@ -392,7 +392,7 @@ export function AttackModules() {
             >
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                  <div className="flex h-8 w-8 items-center justify-center rounded-md border border-[#5B8DB8]/30 bg-[#5B8DB8]/10 text-[#5B8DB8] shrink-0">
+                  <div className="flex h-8 w-8 items-center justify-center rounded-[3px] border border-border bg-muted text-foreground shrink-0">
                     <Puzzle className="h-4 w-4" />
                   </div>
                   <div>
@@ -496,7 +496,7 @@ export function AttackModules() {
               >
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
-                    <div className="flex h-8 w-8 items-center justify-center rounded-md border border-[#5B8DB8]/30 bg-[#5B8DB8]/10 text-[#5B8DB8] shrink-0">
+                    <div className="flex h-8 w-8 items-center justify-center rounded-[3px] border border-border bg-muted text-foreground shrink-0">
                       <CategoryIcon category={cat} className="h-4 w-4" />
                     </div>
                     <div>

@@ -1,3 +1,4 @@
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:ital,wght@0,400;0,500;0,600;0,700;1,400&family=IBM+Plex+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&display=swap');
 @import "tailwindcss";
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
@@ -7,8 +8,8 @@
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --font-sans: "IBM Plex Sans", Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+  --font-mono: "IBM Plex Mono", Consolas, "SFMono-Regular", Menlo, Monaco, monospace;
   --color-sidebar-ring: var(--sidebar-ring);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
@@ -25,7 +26,9 @@
   --color-ring: var(--ring);
   --color-input: var(--input);
   --color-border: var(--border);
+  --color-border-strong: var(--border-strong);
   --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
   --color-accent-foreground: var(--accent-foreground);
   --color-accent: var(--accent);
   --color-muted-foreground: var(--muted-foreground);
@@ -38,13 +41,13 @@
   --color-popover: var(--popover);
   --color-card-foreground: var(--card-foreground);
   --color-card: var(--card);
-  --radius-sm: calc(var(--radius) - 4px);
-  --radius-md: calc(var(--radius) - 2px);
-  --radius-lg: var(--radius);
-  --radius-xl: calc(var(--radius) + 4px);
-  --radius-2xl: calc(var(--radius) + 8px);
-  --radius-3xl: calc(var(--radius) + 12px);
-  --radius-4xl: calc(var(--radius) + 16px);
+  --radius-sm: 2px;
+  --radius-md: 3px;
+  --radius-lg: 4px;
+  --radius-xl: 4px;
+  --radius-2xl: 4px;
+  --radius-3xl: 4px;
+  --radius-4xl: 4px;
   --color-aegis: var(--aegis);
   --color-aegis-foreground: var(--aegis-foreground);
   --color-aegis-accent: var(--aegis-accent);
@@ -56,7 +59,8 @@
   --color-warning-foreground: var(--warning-foreground);
 }
 
-:root {
+:root,
+.dark {
   --radius: 0.5rem;
   /* Centauri Aegis Graphite / Charcoal / Slate / Steel-Blue Foundation */
   --background: #08090B;
@@ -102,48 +106,49 @@
   --warning-foreground: #08090B;
 }
 
-/* Light theme */
+/* Light theme — Professional Security Workstation in Daylight */
 .light {
-  --background: #F4F6F8;
-  --foreground: #12151A;
+  --background: #F4F5F3;
+  --foreground: #171918;
   --card: #FFFFFF;
-  --card-foreground: #12151A;
+  --card-foreground: #171918;
   --popover: #FFFFFF;
-  --popover-foreground: #12151A;
-  --primary: #3E6E99;
-  --primary-foreground: #FFFFFF;
-  --secondary: #EAEFF4;
-  --secondary-foreground: #12151A;
-  --muted: #EAEFF4;
-  --muted-foreground: #5C6775;
-  --accent: #E2E8F0;
-  --accent-foreground: #12151A;
-  --destructive: #C94A4A;
+  --popover-foreground: #171918;
+  --primary: #171918;
+  --primary-foreground: #F5F6F4;
+  --secondary: #E5E7E4;
+  --secondary-foreground: #242724;
+  --muted: #FAFAF9;
+  --muted-foreground: #737873;
+  --accent: #E5E7E4;
+  --accent-foreground: #171918;
+  --destructive: #955C5C;
   --destructive-foreground: #FFFFFF;
-  --border: #D5DCE4;
-  --input: #D5DCE4;
-  --ring: #3E6E99;
-  --chart-1: #3E6E99;
-  --chart-2: #5B8DB8;
-  --chart-3: #2F5577;
-  --chart-4: #3FA66B;
-  --chart-5: #C9973E;
-  --sidebar: #EAEFF4;
-  --sidebar-foreground: #12151A;
-  --sidebar-primary: #3E6E99;
-  --sidebar-primary-foreground: #FFFFFF;
-  --sidebar-accent: #DFE5EC;
-  --sidebar-accent-foreground: #12151A;
-  --sidebar-border: #D0D8E2;
-  --sidebar-ring: #3E6E99;
-  --aegis: #3E6E99;
-  --aegis-foreground: #FFFFFF;
-  --aegis-accent: #5B8DB8;
+  --border: #D9DBD8;
+  --border-strong: #C8CBC7;
+  --input: #D4D7D3;
+  --ring: #171918;
+  --chart-1: #171918;
+  --chart-2: #68716B;
+  --chart-3: #737873;
+  --chart-4: #54735C;
+  --chart-5: #806D48;
+  --sidebar: #ECEDEA;
+  --sidebar-foreground: #171918;
+  --sidebar-primary: #171918;
+  --sidebar-primary-foreground: #F5F6F4;
+  --sidebar-accent: #DFE1DD;
+  --sidebar-accent-foreground: #171918;
+  --sidebar-border: #D6D8D5;
+  --sidebar-ring: #171918;
+  --aegis: #171918;
+  --aegis-foreground: #F5F6F4;
+  --aegis-accent: #2A2D2B;
   --aegis-surface: #FFFFFF;
-  --aegis-elevated: #F8FAFC;
-  --success: #2E8551;
+  --aegis-elevated: #FAFAF9;
+  --success: #54735C;
   --success-foreground: #FFFFFF;
-  --warning: #B3822E;
+  --warning: #806D48;
   --warning-foreground: #FFFFFF;
 }
 
@@ -163,29 +168,29 @@
 }
 .dark ::-webkit-scrollbar-track,
 :root:is(.dark) ::-webkit-scrollbar-track {
-  background: #0D0F12;
+  background: #0D0E10;
 }
 .dark ::-webkit-scrollbar-thumb,
 :root:is(.dark) ::-webkit-scrollbar-thumb {
-  background: #252A31;
-  border-radius: 4px;
+  background: #242629;
+  border-radius: 2px;
 }
 .dark ::-webkit-scrollbar-thumb:hover,
 :root:is(.dark) ::-webkit-scrollbar-thumb:hover {
-  background: #303640;
+  background: #303338;
 }
 .light ::-webkit-scrollbar-track,
 :root:is(.light) ::-webkit-scrollbar-track {
-  background: #F4F6F8;
+  background: #ECEDEA;
 }
 .light ::-webkit-scrollbar-thumb,
 :root:is(.light) ::-webkit-scrollbar-thumb {
-  background: #D0D8E2;
-  border-radius: 4px;
+  background: #D9DBD8;
+  border-radius: 2px;
 }
 .light ::-webkit-scrollbar-thumb:hover,
 :root:is(.light) ::-webkit-scrollbar-thumb:hover {
-  background: #B0BAC6;
+  background: #C8CBC7;
 }
 
 /* Sonner Notification Container Stacking Fix */

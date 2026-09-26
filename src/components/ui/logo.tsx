@@ -15,13 +15,13 @@ export function CentauriAegisLogo({
     typeof size === "number"
       ? size
       : {
-          sm: 24,
-          md: 32,
-          lg: 44,
-          xl: 60,
-        }[size] ?? 32;
+          sm: 20,
+          md: 28,
+          lg: 38,
+          xl: 52,
+        }[size] ?? 28;
 
-  // Abstract heraldic aegis geometry combined with the Centauri 4-point/8-point astrometric guide
+  // Technical Aegis Insignia: Precision geometry in graphite, neutral grey, and off-white
   const symbolSvg = (
     <svg
       width={dimension}
@@ -30,56 +30,37 @@ export function CentauriAegisLogo({
       fill="none"
       xmlns="http://www.w3.org/2000/svg"
       className="shrink-0"
-      aria-label="Centauri Aegis Symbol"
+      aria-label="Centauri Aegis Insignia"
     >
-      <defs>
-        <linearGradient id="aegis-outer" x1="6" y1="4" x2="42" y2="44" gradientUnits="userSpaceOnUse">
-          <stop offset="0%" stopColor="#6D9FC9" />
-          <stop offset="50%" stopColor="#5B8DB8" />
-          <stop offset="100%" stopColor="#3A5A78" />
-        </linearGradient>
-        <linearGradient id="aegis-inner" x1="12" y1="10" x2="36" y2="38" gradientUnits="userSpaceOnUse">
-          <stop offset="0%" stopColor="#5B8DB8" stopOpacity="0.8" />
-          <stop offset="100%" stopColor="#252A31" stopOpacity="0.4" />
-        </linearGradient>
-        <radialGradient id="centauri-core" cx="24" cy="22" r="10" gradientUnits="userSpaceOnUse">
-          <stop offset="0%" stopColor="#FFFFFF" />
-          <stop offset="40%" stopColor="#A7AFBA" />
-          <stop offset="100%" stopColor="#303640" stopOpacity="0" />
-        </radialGradient>
-      </defs>
-
-      {/* Outer Aegis Diamond-Shield Perimeter */}
+      {/* Outer Technical Shield-Diamond Boundary */}
       <path
         d="M24 3L42 12V25C42 34.5 34.5 42.5 24 45C13.5 42.5 6 34.5 6 25V12L24 3Z"
-        stroke="url(#aegis-outer)"
-        strokeWidth="2.5"
+        strokeWidth="2"
         strokeLinecap="round"
         strokeLinejoin="round"
-        fill="#08090B"
+        className="stroke-[#C8CBC7] fill-[#FFFFFF] dark:stroke-[#303338] dark:fill-[#111214]"
       />
 
-      {/* Layered Inner Shield Geometries */}
+      {/* Inner Precision Offset Guide */}
       <path
         d="M24 8L37 15V24C37 31.5 31.5 37.8 24 40C16.5 37.8 11 31.5 11 24V15L24 8Z"
-        fill="url(#aegis-inner)"
-        stroke="#5B8DB8"
         strokeWidth="1"
-        strokeOpacity="0.5"
+        className="stroke-[#D9DBD8] fill-[#ECEDEA] dark:stroke-[#242629] dark:fill-[#161719]"
       />
 
-      {/* Astrometric Centauri Crosshairs / Security Coordinates */}
-      <line x1="24" y1="12" x2="24" y2="34" stroke="#A7AFBA" strokeWidth="1.5" strokeLinecap="round" strokeOpacity="0.8" />
-      <line x1="15" y1="22" x2="33" y2="22" stroke="#A7AFBA" strokeWidth="1.5" strokeLinecap="round" strokeOpacity="0.8" />
+      {/* Precision Astrometric Crosshairs */}
+      <line x1="24" y1="13" x2="24" y2="35" strokeWidth="1.25" strokeLinecap="round" className="stroke-[#737873] dark:stroke-[#707277]" />
+      <line x1="14" y1="24" x2="34" y2="24" strokeWidth="1.25" strokeLinecap="round" className="stroke-[#737873] dark:stroke-[#707277]" />
 
-      {/* Geometric Diamond Core */}
+      {/* Internal Security Diamond Coordinate */}
       <polygon
-        points="24,16 29,22 24,28 19,22"
-        fill="url(#centauri-core)"
+        points="24,18 29,24 24,30 19,24"
+        strokeWidth="1.5"
+        className="stroke-[#171918] fill-[#DFE1DD] dark:stroke-[#B8BABD] dark:fill-[#1B1D20]"
       />
 
-      {/* Core Node */}
-      <circle cx="24" cy="22" r="2" fill="#FFFFFF" />
+      {/* Center Point */}
+      <circle cx="24" cy="24" r="1.75" className="fill-[#171918] dark:fill-[#E5E5E5]" />
     </svg>
   );
 
@@ -88,13 +69,13 @@ export function CentauriAegisLogo({
   }
 
   return (
-    <div className={`inline-flex items-center gap-3 ${className}`}>
+    <div className={`inline-flex items-center gap-2.5 ${className}`}>
       {symbolSvg}
       <div className="flex flex-col">
-        <span className="font-sans text-base font-bold tracking-tight text-white leading-tight">
-          Centauri <span className="text-[#5B8DB8]">Aegis</span>
+        <span className="font-sans text-sm font-semibold tracking-tight text-foreground leading-none">
+          Centauri Aegis
         </span>
-        <span className="font-mono text-[9px] tracking-wider uppercase text-muted-foreground font-medium">
+        <span className="font-mono text-[9px] tracking-wider uppercase text-muted-foreground font-normal mt-1">
           AI Security Testing &amp; Research
         </span>
       </div>

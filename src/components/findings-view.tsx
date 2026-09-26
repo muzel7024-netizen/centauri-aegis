@@ -66,25 +66,25 @@ export function FindingsView() {
     switch (sev) {
       case "critical":
         return (
-          <Badge className="bg-red-500/20 text-red-400 border border-red-500/40 uppercase font-mono text-[10px] px-2 py-0.5">
+          <Badge className="bg-destructive/15 text-destructive border border-destructive/40 uppercase font-mono text-[10px] px-1.5 py-0.5 rounded-[2px]">
             CRITICAL
           </Badge>
         );
       case "high":
         return (
-          <Badge className="bg-amber-500/20 text-amber-400 border border-amber-500/40 uppercase font-mono text-[10px] px-2 py-0.5">
+          <Badge className="bg-warning/15 text-warning border border-warning/40 uppercase font-mono text-[10px] px-1.5 py-0.5 rounded-[2px]">
             HIGH
           </Badge>
         );
       case "medium":
         return (
-          <Badge className="bg-[#5B8DB8]/20 text-[#5B8DB8] border border-[#5B8DB8]/40 uppercase font-mono text-[10px] px-2 py-0.5">
+          <Badge className="bg-muted-foreground/15 text-muted-foreground border border-muted-foreground/40 uppercase font-mono text-[10px] px-1.5 py-0.5 rounded-[2px]">
             MEDIUM
           </Badge>
         );
       default:
         return (
-          <Badge className="bg-slate-500/20 text-slate-300 border border-slate-500/40 uppercase font-mono text-[10px] px-2 py-0.5">
+          <Badge className="bg-muted-foreground/15 text-muted-foreground border border-muted-foreground/40 uppercase font-mono text-[10px] px-1.5 py-0.5 rounded-[2px]">
             LOW
           </Badge>
         );
@@ -95,19 +95,19 @@ export function FindingsView() {
     switch (status) {
       case "resolved":
         return (
-          <Badge variant="outline" className="border-emerald-500/30 bg-emerald-500/10 text-emerald-400 text-[10px]">
+          <Badge variant="outline" className="border-success/40 bg-success/10 text-success text-[10px] font-mono rounded-[2px]">
             Resolved
           </Badge>
         );
       case "reviewed":
         return (
-          <Badge variant="outline" className="border-[#5B8DB8]/30 bg-[#5B8DB8]/10 text-[#5B8DB8] text-[10px]">
+          <Badge variant="outline" className="border-muted-foreground/40 bg-muted-foreground/10 text-muted-foreground text-[10px] font-mono rounded-[2px]">
             Reviewed
           </Badge>
         );
       default:
         return (
-          <Badge variant="outline" className="border-amber-500/30 bg-amber-500/10 text-amber-400 text-[10px]">
+          <Badge variant="outline" className="border-warning/40 bg-warning/10 text-warning text-[10px] font-mono rounded-[2px]">
             Open
           </Badge>
         );
@@ -115,19 +115,19 @@ export function FindingsView() {
   };
 
   return (
-    <div className="flex-1 space-y-6 p-8">
+    <div className="flex-1 space-y-5 p-6">
       {/* Top Banner */}
-      <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between border-b border-border/60 pb-6">
+      <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between border-b border-border pb-5">
         <div>
-          <div className="flex items-center gap-3">
-            <h1 className="text-2xl font-bold font-mono tracking-tight text-foreground">
-              FINDINGS <span className="text-aegis">REGISTER</span>
+          <div className="flex items-center gap-2.5">
+            <h1 className="text-xl font-bold font-mono tracking-tight text-foreground uppercase">
+              Findings Register
             </h1>
-            <Badge variant="outline" className="border-[#5B8DB8]/30 bg-[#5B8DB8]/10 text-[#5B8DB8] font-mono text-xs">
+            <Badge variant="outline" className="border-border bg-muted text-muted-foreground font-mono text-[10px] px-1.5 py-0.5 rounded-[2px]">
               {findings.length} Vulnerabilities
             </Badge>
           </div>
-          <p className="text-sm text-muted-foreground mt-1">
+          <p className="text-xs text-muted-foreground mt-1 font-sans">
             Confirmed vulnerabilities and adversarial exploits derived from assessment runs
           </p>
         </div>
@@ -137,16 +137,16 @@ export function FindingsView() {
             variant="outline"
             size="sm"
             onClick={() => setView("assessments")}
-            className="gap-2 border-border hover:bg-card text-xs"
+            className="gap-1.5 border-border bg-card hover:bg-muted text-foreground text-xs rounded-[3px] h-8 shadow-[0_1px_2px_rgba(0,0,0,0.04)] dark:shadow-none"
           >
-            <Shield className="h-3.5 w-3.5 text-[#5B8DB8]" />
+            <Shield className="h-3.5 w-3.5 text-muted-foreground" />
             Assessments
           </Button>
           <Button
             variant="outline"
             size="sm"
             onClick={() => setView("reports")}
-            className="gap-2 border-border hover:bg-card text-xs text-[#5B8DB8]"
+            className="gap-1.5 border-border bg-card hover:bg-muted text-foreground text-xs rounded-[3px] h-8 shadow-[0_1px_2px_rgba(0,0,0,0.04)] dark:shadow-none"
           >
             Generate Report
           </Button>
@@ -154,65 +154,55 @@ export function FindingsView() {
       </div>
 
       {/* KPI Cards Grid */}
-      <div className="grid grid-cols-2 gap-4 md:grid-cols-5">
-        <Card className="border-border bg-card">
-          <CardHeader className="pb-2">
-            <CardDescription className="text-xs">Total Findings</CardDescription>
-            <CardTitle className="text-2xl font-bold font-mono text-foreground">
-              {stats.total}
-            </CardTitle>
-          </CardHeader>
-        </Card>
+      <div className="grid grid-cols-2 gap-3 md:grid-cols-5">
+        <div className="rounded-[4px] border border-border bg-card p-3.5 shadow-[0_1px_2px_rgba(0,0,0,0.04)] dark:shadow-none">
+          <span className="text-[10px] font-mono uppercase tracking-wider text-muted-foreground block mb-1">Total Findings</span>
+          <div className="text-xl font-bold font-mono text-foreground">
+            {stats.total}
+          </div>
+        </div>
 
-        <Card className="border-border bg-card">
-          <CardHeader className="pb-2">
-            <CardDescription className="text-xs">Critical Severity</CardDescription>
-            <CardTitle className="text-2xl font-bold font-mono text-red-400">
-              {stats.critical}
-            </CardTitle>
-          </CardHeader>
-        </Card>
+        <div className="rounded-[4px] border border-border bg-card p-3.5 shadow-[0_1px_2px_rgba(0,0,0,0.04)] dark:shadow-none">
+          <span className="text-[10px] font-mono uppercase tracking-wider text-muted-foreground block mb-1">Critical Severity</span>
+          <div className="text-xl font-bold font-mono text-destructive">
+            {stats.critical}
+          </div>
+        </div>
 
-        <Card className="border-border bg-card">
-          <CardHeader className="pb-2">
-            <CardDescription className="text-xs">High Severity</CardDescription>
-            <CardTitle className="text-2xl font-bold font-mono text-amber-400">
-              {stats.high}
-            </CardTitle>
-          </CardHeader>
-        </Card>
+        <div className="rounded-[4px] border border-border bg-card p-3.5 shadow-[0_1px_2px_rgba(0,0,0,0.04)] dark:shadow-none">
+          <span className="text-[10px] font-mono uppercase tracking-wider text-muted-foreground block mb-1">High Severity</span>
+          <div className="text-xl font-bold font-mono text-warning">
+            {stats.high}
+          </div>
+        </div>
 
-        <Card className="border-border bg-card">
-          <CardHeader className="pb-2">
-            <CardDescription className="text-xs">Medium Severity</CardDescription>
-            <CardTitle className="text-2xl font-bold font-mono text-[#5B8DB8]">
-              {stats.medium}
-            </CardTitle>
-          </CardHeader>
-        </Card>
+        <div className="rounded-[4px] border border-border bg-card p-3.5 shadow-[0_1px_2px_rgba(0,0,0,0.04)] dark:shadow-none">
+          <span className="text-[10px] font-mono uppercase tracking-wider text-muted-foreground block mb-1">Medium Severity</span>
+          <div className="text-xl font-bold font-mono text-muted-foreground">
+            {stats.medium}
+          </div>
+        </div>
 
-        <Card className="border-border bg-card">
-          <CardHeader className="pb-2">
-            <CardDescription className="text-xs">Open / Unresolved</CardDescription>
-            <CardTitle className="text-2xl font-bold font-mono text-amber-300">
-              {stats.open}
-            </CardTitle>
-          </CardHeader>
-        </Card>
+        <div className="rounded-[4px] border border-border bg-card p-3.5 shadow-[0_1px_2px_rgba(0,0,0,0.04)] dark:shadow-none">
+          <span className="text-[10px] font-mono uppercase tracking-wider text-muted-foreground block mb-1">Open / Unresolved</span>
+          <div className="text-xl font-bold font-mono text-warning">
+            {stats.open}
+          </div>
+        </div>
       </div>
 
       {/* Search and Filters Bar */}
       <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
         <div className="flex flex-wrap items-center gap-2">
           {/* Severity filter */}
-          <div className="flex items-center rounded-md border border-border/60 bg-background/50 p-0.5 text-xs">
+          <div className="flex items-center rounded-[3px] border border-border bg-card p-0.5 text-xs shadow-[0_1px_2px_rgba(0,0,0,0.04)] dark:shadow-none">
             {["all", "critical", "high", "medium", "low"].map((sev) => (
               <button
                 key={sev}
                 onClick={() => setSeverityFilter(sev)}
-                className={`rounded px-2.5 py-1 capitalize transition-colors ${
+                className={`rounded-[2px] px-2 py-1 capitalize font-mono text-[11px] transition-colors ${
                   severityFilter === sev
-                    ? "bg-[#5B8DB8]/20 text-[#5B8DB8] font-medium"
+                    ? "bg-muted text-foreground border border-border font-medium"
                     : "text-muted-foreground hover:text-foreground"
                 }`}
               >
@@ -222,14 +212,14 @@ export function FindingsView() {
           </div>
 
           {/* Status filter */}
-          <div className="flex items-center rounded-md border border-border/60 bg-background/50 p-0.5 text-xs">
+          <div className="flex items-center rounded-[3px] border border-border bg-card p-0.5 text-xs shadow-[0_1px_2px_rgba(0,0,0,0.04)] dark:shadow-none">
             {["all", "open", "reviewed", "resolved"].map((st) => (
               <button
                 key={st}
                 onClick={() => setStatusFilter(st)}
-                className={`rounded px-2.5 py-1 capitalize transition-colors ${
+                className={`rounded-[2px] px-2 py-1 capitalize font-mono text-[11px] transition-colors ${
                   statusFilter === st
-                    ? "bg-[#5B8DB8]/20 text-[#5B8DB8] font-medium"
+                    ? "bg-muted text-foreground border border-border font-medium"
                     : "text-muted-foreground hover:text-foreground"
                 }`}
               >
@@ -246,193 +236,189 @@ export function FindingsView() {
             placeholder="Search findings, evidence, tests..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="h-8 w-full rounded-md border border-border bg-background/50 pl-8 pr-3 text-xs text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-aegis"
+            className="h-8 w-full rounded-[3px] border border-input bg-card pl-8 pr-3 text-xs text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none transition-colors"
           />
         </div>
       </div>
 
       {/* Findings List */}
       {filteredFindings.length === 0 ? (
-        <Card className="border-border bg-card">
-          <CardContent className="p-12 text-center space-y-2">
-            <CheckCircle2 className="mx-auto h-8 w-8 text-emerald-400" />
-            <p className="text-sm font-semibold text-foreground">
-              {findings.length === 0
-                ? "No vulnerability findings recorded yet"
-                : "No findings match the active filters"}
-            </p>
-            <p className="text-xs text-muted-foreground max-w-sm mx-auto">
-              Execute an assessment run against an LLM target to automatically discover and register security vulnerabilities.
-            </p>
-          </CardContent>
-        </Card>
+        <div className="rounded-[4px] border border-border bg-card p-10 text-center space-y-2 shadow-[0_1px_2px_rgba(0,0,0,0.04)] dark:shadow-none">
+          <CheckCircle2 className="mx-auto h-6 w-6 text-success" />
+          <p className="text-xs font-mono uppercase tracking-wider text-foreground font-semibold">
+            {findings.length === 0
+              ? "No vulnerability findings recorded"
+              : "No findings match active filters"}
+          </p>
+          <p className="text-xs text-muted-foreground max-w-sm mx-auto font-sans">
+            Execute an assessment run against an LLM target to automatically discover and register security vulnerabilities.
+          </p>
+        </div>
       ) : (
-        <div className="space-y-3">
+        <div className="space-y-2.5">
           {filteredFindings.map((finding) => {
             const isExpanded = expandedFindingId === finding.id;
             const parentAssessment = assessments.find((a) => a.id === finding.assessmentId);
             const parentTarget = targets.find((t) => t.id === finding.targetId);
 
             return (
-              <Card
+              <div
                 key={finding.id}
-                className="border-border bg-card hover:border-border/80 transition-colors"
+                className="rounded-[4px] border border-border bg-card p-3.5 hover:border-border-strong transition-colors shadow-[0_1px_2px_rgba(0,0,0,0.04)] dark:shadow-none"
               >
-                <CardContent className="p-4">
-                  <div className="flex flex-col gap-3">
-                    {/* Header Row */}
-                    <div className="flex items-start justify-between gap-3">
-                      <div className="space-y-1 min-w-0 flex-1">
-                        <div className="flex items-center gap-2.5 flex-wrap">
-                          {getSeverityBadge(finding.severity)}
-                          <h3 className="text-sm font-semibold text-foreground">
-                            {finding.title}
-                          </h3>
-                          <Badge variant="outline" className="text-[10px] py-0 px-1.5 font-mono">
-                            {CATEGORY_LABELS[finding.category]}
-                          </Badge>
-                          {getStatusBadge(finding.status)}
-                        </div>
-
-                        <div className="flex items-center gap-3 text-xs text-muted-foreground pt-0.5">
-                          {parentTarget && (
-                            <span>
-                              Target: <strong className="text-foreground">{parentTarget.name}</strong>
-                            </span>
-                          )}
-                          {parentAssessment && (
-                            <>
-                              <span>&middot;</span>
-                              <span>
-                                Assessment: <strong className="text-foreground">{parentAssessment.name}</strong>
-                              </span>
-                            </>
-                          )}
-                          <span>&middot;</span>
-                          <span>Confidence: {(finding.confidence * 100).toFixed(0)}%</span>
-                        </div>
+                <div className="flex flex-col gap-2.5">
+                  {/* Header Row */}
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="space-y-1 min-w-0 flex-1">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        {getSeverityBadge(finding.severity)}
+                        <h3 className="text-xs font-semibold text-foreground">
+                          {finding.title}
+                        </h3>
+                        <Badge variant="outline" className="text-[10px] py-0 px-1.5 font-mono border-border bg-muted text-muted-foreground rounded-[2px]">
+                          {CATEGORY_LABELS[finding.category]}
+                        </Badge>
+                        {getStatusBadge(finding.status)}
                       </div>
 
-                      <div className="flex items-center gap-1.5 shrink-0">
-                        {/* Status switcher */}
-                        {finding.status !== "resolved" ? (
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => {
-                              updateFinding(finding.id, { status: "resolved" });
-                              toast.success("Finding marked as resolved");
-                            }}
-                            className="h-7 text-xs px-2 gap-1 text-emerald-400 border-emerald-500/30 hover:bg-emerald-500/10"
-                            title="Mark as resolved"
-                          >
-                            <Check className="h-3 w-3" />
-                            Resolve
-                          </Button>
-                        ) : (
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => {
-                              updateFinding(finding.id, { status: "open" });
-                              toast.info("Finding reopened");
-                            }}
-                            className="h-7 text-xs px-2 text-muted-foreground"
-                            title="Reopen finding"
-                          >
-                            Reopen
-                          </Button>
+                      <div className="flex items-center gap-2 text-xs font-mono text-muted-foreground pt-0.5">
+                        {parentTarget && (
+                          <span>
+                            Target: <strong className="text-foreground font-normal">{parentTarget.name}</strong>
+                          </span>
                         )}
-
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() =>
-                            setExpandedFindingId(isExpanded ? null : finding.id)
-                          }
-                          className="h-7 px-2 text-xs text-[#5B8DB8] hover:text-[#6D9FC9]"
-                        >
-                          {isExpanded ? "Collapse" : "Details"}
-                        </Button>
-
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => {
-                            deleteFinding(finding.id);
-                            toast.info("Finding removed");
-                          }}
-                          className="h-7 w-7 p-0 text-muted-foreground hover:text-red-400"
-                          title="Delete finding"
-                        >
-                          <Trash2 className="h-3.5 w-3.5" />
-                        </Button>
+                        {parentAssessment && (
+                          <>
+                            <span>&middot;</span>
+                            <span>
+                              Assessment: <strong className="text-foreground font-normal">{parentAssessment.name}</strong>
+                            </span>
+                          </>
+                        )}
+                        <span>&middot;</span>
+                        <span>Confidence: {(finding.confidence * 100).toFixed(0)}%</span>
                       </div>
                     </div>
 
-                    {/* Short Description */}
-                    <p className="text-xs text-muted-foreground leading-relaxed">
-                      {finding.description}
-                    </p>
+                    <div className="flex items-center gap-1 shrink-0">
+                      {/* Status switcher */}
+                      {finding.status !== "resolved" ? (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => {
+                            updateFinding(finding.id, { status: "resolved" });
+                            toast.success("Finding marked as resolved");
+                          }}
+                          className="h-6 text-[11px] px-2 gap-1 text-success border-success/30 bg-success/10 hover:bg-success/20 rounded-[2px]"
+                          title="Mark as resolved"
+                        >
+                          <Check className="h-3 w-3" />
+                          Resolve
+                        </Button>
+                      ) : (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => {
+                            updateFinding(finding.id, { status: "open" });
+                            toast.info("Finding reopened");
+                          }}
+                          className="h-6 text-[11px] px-2 text-muted-foreground border-border hover:bg-muted rounded-[2px]"
+                          title="Reopen finding"
+                        >
+                          Reopen
+                        </Button>
+                      )}
 
-                    {/* Expandable Details Drawer */}
-                    {isExpanded && (
-                      <div className="mt-2 space-y-4 rounded-lg border border-border/60 bg-background/50 p-4 text-xs min-w-0 max-w-full overflow-hidden">
-                        {/* Evidence Section */}
-                        {finding.evidence.length > 0 && (
-                          <div className="min-w-0 max-w-full">
-                            <h4 className="font-semibold text-foreground uppercase tracking-wider text-[11px] mb-2">
-                              Empirical Model Evidence
-                            </h4>
-                            <div className="space-y-1.5 min-w-0 max-w-full">
-                              {finding.evidence.map((ev, idx) => (
-                                <div
-                                  key={idx}
-                                  className="rounded border border-border/50 bg-background/80 p-3 font-mono text-[11px] text-[#5B8DB8] leading-relaxed break-words break-all whitespace-pre-wrap max-h-56 overflow-y-auto overflow-x-hidden min-w-0 max-w-full"
-                                >
-                                  &ldquo;{ev}&rdquo;
-                                </div>
-                              ))}
-                            </div>
-                          </div>
-                        )}
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() =>
+                          setExpandedFindingId(isExpanded ? null : finding.id)
+                        }
+                        className="h-6 px-2 text-[11px] text-muted-foreground hover:text-foreground hover:bg-muted rounded-[2px]"
+                      >
+                        {isExpanded ? "Collapse" : "Details"}
+                      </Button>
 
-                        {/* Affected Probes */}
-                        {finding.affectedTests.length > 0 && (
-                          <div>
-                            <h4 className="font-semibold text-foreground uppercase tracking-wider text-[11px] mb-1.5">
-                              Triggering Attack Probes ({finding.affectedTests.length})
-                            </h4>
-                            <div className="flex flex-wrap gap-1.5">
-                              {finding.affectedTests.map((testName, idx) => (
-                                <Badge
-                                  key={idx}
-                                  variant="secondary"
-                                  className="font-mono text-[10px] text-muted-foreground"
-                                >
-                                  {testName}
-                                </Badge>
-                              ))}
-                            </div>
-                          </div>
-                        )}
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => {
+                          deleteFinding(finding.id);
+                          toast.info("Finding removed");
+                        }}
+                        className="h-6 w-6 p-0 text-muted-foreground hover:text-destructive hover:bg-muted rounded-[2px]"
+                        title="Delete finding"
+                      >
+                        <Trash2 className="h-3 w-3" />
+                      </Button>
+                    </div>
+                  </div>
 
-                        <Separator className="my-2" />
+                  {/* Short Description */}
+                  <p className="text-xs text-muted-foreground leading-relaxed font-sans">
+                    {finding.description}
+                  </p>
 
-                        {/* Remediation Guidance */}
-                        <div>
-                          <h4 className="font-semibold text-foreground uppercase tracking-wider text-[11px] mb-1">
-                            Actionable Defensive Remediation
+                  {/* Expandable Details Drawer */}
+                  {isExpanded && (
+                    <div className="mt-2 space-y-3 rounded-[3px] border border-border bg-muted p-3 text-xs min-w-0 max-w-full overflow-hidden">
+                      {/* Evidence Section */}
+                      {finding.evidence.length > 0 && (
+                        <div className="min-w-0 max-w-full">
+                          <h4 className="font-mono text-[10px] uppercase tracking-wider text-muted-foreground mb-1.5">
+                            Model Evidence Sample
                           </h4>
-                          <p className="text-foreground leading-relaxed text-xs bg-[#5B8DB8]/10 border border-[#5B8DB8]/20 rounded p-2.5">
-                            {finding.remediation}
-                          </p>
+                          <div className="space-y-1 min-w-0 max-w-full">
+                            {finding.evidence.map((ev, idx) => (
+                              <div
+                                key={idx}
+                                className="rounded-[2px] border border-border bg-card p-2.5 font-mono text-[11px] text-foreground leading-relaxed break-words break-all whitespace-pre-wrap max-h-56 overflow-y-auto min-w-0 max-w-full"
+                              >
+                                {ev}
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Affected Probes */}
+                      {finding.affectedTests.length > 0 && (
+                        <div>
+                          <h4 className="font-mono text-[10px] uppercase tracking-wider text-muted-foreground mb-1">
+                            Triggering Attack Probes ({finding.affectedTests.length})
+                          </h4>
+                          <div className="flex flex-wrap gap-1">
+                            {finding.affectedTests.map((testName, idx) => (
+                              <Badge
+                                key={idx}
+                                variant="outline"
+                                className="font-mono text-[10px] border-border bg-card text-muted-foreground rounded-[2px]"
+                              >
+                                {testName}
+                              </Badge>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
+                      <Separator className="my-1.5 bg-border" />
+
+                      {/* Remediation Guidance */}
+                      <div>
+                        <h4 className="font-mono text-[10px] uppercase tracking-wider text-muted-foreground mb-1">
+                          Defensive Remediation Strategy
+                        </h4>
+                        <div className="text-foreground leading-relaxed text-xs bg-card border border-border rounded-[2px] p-2.5">
+                          {finding.remediation}
                         </div>
                       </div>
-                    )}
-                  </div>
-                </CardContent>
-              </Card>
+                    </div>
+                  )}
+                </div>
+              </div>
             );
           })}
         </div>

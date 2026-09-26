@@ -99,28 +99,28 @@ function severityBadgeClass(severity: Severity): string {
     case "medium":
       return "bg-warning/20 text-warning border-warning/30";
     case "low":
-      return "bg-blue-500/20 text-blue-400 border-blue-500/30";
+      return "bg-muted-foreground/15 text-muted-foreground border-muted-foreground/30";
   }
 }
 
 function categoryBadgeClass(category: AttackCategory): string {
   switch (category) {
     case "injection":
-      return "bg-primary/20 text-primary border-primary/30";
+      return "bg-primary/15 text-primary border-primary/30";
     case "jailbreak":
-      return "bg-destructive/20 text-destructive border-destructive/30";
+      return "bg-destructive/15 text-destructive border-destructive/30";
     case "extraction":
-      return "bg-blue-500/20 text-blue-400 border-blue-500/30";
+      return "bg-muted-foreground/15 text-muted-foreground border-muted-foreground/30";
     case "bypass":
-      return "bg-amber-500/20 text-amber-400 border-amber-500/30";
+      return "bg-amber-500/15 text-amber-400 border-amber-500/30";
     case "tool_abuse":
-      return "bg-amber-500/20 text-amber-400 border-amber-500/30";
+      return "bg-amber-500/15 text-amber-400 border-amber-500/30";
     case "multi_turn":
-      return "bg-teal-500/20 text-teal-400 border-teal-500/30";
+      return "bg-success/15 text-success border-success/30";
     case "encoding":
-      return "bg-cyan-500/20 text-cyan-400 border-cyan-500/30";
+      return "bg-muted-foreground/15 text-muted-foreground border-muted-foreground/30";
     default:
-      return "bg-gray-500/20 text-gray-400 border-gray-500/30";
+      return "bg-muted text-muted-foreground border-border";
   }
 }
 
@@ -156,7 +156,7 @@ function classificationLabel(classification: AnalysisClassification): string {
 
 function severityScoreColor(score: number): string {
   if (score <= 2) return "[&>div]:bg-success";
-  if (score <= 4) return "[&>div]:bg-blue-500";
+  if (score <= 4) return "[&>div]:bg-muted-foreground";
   if (score <= 6) return "[&>div]:bg-warning";
   if (score <= 8) return "[&>div]:bg-amber-500";
   return "[&>div]:bg-destructive";

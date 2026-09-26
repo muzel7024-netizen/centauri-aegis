@@ -91,6 +91,8 @@ interface AppState {
   setView: (view: ViewName) => void;
   isRunning: boolean;
   setIsRunning: (running: boolean) => void;
+  isStopping: boolean;
+  setIsStopping: (stopping: boolean) => void;
   cancelActiveExecution: (() => void) | null;
   setCancelActiveExecution: (fn: (() => void) | null) => void;
 }
@@ -155,6 +157,11 @@ export const useStore = create<AppState>()(
           activeAssessmentId:
             state.activeAssessmentId === id ? null : state.activeAssessmentId,
           findings: state.findings.filter((f) => f.assessmentId !== id),
+          runs: state.runs.filter((r) => r.assessmentId !== id),
+          activeRunId:
+            state.runs.find((r) => r.id === state.activeRunId)?.assessmentId === id
+              ? null
+              : state.activeRunId,
         })),
       duplicateAssessment: (id) =>
         set((state) => {
@@ -249,7 +256,89 @@ export const useStore = create<AppState>()(
       // Attack runs
       runs: [],
       activeRunId: null,
-      addRun: (run) => set((state) => ({ runs: [run, ...state.runs] })),
+      addRun: (run) =>
+        set((state) => {
+          const updatedRun = { ...run };
+          let updatedAssessments = [...state.assessments];
+          let newActiveAssessmentId = state.activeAssessmentId;
+
+          // Ensure run is linked to an assessment
+          let assessmentId = updatedRun.assessmentId;
+          if (!assessmentId) {
+            // Check if active assessment exists for this target that can be linked
+            const matchedAssessment = state.activeAssessmentId
+              ? updatedAssessments.find(
+                  (a) =>
+                    a.id === state.activeAssessmentId &&
+                    a.targetId === updatedRun.targetId &&
+                    (a.status === "draft" || a.status === "ready" || a.status === "running")
+                )
+              : null;
+
+            if (matchedAssessment) {
+              assessmentId = matchedAssessment.id;
+            } else {
+              assessmentId = generateId();
+            }
+            updatedRun.assessmentId = assessmentId;
+          }
+
+          const existingIndex = updatedAssessments.findIndex((a) => a.id === assessmentId);
+          if (existingIndex >= 0) {
+            const existing = updatedAssessments[existingIndex];
+            const nextRunIds = existing.runIds.includes(updatedRun.id)
+              ? existing.runIds
+              : [updatedRun.id, ...existing.runIds];
+            const nextStatus =
+              updatedRun.status === "running"
+                ? ("running" as const)
+                : existing.status;
+
+            updatedAssessments[existingIndex] = {
+              ...existing,
+              status: nextStatus,
+              startedAt: existing.startedAt || (updatedRun.status === "running" ? updatedRun.startTime : undefined),
+              runIds: nextRunIds,
+              updatedAt: Date.now(),
+            };
+            newActiveAssessmentId = existing.id;
+          } else {
+            // Create a corresponding Assessment entity for this run
+            const newAssessment: Assessment = {
+              id: assessmentId,
+              name: `${updatedRun.targetName || "Target"} Assessment`,
+              targetId: updatedRun.targetId,
+              targetName: updatedRun.targetName,
+              status:
+                updatedRun.status === "running"
+                  ? "running"
+                  : updatedRun.status === "cancelled"
+                    ? "stopped"
+                    : "completed",
+              createdAt: updatedRun.startTime || Date.now(),
+              updatedAt: Date.now(),
+              startedAt: updatedRun.status === "running" ? updatedRun.startTime : undefined,
+              configuration: {
+                categories: updatedRun.categories || [],
+                payloadSelection: "all",
+                includeVariants: false,
+                adaptiveEnabled: false,
+                evolveEnabled: false,
+                concurrency: state.concurrency || 1,
+              },
+              runIds: [updatedRun.id],
+            };
+            updatedAssessments = [newAssessment, ...updatedAssessments];
+            newActiveAssessmentId = newAssessment.id;
+          }
+
+          return {
+            runs: [updatedRun, ...state.runs],
+            assessments: updatedAssessments,
+            activeAssessmentId: newActiveAssessmentId,
+            activeRunId: updatedRun.id,
+          };
+        }),
       addResult: (runId, result) =>
         set((state) => ({
           runs: state.runs.map((r) =>
@@ -257,30 +346,148 @@ export const useStore = create<AppState>()(
           ),
         })),
       completeRun: (runId) =>
-        set((state) => ({
-          runs: state.runs.map((r) =>
+        set((state) => {
+          const targetRun = state.runs.find((r) => r.id === runId);
+          if (!targetRun || targetRun.status === "cancelled" || targetRun.status === "completed") {
+            return {
+              ...state,
+              isRunning: false,
+              isStopping: false,
+              runProgress: null,
+            };
+          }
+
+          const updatedRuns = state.runs.map((r) =>
             r.id === runId
               ? { ...r, status: "completed" as const, endTime: Date.now() }
               : r
-          ),
-        })),
+          );
+          let updatedAssessments = state.assessments;
+          let updatedFindings = state.findings;
+
+          const assessmentId = targetRun?.assessmentId;
+          if (assessmentId) {
+            const assessment = updatedAssessments.find((a) => a.id === assessmentId);
+            if (assessment) {
+              const linkedRuns = updatedRuns.filter(
+                (r) =>
+                  assessment.runIds.includes(r.id) ||
+                  r.id === targetRun.id ||
+                  r.assessmentId === assessment.id
+              );
+              const stillRunning = linkedRuns.some((r) => r.status === "running");
+
+              if (!stillRunning) {
+                const allResults = linkedRuns.flatMap((r) => r.results);
+                const derivedFindings = generateFindingsFromResults(
+                  assessment.id,
+                  assessment.targetId,
+                  allResults
+                );
+                const otherFindings = state.findings.filter(
+                  (f) => f.assessmentId !== assessment.id
+                );
+                updatedFindings = [...derivedFindings, ...otherFindings];
+
+                const summary = calculateAssessmentSummary(
+                  assessment,
+                  updatedRuns,
+                  derivedFindings
+                );
+
+                updatedAssessments = updatedAssessments.map((a) =>
+                  a.id === assessment.id
+                    ? {
+                        ...a,
+                        status: "completed" as const,
+                        completedAt: Date.now(),
+                        updatedAt: Date.now(),
+                        summary,
+                      }
+                    : a
+                );
+              }
+            }
+          }
+
+          return {
+            runs: updatedRuns,
+            assessments: updatedAssessments,
+            findings: updatedFindings,
+            isRunning: false,
+            isStopping: false,
+            runProgress: null,
+          };
+        }),
       cancelRun: (runId) =>
-        set((state) => ({
-          runs: state.runs.map((r) =>
+        set((state) => {
+          const targetRun = state.runs.find((r) => r.id === runId);
+          if (!targetRun || targetRun.status === "completed" || targetRun.status === "cancelled") {
+            return {
+              ...state,
+              isRunning: false,
+              isStopping: false,
+              runProgress: null,
+            };
+          }
+
+          const updatedRuns = state.runs.map((r) =>
             r.id === runId
               ? { ...r, status: "cancelled" as const, endTime: Date.now() }
               : r
-          ),
-          isRunning: false,
-          runProgress: null,
-        })),
+          );
+          let updatedAssessments = state.assessments;
+
+          const assessmentId = targetRun?.assessmentId;
+          if (assessmentId) {
+            const assessment = updatedAssessments.find((a) => a.id === assessmentId);
+            if (assessment && assessment.status === "running") {
+              updatedAssessments = updatedAssessments.map((a) =>
+                a.id === assessment.id
+                  ? {
+                      ...a,
+                      status: "stopped" as const,
+                      updatedAt: Date.now(),
+                    }
+                  : a
+              );
+            }
+          }
+
+          return {
+            runs: updatedRuns,
+            assessments: updatedAssessments,
+            isRunning: false,
+            isStopping: false,
+            runProgress: null,
+          };
+        }),
       setActiveRun: (id) => set({ activeRunId: id }),
       deleteRun: (runId) =>
-        set((state) => ({
-          runs: state.runs.filter((r) => r.id !== runId),
-          activeRunId:
-            state.activeRunId === runId ? null : state.activeRunId,
-        })),
+        set((state) => {
+          const targetRun = state.runs.find((r) => r.id === runId);
+          const remainingRuns = state.runs.filter((r) => r.id !== runId);
+          let updatedAssessments = state.assessments;
+
+          if (targetRun?.assessmentId) {
+            updatedAssessments = state.assessments.map((a) =>
+              a.id === targetRun.assessmentId
+                ? {
+                    ...a,
+                    runIds: a.runIds.filter((id) => id !== runId),
+                    updatedAt: Date.now(),
+                  }
+                : a
+            );
+          }
+
+          return {
+            runs: remainingRuns,
+            assessments: updatedAssessments,
+            activeRunId:
+              state.activeRunId === runId ? null : state.activeRunId,
+          };
+        }),
 
       // Run settings
       concurrency: 1,
@@ -317,6 +524,8 @@ export const useStore = create<AppState>()(
       setView: (view) => set({ view }),
       isRunning: false,
       setIsRunning: (running) => set({ isRunning: running }),
+      isStopping: false,
+      setIsStopping: (stopping) => set({ isStopping: stopping }),
       cancelActiveExecution: null,
       setCancelActiveExecution: (fn) => set({ cancelActiveExecution: fn }),
     }),

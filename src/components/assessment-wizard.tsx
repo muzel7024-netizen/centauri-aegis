@@ -172,15 +172,15 @@ export function AssessmentWizard({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 backdrop-blur-sm p-4">
-      <Card className="w-full max-w-2xl border-border/80 bg-[#0D0F12] text-foreground shadow-2xl shadow-black/60">
-        <CardHeader className="border-b border-border/40 pb-4">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
+      <Card className="w-full max-w-2xl border-border bg-card text-foreground rounded-[4px] shadow-2xl">
+        <CardHeader className="border-b border-border pb-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2.5">
-              <Shield className="h-5 w-5 text-aegis" />
+              <Shield className="h-4 w-4 text-muted-foreground" />
               <div>
-                <CardTitle className="text-lg font-bold">New Assessment Wizard</CardTitle>
-                <CardDescription className="text-xs">
+                <CardTitle className="text-sm font-bold font-mono uppercase tracking-wider text-foreground">New Assessment Wizard</CardTitle>
+                <CardDescription className="text-xs text-muted-foreground">
                   Configure a structured security evaluation workflow
                 </CardDescription>
               </div>
@@ -189,61 +189,61 @@ export function AssessmentWizard({
               variant="ghost"
               size="sm"
               onClick={onClose}
-              className="h-8 w-8 p-0 text-muted-foreground hover:text-foreground"
+              className="h-7 w-7 p-0 text-muted-foreground hover:text-foreground rounded-[2px]"
             >
               <X className="h-4 w-4" />
             </Button>
           </div>
 
           {/* Stepper */}
-          <div className="mt-4 flex items-center justify-between px-2">
+          <div className="mt-3 flex items-center justify-between px-2">
             <div className="flex items-center gap-2">
               <div
-                className={`flex h-6 w-6 items-center justify-center rounded-full text-xs font-semibold ${
+                className={`flex h-5 w-5 items-center justify-center rounded-[2px] font-mono text-[11px] font-medium ${
                   step === 1
-                    ? "bg-aegis text-white"
-                    : "bg-primary/20 text-primary"
+                    ? "bg-primary text-primary-foreground"
+                    : "bg-muted text-muted-foreground border border-border"
                 }`}
               >
                 1
               </div>
-              <span className={`text-xs ${step === 1 ? "font-semibold text-foreground" : "text-muted-foreground"}`}>
+              <span className={`text-xs font-mono uppercase tracking-wider ${step === 1 ? "font-semibold text-foreground" : "text-muted-foreground"}`}>
                 Target
               </span>
             </div>
 
-            <Separator className="w-12" />
+            <Separator className="w-12 bg-border" />
 
             <div className="flex items-center gap-2">
               <div
-                className={`flex h-6 w-6 items-center justify-center rounded-full text-xs font-semibold ${
+                className={`flex h-5 w-5 items-center justify-center rounded-[2px] font-mono text-[11px] font-medium ${
                   step === 2
-                    ? "bg-aegis text-white"
+                    ? "bg-primary text-primary-foreground"
                     : step > 2
-                      ? "bg-primary/20 text-primary"
-                      : "bg-muted text-muted-foreground"
+                      ? "bg-muted text-foreground border border-border-strong"
+                      : "bg-muted text-muted-foreground border border-border"
                 }`}
               >
                 2
               </div>
-              <span className={`text-xs ${step === 2 ? "font-semibold text-foreground" : "text-muted-foreground"}`}>
+              <span className={`text-xs font-mono uppercase tracking-wider ${step === 2 ? "font-semibold text-foreground" : "text-muted-foreground"}`}>
                 Configuration
               </span>
             </div>
 
-            <Separator className="w-12" />
+            <Separator className="w-12 bg-border" />
 
             <div className="flex items-center gap-2">
               <div
-                className={`flex h-6 w-6 items-center justify-center rounded-full text-xs font-semibold ${
+                className={`flex h-5 w-5 items-center justify-center rounded-[2px] font-mono text-[11px] font-medium ${
                   step === 3
-                    ? "bg-aegis text-white"
-                    : "bg-muted text-muted-foreground"
+                    ? "bg-primary text-primary-foreground"
+                    : "bg-muted text-muted-foreground border border-border"
                 }`}
               >
                 3
               </div>
-              <span className={`text-xs ${step === 3 ? "font-semibold text-foreground" : "text-muted-foreground"}`}>
+              <span className={`text-xs font-mono uppercase tracking-wider ${step === 3 ? "font-semibold text-foreground" : "text-muted-foreground"}`}>
                 Review & Launch
               </span>
             </div>
@@ -368,21 +368,21 @@ export function AssessmentWizard({
                     return (
                       <label
                         key={cat}
-                        className={`flex cursor-pointer items-center justify-between rounded-md border p-2.5 transition-colors ${
+                        className={`flex cursor-pointer items-center justify-between rounded-[3px] border p-2.5 transition-colors ${
                           isChecked
-                            ? "border-aegis/50 bg-aegis/10 text-foreground"
-                            : "border-border bg-background/40 text-muted-foreground hover:border-border/80"
+                            ? "border-border-strong bg-muted text-foreground"
+                            : "border-border bg-card text-muted-foreground hover:border-border-strong"
                         }`}
                       >
                         <div className="flex items-center gap-2">
                           <Checkbox
                             checked={isChecked}
                             onCheckedChange={() => toggleCategory(cat)}
-                            className="data-[state=checked]:border-aegis data-[state=checked]:bg-aegis"
+                            className="border-border-strong data-[state=checked]:border-primary data-[state=checked]:bg-primary data-[state=checked]:text-primary-foreground rounded-[2px]"
                           />
                           <span className="text-xs font-medium">{CATEGORY_LABELS[cat]}</span>
                         </div>
-                        <span className="font-mono text-[11px] opacity-60">{count}</span>
+                        <span className="font-mono text-[11px] text-muted-foreground">{count}</span>
                       </label>
                     );
                   })}
@@ -390,48 +390,48 @@ export function AssessmentWizard({
               </div>
 
               {/* Advanced Modules */}
-              <div className="rounded-lg border border-border/50 bg-background/30 p-3.5 space-y-2.5">
-                <span className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground block">
+              <div className="rounded-[3px] border border-border bg-card p-3 space-y-2">
+                <span className="text-[10px] font-mono uppercase tracking-wider text-muted-foreground block mb-1">
                   Advanced Testing Modules
                 </span>
                 <div className="space-y-2">
-                  <label className="flex items-center justify-between text-xs cursor-pointer">
+                  <label className="flex items-center justify-between text-xs cursor-pointer text-muted-foreground hover:text-foreground">
                     <div className="flex items-center gap-2">
                       <Checkbox
                         checked={includeVariants}
                         onCheckedChange={(c) => setIncludeVariants(!!c)}
-                        className="data-[state=checked]:border-aegis data-[state=checked]:bg-aegis"
+                        className="border-border-strong data-[state=checked]:border-primary data-[state=checked]:bg-primary data-[state=checked]:text-primary-foreground rounded-[2px]"
                       />
                       <span>Generate Multi-Variant Payloads (Obfuscation, Leetspeak, ROT13)</span>
                     </div>
-                    <Badge variant="outline" className="text-[10px] py-0 px-1 border-primary/30 text-primary">
+                    <Badge variant="outline" className="text-[10px] py-0 px-1 border-border bg-muted text-muted-foreground font-mono rounded-[2px]">
                       +{totalVariantTypes}x Probes
                     </Badge>
                   </label>
 
-                  <label className="flex items-center justify-between text-xs cursor-pointer">
+                  <label className="flex items-center justify-between text-xs cursor-pointer text-muted-foreground hover:text-foreground">
                     <div className="flex items-center gap-2">
                       <Checkbox
                         checked={adaptiveEnabled}
                         onCheckedChange={(c) => setAdaptiveEnabled(!!c)}
-                        className="data-[state=checked]:border-aegis data-[state=checked]:bg-aegis"
+                        className="border-border-strong data-[state=checked]:border-primary data-[state=checked]:bg-primary data-[state=checked]:text-primary-foreground rounded-[2px]"
                       />
                       <div className="flex items-center gap-1.5">
-                        <Brain className="h-3.5 w-3.5 text-primary" />
+                        <Brain className="h-3.5 w-3.5 text-muted-foreground" />
                         <span>Adaptive Feedback Loop (Dynamic prompt mutation on refusals)</span>
                       </div>
                     </div>
                   </label>
 
-                  <label className="flex items-center justify-between text-xs cursor-pointer">
+                  <label className="flex items-center justify-between text-xs cursor-pointer text-muted-foreground hover:text-foreground">
                     <div className="flex items-center gap-2">
                       <Checkbox
                         checked={evolveEnabled}
                         onCheckedChange={(c) => setEvolveEnabled(!!c)}
-                        className="data-[state=checked]:border-aegis data-[state=checked]:bg-aegis"
+                        className="border-border-strong data-[state=checked]:border-primary data-[state=checked]:bg-primary data-[state=checked]:text-primary-foreground rounded-[2px]"
                       />
                       <div className="flex items-center gap-1.5">
-                        <Sparkles className="h-3.5 w-3.5 text-primary" />
+                        <Sparkles className="h-3.5 w-3.5 text-muted-foreground" />
                         <span>Evolutionary Mutation Engine (Genetic payload optimization)</span>
                       </div>
                     </div>
@@ -444,56 +444,56 @@ export function AssessmentWizard({
           {/* STEP 3: REVIEW & ESTIMATION */}
           {step === 3 && (
             <div className="space-y-4">
-              <div className="rounded-lg border border-border bg-background/50 p-4 space-y-3">
-                <div className="flex items-center justify-between border-b border-border/40 pb-2">
-                  <span className="text-xs text-muted-foreground">Target Endpoint</span>
+              <div className="rounded-[3px] border border-border bg-card p-4 space-y-3">
+                <div className="flex items-center justify-between border-b border-border pb-2">
+                  <span className="text-xs text-muted-foreground font-mono">Target Endpoint</span>
                   <span className="font-mono text-xs font-semibold text-foreground">
                     {selectedTarget?.name} ({selectedTarget?.model})
                   </span>
                 </div>
 
-                <div className="flex items-center justify-between border-b border-border/40 pb-2">
-                  <span className="text-xs text-muted-foreground">Selected Categories</span>
+                <div className="flex items-center justify-between border-b border-border pb-2">
+                  <span className="text-xs text-muted-foreground font-mono">Selected Categories</span>
                   <span className="text-xs text-foreground font-medium">
                     {categories.length} categories ({categories.map((c) => CATEGORY_LABELS[c]).join(", ")})
                   </span>
                 </div>
 
-                <div className="flex items-center justify-between border-b border-border/40 pb-2">
-                  <span className="text-xs text-muted-foreground">Variants & Mutators</span>
+                <div className="flex items-center justify-between border-b border-border pb-2">
+                  <span className="text-xs text-muted-foreground font-mono">Variants & Mutators</span>
                   <span className="text-xs text-foreground">
                     {includeVariants ? "Enabled (Base + Variants)" : "Base Payloads Only"}
                   </span>
                 </div>
 
                 <div className="flex items-center justify-between">
-                  <span className="text-xs font-semibold text-foreground">Total Estimated Probes</span>
-                  <Badge variant="outline" className="font-mono text-sm border-aegis/50 bg-aegis/15 text-primary px-2 py-0.5">
+                  <span className="text-xs font-mono uppercase tracking-wider text-muted-foreground">Total Estimated Probes</span>
+                  <Badge variant="outline" className="font-mono text-xs border-border-strong bg-muted text-foreground px-2 py-0.5 rounded-[2px]">
                     {estimatedTestCount} Test Probes
                   </Badge>
                 </div>
               </div>
 
-              <div className="rounded-md border border-primary/20 bg-primary/5 p-3 text-xs text-primary">
-                You can save this assessment as a <strong>Draft</strong> to execute later, or <strong>Start Assessment</strong> to immediately begin streamed adversarial testing.
+              <div className="rounded-[3px] border border-border bg-muted/40 p-3 text-xs text-muted-foreground font-mono">
+                You can save this assessment as a Draft to execute later, or Launch to immediately begin streamed adversarial testing.
               </div>
             </div>
           )}
 
           {/* Footer Controls */}
-          <div className="mt-6 flex items-center justify-between border-t border-border/40 pt-4">
+          <div className="mt-6 flex items-center justify-between border-t border-border pt-4">
             {step > 1 ? (
               <Button
                 variant="outline"
                 size="sm"
                 onClick={() => setStep((s) => (s - 1) as 1 | 2)}
-                className="gap-1.5 text-xs"
+                className="gap-1.5 text-xs border-border bg-card text-foreground hover:bg-muted rounded-[3px] h-8"
               >
                 <ArrowLeft className="h-3.5 w-3.5" />
                 Back
               </Button>
             ) : (
-              <Button variant="ghost" size="sm" onClick={onClose} className="text-xs">
+              <Button variant="ghost" size="sm" onClick={onClose} className="text-xs text-muted-foreground hover:text-foreground rounded-[3px] h-8">
                 Cancel
               </Button>
             )}
@@ -504,7 +504,7 @@ export function AssessmentWizard({
                   variant="outline"
                   size="sm"
                   onClick={handleSaveDraft}
-                  className="gap-1.5 text-xs border-border"
+                  className="gap-1.5 text-xs border-border bg-card text-foreground hover:bg-muted rounded-[3px] h-8"
                 >
                   <Save className="h-3.5 w-3.5" />
                   Save Draft
@@ -525,7 +525,7 @@ export function AssessmentWizard({
                     }
                     setStep((s) => (s + 1) as 2 | 3);
                   }}
-                  className="gap-1.5 text-xs bg-aegis text-white hover:bg-aegis/90"
+                  className="gap-1.5 text-xs bg-primary text-primary-foreground hover:bg-[#2A2D2B] dark:hover:bg-[#D0D1D3] font-medium rounded-[3px] h-8 shadow-none"
                 >
                   Continue
                   <ArrowRight className="h-3.5 w-3.5" />
@@ -534,10 +534,10 @@ export function AssessmentWizard({
                 <Button
                   size="sm"
                   onClick={handleStartNow}
-                  className="gap-1.5 text-xs bg-aegis text-white hover:bg-aegis/90 shadow-md shadow-black/40"
+                  className="gap-1.5 text-xs bg-primary text-primary-foreground hover:bg-[#2A2D2B] dark:hover:bg-[#D0D1D3] font-medium rounded-[3px] h-8 shadow-none"
                 >
-                  <Play className="h-3.5 w-3.5" />
-                  Start Assessment
+                  <Play className="h-3.5 w-3.5 fill-current" />
+                  Launch Assessment
                 </Button>
               )}
             </div>

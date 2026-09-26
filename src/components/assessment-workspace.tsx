@@ -36,13 +36,10 @@ import { toast } from "sonner";
 export function AssessmentWorkspace() {
   const {
     assessments,
-    activeAssessmentId,
     setActiveAssessment,
     deleteAssessment,
     duplicateAssessment,
-    targets,
     activeTargetId,
-    setView,
   } = useStore();
 
   const [wizardOpen, setWizardOpen] = useState(false);
@@ -80,31 +77,31 @@ export function AssessmentWorkspace() {
     switch (status) {
       case "completed":
         return (
-          <Badge variant="outline" className="border-emerald-500/30 bg-emerald-500/10 text-emerald-400 font-mono text-[10px]">
+          <Badge variant="outline" className="border-success/40 bg-success/10 text-success font-mono text-[10px] rounded-[2px]">
             COMPLETED
           </Badge>
         );
       case "running":
         return (
-          <Badge variant="outline" className="border-amber-500/30 bg-amber-500/10 text-amber-400 font-mono text-[10px] animate-pulse">
+          <Badge variant="outline" className="border-warning/40 bg-warning/10 text-warning font-mono text-[10px] animate-pulse rounded-[2px]">
             RUNNING
           </Badge>
         );
       case "ready":
         return (
-          <Badge variant="outline" className="border-[#5B8DB8]/30 bg-[#5B8DB8]/10 text-[#5B8DB8] font-mono text-[10px]">
+          <Badge variant="outline" className="border-border bg-muted text-foreground font-mono text-[10px] rounded-[2px]">
             READY
           </Badge>
         );
       case "stopped":
         return (
-          <Badge variant="outline" className="border-red-500/30 bg-red-500/10 text-red-400 font-mono text-[10px]">
+          <Badge variant="outline" className="border-destructive/40 bg-destructive/10 text-destructive font-mono text-[10px] rounded-[2px]">
             STOPPED
           </Badge>
         );
       default:
         return (
-          <Badge variant="outline" className="border-muted-foreground/30 text-muted-foreground font-mono text-[10px]">
+          <Badge variant="outline" className="border-border bg-card text-muted-foreground font-mono text-[10px] rounded-[2px]">
             DRAFT
           </Badge>
         );
@@ -112,19 +109,19 @@ export function AssessmentWorkspace() {
   };
 
   return (
-    <div className="flex-1 space-y-6 p-8">
+    <div className="flex-1 space-y-5 p-6">
       {/* Top Header */}
-      <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between border-b border-border/60 pb-6">
+      <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between border-b border-border pb-5">
         <div>
-          <div className="flex items-center gap-3">
-            <h1 className="text-2xl font-bold font-mono tracking-tight text-foreground">
-              ASSESSMENT <span className="text-aegis">WORKSPACE</span>
+          <div className="flex items-center gap-2.5">
+            <h1 className="text-xl font-bold font-mono tracking-tight text-foreground uppercase">
+              Assessment Workspace
             </h1>
-            <Badge variant="outline" className="border-[#5B8DB8]/30 bg-[#5B8DB8]/10 text-[#5B8DB8] font-mono text-xs">
+            <Badge variant="outline" className="border-border-strong bg-muted text-muted-foreground font-mono text-[10px] px-1.5 py-0.5 rounded-[2px]">
               {assessments.length} Total
             </Badge>
           </div>
-          <p className="text-sm text-muted-foreground mt-1">
+          <p className="text-xs text-muted-foreground mt-1 font-sans">
             Structured security assessment plans, test plans, real-time runs, and vulnerability findings
           </p>
         </div>
@@ -133,7 +130,7 @@ export function AssessmentWorkspace() {
           <Button
             size="sm"
             onClick={() => setWizardOpen(true)}
-            className="gap-2 bg-aegis hover:bg-aegis/90 text-white text-xs shadow-md shadow-black/40"
+            className="gap-1.5 bg-primary hover:bg-[#2A2D2B] dark:hover:bg-[#D0D1D3] text-primary-foreground font-medium text-xs rounded-[3px] h-8 shadow-none"
           >
             <Plus className="h-3.5 w-3.5" />
             New Assessment
@@ -143,19 +140,17 @@ export function AssessmentWorkspace() {
 
       {/* Filter and Search Bar */}
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <div className="flex items-center gap-1.5 overflow-x-auto">
+        <div className="flex items-center gap-1 overflow-x-auto rounded-[3px] border border-border bg-card p-0.5">
           {["all", "draft", "ready", "running", "completed", "stopped"].map((st) => (
-            <Button
+            <button
               key={st}
-              variant={statusFilter === st ? "secondary" : "ghost"}
-              size="sm"
               onClick={() => setStatusFilter(st)}
-              className={`h-7 text-xs capitalize ${
-                statusFilter === st ? "bg-[#5B8DB8]/15 text-[#5B8DB8] font-medium" : "text-muted-foreground"
+              className={`rounded-[2px] px-2 py-1 text-xs font-mono capitalize transition-colors ${
+                statusFilter === st ? "bg-muted text-foreground border border-border-strong font-medium" : "text-muted-foreground hover:text-foreground"
               }`}
             >
               {st}
-            </Button>
+            </button>
           ))}
         </div>
 
@@ -166,7 +161,7 @@ export function AssessmentWorkspace() {
             placeholder="Search assessments..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="h-8 w-full rounded-md border border-border bg-background/50 pl-8 pr-3 text-xs text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-aegis"
+            className="h-8 w-full rounded-[3px] border border-border bg-card pl-8 pr-3 text-xs text-foreground placeholder:text-muted-foreground focus:border-border-strong focus:outline-none transition-colors"
           />
         </div>
       </div>
@@ -188,7 +183,7 @@ export function AssessmentWorkspace() {
               <Button
                 size="sm"
                 onClick={() => setWizardOpen(true)}
-                className="mt-2 bg-aegis hover:bg-aegis/90 text-white gap-2 text-xs"
+                className="mt-2 bg-primary hover:bg-[#2A2D2B] dark:hover:bg-[#D0D1D3] text-primary-foreground gap-2 text-xs"
               >
                 <Plus className="h-3.5 w-3.5" />
                 Create First Assessment
@@ -201,110 +196,118 @@ export function AssessmentWorkspace() {
           {filteredAssessments.map((assessment) => {
             const hasSummary = !!assessment.summary;
             return (
-              <Card
+              <div
                 key={assessment.id}
-                className="border-border bg-card hover:border-border/80 transition-colors"
+                className="rounded-[4px] border border-border bg-card p-4 hover:border-border-strong transition-colors shadow-[0_1px_2px_rgba(0,0,0,0.04)] dark:shadow-none"
               >
-                <CardContent className="p-5">
-                  <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-                    <div className="space-y-1.5 min-w-0 flex-1">
-                      <div className="flex items-center gap-2.5">
-                        <h3 className="text-base font-semibold text-foreground truncate">
-                          {assessment.name}
-                        </h3>
-                        {getStatusBadge(assessment.status)}
-                      </div>
-
-                      {assessment.description && (
-                        <p className="text-xs text-muted-foreground line-clamp-1">
-                          {assessment.description}
-                        </p>
-                      )}
-
-                      <div className="flex flex-wrap items-center gap-3 text-xs text-muted-foreground pt-1">
-                        <span className="flex items-center gap-1">
-                          <Target className="h-3 w-3 text-[#5B8DB8]" />
-                          Target: <strong className="text-foreground">{assessment.targetName}</strong>
-                        </span>
-
-                        <span>&middot;</span>
-
-                        <span>
-                          {assessment.configuration.categories.length} Categories (
-                          {assessment.configuration.categories
-                            .map((c) => CATEGORY_LABELS[c])
-                            .slice(0, 3)
-                            .join(", ")}
-                          {assessment.configuration.categories.length > 3 && "..."})
-                        </span>
-
-                        {assessment.configuration.includeVariants && (
-                          <>
-                            <span>&middot;</span>
-                            <Badge variant="outline" className="text-[10px] py-0 px-1 border-[#5B8DB8]/30 text-[#5B8DB8]">
-                              Variants
-                            </Badge>
-                          </>
-                        )}
-
-                        {assessment.configuration.adaptiveEnabled && (
-                          <>
-                            <span>&middot;</span>
-                            <Badge variant="outline" className="text-[10px] py-0 px-1 border-[#5B8DB8]/30 text-[#5B8DB8]">
-                              Adaptive
-                            </Badge>
-                          </>
-                        )}
-                      </div>
+                <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+                  <div className="space-y-1 min-w-0 flex-1">
+                    <div className="flex items-center gap-2">
+                      <h3 className="text-xs font-semibold text-foreground truncate">
+                        {assessment.name}
+                      </h3>
+                      {getStatusBadge(assessment.status)}
                     </div>
 
-                    {/* Summary metrics if completed */}
-                    {hasSummary && assessment.summary && (
-                      <div className="flex items-center gap-4 border-l border-border/40 pl-4 shrink-0">
-                        <div className="text-center">
-                          <div className="text-xs text-muted-foreground">Grade</div>
-                          <Badge
-                            className={`font-mono text-xs px-2 py-0.5 mt-0.5 ${
-                              assessment.summary.scoreGrade === "A+" || assessment.summary.scoreGrade === "A"
-                                ? "bg-emerald-500/20 text-emerald-400 border border-emerald-500/30"
-                                : assessment.summary.scoreGrade === "B"
-                                  ? "bg-blue-500/20 text-blue-400 border border-blue-500/30"
-                                  : "bg-red-500/20 text-red-400 border border-red-500/30"
-                            }`}
-                          >
-                            {assessment.summary.scoreGrade}
-                          </Badge>
-                        </div>
-
-                        <div className="text-center">
-                          <div className="text-xs text-muted-foreground">Breach Rate</div>
-                          <div className="font-mono text-sm font-semibold text-foreground">
-                            {assessment.summary.breachRate}%
-                          </div>
-                        </div>
-
-                        <div className="text-center">
-                          <div className="text-xs text-muted-foreground">Findings</div>
-                          <div className="font-mono text-sm font-semibold text-red-400">
-                            {assessment.summary.findingsCount.critical +
-                              assessment.summary.findingsCount.high +
-                              assessment.summary.findingsCount.medium +
-                              assessment.summary.findingsCount.low}
-                          </div>
-                        </div>
-                      </div>
+                    {assessment.description && (
+                      <p className="text-xs text-muted-foreground line-clamp-1 font-sans">
+                        {assessment.description}
+                      </p>
                     )}
 
-                    {/* Action Controls */}
-                    <div className="flex items-center gap-2 shrink-0 pt-2 md:pt-0">
-                      <Button
-                        size="sm"
-                        onClick={() => setRunningAssessmentId(assessment.id)}
-                        className="gap-1.5 bg-aegis hover:bg-aegis/90 text-white text-xs"
-                      >
-                        <Play className="h-3 w-3" />
-                        {assessment.status === "completed" ? "Inspect / Rerun" : "Console"}
-                      </Button>
+                    <div className="flex flex-wrap items-center gap-2.5 text-xs font-mono text-muted-foreground pt-0.5">
+                      <span className="flex items-center gap-1">
+                        <Target className="h-3 w-3 text-muted-foreground" />
+                        Target: <strong className="text-foreground font-normal">{assessment.targetName}</strong>
+                      </span>
+
+                      <span>&middot;</span>
+
+                      <span>
+                        {assessment.configuration.categories.length} Categories (
+                        {assessment.configuration.categories
+                          .map((c) => CATEGORY_LABELS[c])
+                          .slice(0, 3)
+                          .join(", ")}
+                        {assessment.configuration.categories.length > 3 && "..."})
+                      </span>
+
+                      {assessment.configuration.includeVariants && (
+                        <>
+                          <span>&middot;</span>
+                          <Badge variant="outline" className="text-[10px] py-0 px-1 border-border bg-muted text-muted-foreground rounded-[2px] font-mono">
+                            Variants
+                          </Badge>
+                        </>
+                      )}
+
+                      {assessment.configuration.adaptiveEnabled && (
+                        <>
+                          <span>&middot;</span>
+                          <Badge variant="outline" className="text-[10px] py-0 px-1 border-border bg-muted text-muted-foreground rounded-[2px] font-mono">
+                            Adaptive
+                          </Badge>
+                        </>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Summary metrics if completed */}
+                  {hasSummary && assessment.summary && (
+                    <div className="flex items-center gap-4 border-l border-border pl-4 shrink-0">
+                      <div className="text-center">
+                        <div className="text-[10px] font-mono uppercase tracking-wider text-muted-foreground">Grade</div>
+                        <Badge
+                          className={`font-mono text-xs px-2 py-0.5 mt-0.5 rounded-[2px] ${
+                            assessment.summary.scoreGrade === "A+" || assessment.summary.scoreGrade === "A"
+                              ? "bg-success/15 text-success border border-success/40"
+                              : assessment.summary.scoreGrade === "B"
+                                ? "bg-muted-foreground/15 text-muted-foreground border border-muted-foreground/40"
+                                : "bg-destructive/15 text-destructive border border-destructive/40"
+                          }`}
+                        >
+                          {assessment.summary.scoreGrade}
+                        </Badge>
+                      </div>
+
+                      <div className="text-center">
+                        <div className="text-[10px] font-mono uppercase tracking-wider text-muted-foreground">Breach Rate</div>
+                        <div className="font-mono text-xs font-semibold text-foreground">
+                          {assessment.summary.breachRate}%
+                        </div>
+                      </div>
+
+                      <div className="text-center">
+                        <div className="text-[10px] font-mono uppercase tracking-wider text-muted-foreground">Findings</div>
+                        <div className="font-mono text-xs font-semibold text-destructive">
+                          {assessment.summary.findingsCount.critical +
+                            assessment.summary.findingsCount.high +
+                            assessment.summary.findingsCount.medium +
+                            assessment.summary.findingsCount.low}
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Action Controls */}
+                  <div className="flex items-center gap-1.5 shrink-0 pt-2 md:pt-0">
+                    <Button
+                      size="sm"
+                      onClick={() => {
+                        setActiveAssessment(assessment.id);
+                        setRunningAssessmentId(assessment.id);
+                      }}
+                      className="gap-1.5 bg-primary hover:bg-[#2A2D2B] dark:hover:bg-[#D0D1D3] text-primary-foreground text-xs font-medium rounded-[3px] h-7 shadow-none"
+                    >
+                      <Play className="h-3 w-3 fill-current" />
+                      {assessment.status === "completed"
+                        ? "Inspect / Rerun"
+                        : assessment.status === "running"
+                          ? "Console"
+                          : assessment.status === "ready"
+                            ? "Run"
+                            : "Console"}
+                    </Button>
 
                       <Button
                         variant="ghost"
@@ -325,10 +328,9 @@ export function AssessmentWorkspace() {
                       >
                         <Trash2 className="h-3.5 w-3.5" />
                       </Button>
-                    </div>
                   </div>
-                </CardContent>
-              </Card>
+                </div>
+              </div>
             );
           })}
         </div>

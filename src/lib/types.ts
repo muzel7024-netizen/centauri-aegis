@@ -93,6 +93,7 @@ export interface AttackRun {
   endTime?: number;
   status: "running" | "completed" | "cancelled";
   assessmentId?: string;
+  totalPayloads?: number;
 }
 
 // ─── Assessment Types ──────────────────────────────────────────────────────────

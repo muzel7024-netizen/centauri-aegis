@@ -28,24 +28,24 @@ export function AboutView() {
   return (
     <div className="flex-1 space-y-6 p-8 max-w-5xl">
       {/* Hero Header */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center gap-5 border-b border-border/60 pb-8">
-        <CentauriAegisLogo size={64} className="drop-shadow-[0_0_25px_rgba(91,141,184,0.35)] shrink-0" />
+      <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 border-b border-border pb-6">
+        <CentauriAegisLogo size={48} className="shrink-0" />
         <div className="space-y-1">
-          <div className="flex flex-wrap items-center gap-3">
-            <h1 className="text-3xl font-extrabold tracking-tight text-foreground font-mono">
-              CENTAURI <span className="text-aegis">AEGIS</span>
+          <div className="flex flex-wrap items-center gap-2.5">
+            <h1 className="text-2xl font-bold tracking-tight text-foreground font-mono">
+              CENTAURI AEGIS
             </h1>
-            <Badge variant="outline" className="border-primary/30 bg-primary/10 text-primary font-mono text-xs">
+            <Badge variant="outline" className="border-border-strong bg-muted text-muted-foreground font-mono text-[10px] rounded-[2px]">
               v1.0.0
             </Badge>
-            <Badge variant="outline" className="border-border bg-card/60 text-muted-foreground font-mono text-xs">
-              RELEASE
+            <Badge variant="outline" className="border-border bg-card text-muted-foreground font-mono text-[10px] rounded-[2px]">
+              STABLE
             </Badge>
           </div>
-          <p className="text-base font-medium text-foreground">
-            AI Security Testing & Research
+          <p className="text-sm font-medium text-foreground">
+            AI Security Testing & Research Platform
           </p>
-          <p className="text-xs text-muted-foreground max-w-xl">
+          <p className="text-xs text-muted-foreground max-w-xl font-sans">
             Adversarial red-teaming, jailbreak resistance evaluation, and automated safety auditing platform for modern Large Language Models and AI systems.
           </p>
         </div>

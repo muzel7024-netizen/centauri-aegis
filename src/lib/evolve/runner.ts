@@ -147,15 +147,18 @@ export async function executePayloads(
   payloads: AttackPayload[],
   config: ExecutionConfig,
   concurrency: number,
-  onResult?: (result: AttackResult) => void | Promise<void>
+  onResult?: (result: AttackResult) => void | Promise<void>,
+  signal?: AbortSignal
 ): Promise<AttackResult[]> {
   const effectiveConcurrency = Math.min(clampConcurrency(concurrency), payloads.length || 1);
-  const results: AttackResult[] = new Array(payloads.length);
+  const results: AttackResult[] = [];
 
   if (effectiveConcurrency === 1) {
-    for (const [index, payload] of payloads.entries()) {
+    for (const payload of payloads) {
+      if (signal?.aborted) break;
       const result = await executePayload(payload, config);
-      results[index] = result;
+      if (signal?.aborted) break;
+      results.push(result);
       await onResult?.(result);
     }
     return results;
@@ -165,12 +168,14 @@ export async function executePayloads(
 
   async function runWorker() {
     while (true) {
+      if (signal?.aborted) return;
       const currentIndex = nextIndex++;
       if (currentIndex >= payloads.length) {
         return;
       }
       const result = await executePayload(payloads[currentIndex], config);
-      results[currentIndex] = result;
+      if (signal?.aborted) return;
+      results.push(result);
       await onResult?.(result);
     }
   }

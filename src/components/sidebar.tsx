@@ -1,5 +1,5 @@
 "use client";
-import { useRef, useState, useEffect } from "react";
+import { useRef, useState, useEffect, useCallback } from "react";
 import { generateId } from "@/lib/uuid";
 
 import { useStore } from "@/lib/store";
@@ -12,6 +12,7 @@ import { Separator } from "@/components/ui/separator";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Progress } from "@/components/ui/progress";
 import { getTargetKeyFields } from "@/lib/target-utils";
+import { resolvePayloads } from "@/lib/evolve/runner";
 import {
   Shield,
   Target,
@@ -64,10 +65,12 @@ function formatDuration(ms: number): string {
 
 function RunProgressDisplay({
   progress,
+  isStopping,
 }: {
   progress: { total: number; completed: number; startTime: number };
+  isStopping: boolean;
 }) {
-  const [now, setNow] = useState(0);
+  const [now, setNow] = useState(progress.startTime);
 
   useEffect(() => {
     const tick = () => setNow(Date.now());
@@ -78,24 +81,28 @@ function RunProgressDisplay({
 
   const { total, completed, startTime } = progress;
   const percent = total > 0 ? Math.round((completed / total) * 100) : 0;
-  const elapsed = now - startTime;
+  const elapsed = Math.max(0, now - startTime);
   const avgPerPayload = completed > 0 ? elapsed / completed : 0;
-  const remaining = completed > 0 ? Math.round(avgPerPayload * (total - completed)) : 0;
+  const remaining = completed > 0 && total > completed ? Math.round(avgPerPayload * (total - completed)) : 0;
 
   return (
-    <div className="space-y-1.5">
+    <div className="space-y-1.5 rounded-[3px] border border-sidebar-border bg-sidebar-accent/50 p-2.5">
       <div className="flex items-center justify-between text-xs">
-        <span className="font-mono font-semibold text-foreground">
+        <span className="font-mono font-medium text-sidebar-foreground text-xs">
           {completed}/{total}
         </span>
-        <span className="text-muted-foreground">{percent}%</span>
+        <span className="font-mono text-muted-foreground text-xs">{percent}%</span>
       </div>
-      <Progress value={percent} className="h-2 [&>[data-slot=progress-indicator]]:bg-aegis" />
-      <div className="flex items-center justify-between text-[10px] text-muted-foreground">
+      <Progress
+        value={percent}
+        className="h-1.5 [&>[data-slot=progress-indicator]]:bg-primary bg-muted rounded-[2px]"
+      />
+      <div className="flex items-center justify-between text-[10px] font-mono text-muted-foreground">
         <span>{formatDuration(elapsed)} elapsed</span>
-        {completed > 0 && completed < total && (
+        {completed > 0 && completed < total && !isStopping && (
           <span>~{formatDuration(remaining)} left</span>
         )}
+        {isStopping && <span className="text-warning">Stopping...</span>}
         {completed === total && total > 0 && <span>Done!</span>}
       </div>
     </div>
@@ -108,11 +115,14 @@ export function Sidebar() {
     activeTargetId,
     setActiveTarget,
     assessments,
+    activeAssessmentId,
     findings,
     selectedCategories,
     toggleCategory,
     isRunning,
     setIsRunning,
+    isStopping,
+    setIsStopping,
     view,
     setView,
     addRun,
@@ -132,52 +142,43 @@ export function Sidebar() {
 
   const { authEnabled, username, logout } = useAuth();
   const abortRef = useRef<AbortController | null>(null);
-  const [isStopping, setIsStopping] = useState(false);
-
-  useEffect(() => {
-    if (!isRunning) {
-      setIsStopping(false);
-    }
-  }, [isRunning]);
 
   const canRun =
-    activeTargetId !== null && selectedCategories.length > 0 && !isRunning;
+    activeTargetId !== null && selectedCategories.length > 0 && !isRunning && !isStopping;
 
   // Refs for keyboard shortcut event handlers (avoid stale closures)
   const runAttacksRef = useRef<(() => void) | null>(null);
   const stopAttacksRef = useRef<(() => void) | null>(null);
 
-  // Listen for keyboard shortcut events
-  useEffect(() => {
-    const handleRun = () => runAttacksRef.current?.();
-    const handleStop = () => stopAttacksRef.current?.();
-    window.addEventListener(SHORTCUT_EVENTS.RUN_ATTACKS, handleRun);
-    window.addEventListener(SHORTCUT_EVENTS.STOP_ATTACKS, handleStop);
-    return () => {
-      window.removeEventListener(SHORTCUT_EVENTS.RUN_ATTACKS, handleRun);
-      window.removeEventListener(SHORTCUT_EVENTS.STOP_ATTACKS, handleStop);
-    };
-  }, []);
-
-  const stopAttacks = () => {
-    if (isStopping) return;
+  const stopAttacks = useCallback(() => {
+    if (isStopping || !isRunning) return;
     setIsStopping(true);
     if (cancelActiveExecution) {
-      cancelActiveExecution();
-      return;
+      try {
+        cancelActiveExecution();
+      } catch (err) {
+        console.error("Error cancelling execution:", err);
+      }
     }
     if (abortRef.current) {
       abortRef.current.abort();
       abortRef.current = null;
     }
-  };
+  }, [isStopping, isRunning, setIsStopping, cancelActiveExecution]);
 
-  const runAttacks = async () => {
+  const runAttacks = useCallback(async () => {
     const target = targets.find((t) => t.id === activeTargetId);
     if (!target) return;
+    if (isRunning) return;
 
     const controller = new AbortController();
     abortRef.current = controller;
+    setCancelActiveExecution(() => {
+      controller.abort();
+    });
+
+    const scheduledPayloads = resolvePayloads({ categories: selectedCategories });
+    const totalPayloads = scheduledPayloads.length;
 
     const runId = generateId();
     const run: AttackRun = {
@@ -188,12 +189,15 @@ export function Sidebar() {
       results: [],
       startTime: Date.now(),
       status: "running",
+      totalPayloads,
+      assessmentId: activeAssessmentId || undefined,
     };
 
     addRun(run);
     setActiveRun(runId);
     setIsRunning(true);
-    setRunProgress({ total: 0, completed: 0, startTime: Date.now() });
+    setIsStopping(false);
+    setRunProgress({ total: totalPayloads, completed: 0, startTime: Date.now() });
     setView("results");
 
     let wasCancelled = false;
@@ -213,13 +217,44 @@ export function Sidebar() {
         signal: controller.signal,
       });
 
+      if (!res.ok) {
+        throw new Error(`Request failed with status ${res.status}`);
+      }
+
       const reader = res.body?.getReader();
       const decoder = new TextDecoder();
       let buffer = "";
 
       while (reader) {
-        const { done, value } = await reader.read();
-        if (done) break;
+        if (controller.signal.aborted) {
+          wasCancelled = true;
+          try {
+            await reader.cancel();
+          } catch {
+            // ignore
+          }
+          break;
+        }
+
+        let chunk;
+        try {
+          chunk = await reader.read();
+        } catch (e) {
+          if (controller.signal.aborted) {
+            wasCancelled = true;
+            break;
+          }
+          throw e;
+        }
+
+        const { done, value } = chunk;
+        if (done) {
+          if (controller.signal.aborted) {
+            wasCancelled = true;
+          }
+          break;
+        }
+
         buffer += decoder.decode(value, { stream: true });
         const lines = buffer.split("\n");
         buffer = lines.pop() || "";
@@ -229,7 +264,7 @@ export function Sidebar() {
               const parsed = JSON.parse(line);
               if (parsed.type === "meta" && typeof parsed.totalPayloads === "number") {
                 setRunProgress({ total: parsed.totalPayloads, completed: 0, startTime: Date.now() });
-              } else {
+              } else if (parsed.id || parsed.payloadId) {
                 addResult(runId, parsed);
                 incrementRunProgress();
               }
@@ -242,88 +277,104 @@ export function Sidebar() {
     } catch (err) {
       if (err instanceof DOMException && err.name === "AbortError") {
         wasCancelled = true;
+      } else if (controller.signal.aborted) {
+        wasCancelled = true;
       } else {
         console.error("Attack run failed:", err);
       }
     } finally {
-      if (wasCancelled) {
+      abortRef.current = null;
+      setCancelActiveExecution(null);
+      setIsRunning(false);
+      setIsStopping(false);
+      setRunProgress(null);
+
+      if (wasCancelled || controller.signal.aborted) {
         cancelRun(runId);
       } else {
         completeRun(runId);
       }
-      setIsRunning(false);
-      setIsStopping(false);
-      setRunProgress(null);
-      abortRef.current = null;
-      setCancelActiveExecution(null);
     }
-  };
+  }, [targets, activeTargetId, isRunning, selectedCategories, activeAssessmentId, addRun, setActiveRun, setIsRunning, setIsStopping, setRunProgress, setView, concurrency, setCancelActiveExecution, addResult, incrementRunProgress, cancelRun, completeRun]);
 
-  // Keep refs in sync for keyboard shortcut events
+  // Listen for keyboard shortcut events
+  useEffect(() => {
+    const handleRun = () => runAttacksRef.current?.();
+    const handleStop = () => stopAttacksRef.current?.();
+    window.addEventListener(SHORTCUT_EVENTS.RUN_ATTACKS, handleRun);
+    window.addEventListener(SHORTCUT_EVENTS.STOP_ATTACKS, handleStop);
+    return () => {
+      window.removeEventListener(SHORTCUT_EVENTS.RUN_ATTACKS, handleRun);
+      window.removeEventListener(SHORTCUT_EVENTS.STOP_ATTACKS, handleStop);
+    };
+  }, []);
+
   runAttacksRef.current = canRun ? runAttacks : null;
   stopAttacksRef.current = isRunning ? stopAttacks : null;
 
+  const getNavClass = (isActive: boolean) =>
+    `flex items-center gap-2 rounded-[3px] px-2.5 py-1.5 text-xs font-medium transition-colors ${
+      isActive
+        ? "bg-sidebar-accent text-sidebar-foreground border-l-2 border-primary"
+        : "text-muted-foreground hover:bg-sidebar-accent/60 hover:text-sidebar-foreground"
+    }`;
+
+  const getNavIconClass = (isActive: boolean) =>
+    `h-3.5 w-3.5 shrink-0 ${isActive ? "text-sidebar-foreground" : "text-muted-foreground"}`;
+
   return (
-    <aside className="flex h-screen w-[280px] shrink-0 flex-col border-r border-border bg-sidebar text-sidebar-foreground">
-      {/* Centauri Aegis Brand Header */}
-      <div className="flex items-center gap-3 px-4 py-4 border-b border-border/60">
-        <CentauriAegisLogo size={32} className="drop-shadow-[0_0_12px_rgba(91,141,184,0.3)] shrink-0" />
+    <aside className="flex h-screen w-[270px] shrink-0 flex-col border-r border-sidebar-border bg-sidebar text-sidebar-foreground">
+      {/* Brand Header */}
+      <div className="flex items-center gap-2.5 px-4 py-3.5 border-b border-sidebar-border">
+        <CentauriAegisLogo size={26} className="shrink-0" />
         <div className="flex flex-col">
-          <h1 className="text-sm font-bold tracking-tight text-foreground font-mono">
-            CENTAURI <span className="text-aegis">AEGIS</span>
-          </h1>
-          <span className="text-[10px] uppercase tracking-wider text-muted-foreground font-medium">
-            AI Security Testing
+          <span className="font-sans text-xs font-semibold tracking-wider text-sidebar-foreground uppercase">
+            Centauri Aegis
+          </span>
+          <span className="font-mono text-[9px] uppercase tracking-wider text-muted-foreground mt-0.5">
+            Security Testing Console
           </span>
         </div>
       </div>
 
       <ScrollArea className="min-h-0 flex-1">
-        <div className="flex flex-col gap-1 p-3">
+        <div className="flex flex-col gap-1 p-2.5">
           {/* WORKSPACE Section */}
-          <div className="mb-3">
-            <h2 className="mb-1.5 px-2 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+          <div className="mb-2.5">
+            <h2 className="mb-1 px-2 text-[10px] font-mono uppercase tracking-wider text-muted-foreground">
               Workspace
             </h2>
             <div className="flex flex-col gap-0.5">
               <button
                 onClick={() => setView("dashboard")}
-                className={`flex items-center gap-2 rounded-md px-2.5 py-1.5 text-xs font-medium transition-colors hover:bg-sidebar-accent ${
-                  view === "dashboard"
-                    ? "bg-aegis/15 text-aegis font-semibold border-l-2 border-aegis"
-                    : "text-sidebar-foreground"
-                }`}
+                className={getNavClass(view === "dashboard")}
               >
-                <LayoutDashboard className="h-3.5 w-3.5 text-aegis" />
-                Dashboard
+                <LayoutDashboard className={getNavIconClass(view === "dashboard")} />
+                <span>Dashboard</span>
               </button>
 
               <button
                 onClick={() => setView("config")}
-                className={`flex items-center gap-2 rounded-md px-2.5 py-1.5 text-xs font-medium transition-colors hover:bg-sidebar-accent ${
-                  view === "config"
-                    ? "bg-aegis/15 text-aegis font-semibold border-l-2 border-aegis"
-                    : "text-sidebar-foreground"
-                }`}
+                className={getNavClass(view === "config")}
               >
-                <Target className="h-3.5 w-3.5 text-aegis" />
-                Target Workspace
+                <Target className={getNavIconClass(view === "config")} />
+                <span>Target Workspace</span>
               </button>
 
               <button
                 onClick={() => setView("assessments")}
-                className={`flex items-center justify-between rounded-md px-2.5 py-1.5 text-xs font-medium transition-colors hover:bg-sidebar-accent ${
+                className={`flex items-center justify-between rounded-[3px] px-2.5 py-1.5 text-xs font-medium transition-colors ${
                   view === "assessments"
-                    ? "bg-aegis/15 text-aegis font-semibold border-l-2 border-aegis"
-                    : "text-sidebar-foreground"
+                    ? "bg-sidebar-accent text-sidebar-foreground border-l-2 border-primary"
+                    : "text-muted-foreground hover:bg-sidebar-accent/60 hover:text-sidebar-foreground"
                 }`}
               >
                 <div className="flex items-center gap-2">
-                  <Shield className="h-3.5 w-3.5 text-aegis" />
+                  <Shield className={getNavIconClass(view === "assessments")} />
                   <span>Assessments</span>
                 </div>
                 {assessments.length > 0 && (
-                  <span className="font-mono text-[10px] text-aegis bg-aegis/20 px-1.5 rounded">
+                  <span className="font-mono text-[10px] text-muted-foreground bg-sidebar-accent border border-sidebar-border px-1.5 py-0.2 rounded-[2px]">
                     {assessments.length}
                   </span>
                 )}
@@ -331,18 +382,18 @@ export function Sidebar() {
 
               <button
                 onClick={() => setView("findings")}
-                className={`flex items-center justify-between rounded-md px-2.5 py-1.5 text-xs font-medium transition-colors hover:bg-sidebar-accent ${
+                className={`flex items-center justify-between rounded-[3px] px-2.5 py-1.5 text-xs font-medium transition-colors ${
                   view === "findings"
-                    ? "bg-aegis/15 text-aegis font-semibold border-l-2 border-aegis"
-                    : "text-sidebar-foreground"
+                    ? "bg-sidebar-accent text-sidebar-foreground border-l-2 border-primary"
+                    : "text-muted-foreground hover:bg-sidebar-accent/60 hover:text-sidebar-foreground"
                 }`}
               >
                 <div className="flex items-center gap-2">
-                  <AlertTriangle className="h-3.5 w-3.5 text-aegis" />
+                  <AlertTriangle className={getNavIconClass(view === "findings")} />
                   <span>Findings</span>
                 </div>
                 {findings.length > 0 && (
-                  <span className="font-mono text-[10px] text-amber-300 bg-amber-500/20 px-1.5 rounded">
+                  <span className="font-mono text-[10px] text-warning bg-sidebar-accent border border-sidebar-border px-1.5 py-0.2 rounded-[2px]">
                     {findings.length}
                   </span>
                 )}
@@ -350,24 +401,20 @@ export function Sidebar() {
 
               <button
                 onClick={() => setView("session")}
-                className={`flex items-center gap-2 rounded-md px-2.5 py-1.5 text-xs font-medium transition-colors hover:bg-sidebar-accent ${
-                  view === "session"
-                    ? "bg-aegis/15 text-aegis font-semibold border-l-2 border-aegis"
-                    : "text-sidebar-foreground"
-                }`}
+                className={getNavClass(view === "session")}
               >
-                <Database className="h-3.5 w-3.5 text-aegis" />
-                Session Manager
+                <Database className={getNavIconClass(view === "session")} />
+                <span>Session Manager</span>
               </button>
             </div>
 
-            {/* Active Targets Drawer */}
-            <div className="mt-2.5 rounded-md border border-border/50 bg-background/30 p-2 space-y-1">
-              <div className="flex items-center justify-between text-[10px] font-semibold uppercase tracking-wider text-muted-foreground px-1">
+            {/* Active Target Drawer */}
+            <div className="mt-2 rounded-[3px] border border-sidebar-border bg-card p-2 space-y-1">
+              <div className="flex items-center justify-between text-[10px] font-mono uppercase tracking-wider text-muted-foreground px-1">
                 <span>Active Target</span>
                 <button
                   onClick={() => setView("config")}
-                  className="text-aegis hover:text-foreground flex items-center gap-0.5"
+                  className="text-primary hover:underline flex items-center gap-0.5 text-[10px]"
                 >
                   <Plus className="h-3 w-3" />
                   Add
@@ -375,7 +422,7 @@ export function Sidebar() {
               </div>
 
               {targets.length === 0 ? (
-                <p className="px-1 py-1 text-[11px] text-muted-foreground italic">
+                <p className="px-1 py-1 text-[11px] text-muted-foreground italic font-sans">
                   No targets configured
                 </p>
               ) : (
@@ -383,20 +430,20 @@ export function Sidebar() {
                   <button
                     key={target.id}
                     onClick={() => setActiveTarget(target.id)}
-                    className={`flex w-full items-center gap-2 rounded px-2 py-1 text-xs transition-colors hover:bg-sidebar-accent ${
+                    className={`flex w-full items-center gap-2 rounded-[2px] px-1.5 py-1 text-xs transition-colors hover:bg-sidebar-accent/60 ${
                       activeTargetId === target.id
-                        ? "bg-aegis/15 text-aegis font-medium"
+                        ? "bg-sidebar-accent text-sidebar-foreground border border-sidebar-border font-medium"
                         : "text-muted-foreground"
                     }`}
                   >
                     <span
                       className={`inline-block h-1.5 w-1.5 rounded-full ${
-                        target.connected ? "bg-emerald-400" : "bg-muted-foreground"
+                        target.connected ? "bg-success" : "bg-muted-foreground/40"
                       }`}
                     />
                     <span className="truncate flex-1 text-left">{target.name}</span>
                     {target.connected ? (
-                      <Wifi className="h-3 w-3 text-emerald-400 shrink-0" />
+                      <Wifi className="h-3 w-3 text-success shrink-0" />
                     ) : (
                       <WifiOff className="h-3 w-3 text-muted-foreground shrink-0" />
                     )}
@@ -405,109 +452,89 @@ export function Sidebar() {
               )}
 
               {/* Red Team LLM */}
-              <div className="mt-1 border-t border-border/40 pt-1">
+              <div className="mt-1 border-t border-sidebar-border pt-1">
                 <button
                   onClick={() => setView("config")}
-                  className="flex w-full items-center gap-1.5 rounded px-1.5 py-1 text-[11px] transition-colors hover:bg-sidebar-accent text-muted-foreground"
+                  className="flex w-full items-center gap-1.5 rounded-[2px] px-1.5 py-1 text-[11px] transition-colors hover:bg-sidebar-accent/60 text-muted-foreground"
                 >
-                  <Brain className="h-3 w-3 text-aegis shrink-0" />
+                  <Brain className="h-3 w-3 text-muted-foreground shrink-0" />
                   {redTeamConfig ? (
                     <>
-                      <span className="truncate text-foreground font-medium">{redTeamConfig.model}</span>
-                      <span className={`ml-auto inline-block h-1.5 w-1.5 rounded-full ${redTeamConfig.connected ? "bg-emerald-400" : "bg-muted-foreground"}`} />
+                      <span className="truncate text-sidebar-foreground font-medium">{redTeamConfig.model}</span>
+                      <span className={`ml-auto inline-block h-1.5 w-1.5 rounded-full ${redTeamConfig.connected ? "bg-success" : "bg-muted-foreground/40"}`} />
                     </>
                   ) : (
-                    <span className="italic">No Red Team LLM</span>
+                    <span className="italic font-sans">No Red Team LLM</span>
                   )}
                 </button>
               </div>
             </div>
           </div>
 
-          <Separator className="my-1.5" />
+          <Separator className="my-1.5 bg-sidebar-border" />
 
           {/* TESTING Section */}
-          <div className="mb-3">
-            <h2 className="mb-1.5 px-2 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+          <div className="mb-2.5">
+            <h2 className="mb-1 px-2 text-[10px] font-mono uppercase tracking-wider text-muted-foreground">
               Testing Workflows
             </h2>
             <div className="flex flex-col gap-0.5">
               <button
                 onClick={() => setView("attacks")}
-                className={`flex items-center gap-2 rounded-md px-2.5 py-1.5 text-xs font-medium transition-colors hover:bg-sidebar-accent ${
-                  view === "attacks"
-                    ? "bg-aegis/15 text-aegis font-semibold border-l-2 border-aegis"
-                    : "text-sidebar-foreground"
-                }`}
+                className={getNavClass(view === "attacks")}
               >
-                <Shield className="h-3.5 w-3.5 text-aegis" />
-                Attack Modules
+                <Shield className={getNavIconClass(view === "attacks")} />
+                <span>Attack Modules</span>
               </button>
 
               <button
                 onClick={() => setView("chains")}
-                className={`flex items-center gap-2 rounded-md px-2.5 py-1.5 text-xs font-medium transition-colors hover:bg-sidebar-accent ${
-                  view === "chains"
-                    ? "bg-aegis/15 text-aegis font-semibold border-l-2 border-aegis"
-                    : "text-sidebar-foreground"
-                }`}
+                className={getNavClass(view === "chains")}
               >
-                <Link2 className="h-3.5 w-3.5 text-aegis" />
-                Attack Chains
+                <Link2 className={getNavIconClass(view === "chains")} />
+                <span>Attack Chains</span>
               </button>
 
               <button
                 onClick={() => setView("adaptive")}
-                className={`flex items-center gap-2 rounded-md px-2.5 py-1.5 text-xs font-medium transition-colors hover:bg-sidebar-accent ${
-                  view === "adaptive"
-                    ? "bg-aegis/15 text-aegis font-semibold border-l-2 border-aegis"
-                    : "text-sidebar-foreground"
-                }`}
+                className={getNavClass(view === "adaptive")}
               >
-                <Brain className="h-3.5 w-3.5 text-aegis" />
-                Adaptive Runner
+                <Brain className={getNavIconClass(view === "adaptive")} />
+                <span>Adaptive Runner</span>
               </button>
 
               <button
                 onClick={() => setView("evolve")}
-                className={`flex items-center gap-2 rounded-md px-2.5 py-1.5 text-xs font-medium transition-colors hover:bg-sidebar-accent ${
-                  view === "evolve"
-                    ? "bg-aegis/15 text-aegis font-semibold border-l-2 border-aegis"
-                    : "text-sidebar-foreground"
-                }`}
+                className={getNavClass(view === "evolve")}
               >
-                <Sparkles className="h-3.5 w-3.5 text-aegis" />
-                Evolve Engine
+                <Sparkles className={getNavIconClass(view === "evolve")} />
+                <span>Evolve Engine</span>
               </button>
 
               <button
                 onClick={() => setView("editor")}
-                className={`flex items-center gap-2 rounded-md px-2.5 py-1.5 text-xs font-medium transition-colors hover:bg-sidebar-accent ${
-                  view === "editor"
-                    ? "bg-aegis/15 text-aegis font-semibold border-l-2 border-aegis"
-                    : "text-sidebar-foreground"
-                }`}
+                className={getNavClass(view === "editor")}
               >
-                <Edit3 className="h-3.5 w-3.5 text-aegis" />
-                Payload Editor
+                <Edit3 className={getNavIconClass(view === "editor")} />
+                <span>Payload Editor</span>
               </button>
             </div>
 
             {/* Attack Categories Checklist Drawer */}
-            <div className="mt-2.5 rounded-md border border-border/50 bg-background/30 p-2 space-y-1">
-              <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground px-1 block mb-1">
+            <div className="mt-2 rounded-[3px] border border-sidebar-border bg-card p-2 space-y-1">
+              <span className="text-[10px] font-mono uppercase tracking-wider text-muted-foreground px-1 block mb-1">
                 Active Categories ({selectedCategories.length}/7)
               </span>
-              <div className="space-y-1">
+              <div className="space-y-0.5">
                 {ATTACK_CATEGORIES.map((cat) => (
                   <label
                     key={cat}
-                    className="flex cursor-pointer items-center gap-2 rounded px-1.5 py-0.5 text-[11px] transition-colors hover:bg-sidebar-accent"
+                    className="flex cursor-pointer items-center gap-2 rounded-[2px] px-1.5 py-1 text-[11px] transition-colors hover:bg-sidebar-accent/60 text-muted-foreground hover:text-sidebar-foreground"
                   >
                     <Checkbox
                       checked={selectedCategories.includes(cat)}
                       onCheckedChange={() => toggleCategory(cat)}
-                      className="border-muted-foreground data-[state=checked]:border-aegis data-[state=checked]:bg-aegis h-3.5 w-3.5"
+                      className="border-sidebar-border data-[state=checked]:border-primary data-[state=checked]:bg-primary data-[state=checked]:text-primary-foreground rounded-[2px] h-3.5 w-3.5"
                     />
                     <span className="truncate">{CATEGORY_LABELS[cat]}</span>
                   </label>
@@ -516,128 +543,96 @@ export function Sidebar() {
             </div>
           </div>
 
-          <Separator className="my-1.5" />
+          <Separator className="my-1.5 bg-sidebar-border" />
 
           {/* ANALYSIS Section */}
-          <div className="mb-3">
-            <h2 className="mb-1.5 px-2 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+          <div className="mb-2.5">
+            <h2 className="mb-1 px-2 text-[10px] font-mono uppercase tracking-wider text-muted-foreground">
               Analysis & Metrics
             </h2>
             <div className="flex flex-col gap-0.5">
               <button
                 onClick={() => setView("results")}
-                className={`flex items-center gap-2 rounded-md px-2.5 py-1.5 text-xs font-medium transition-colors hover:bg-sidebar-accent ${
-                  view === "results"
-                    ? "bg-aegis/15 text-aegis font-semibold border-l-2 border-aegis"
-                    : "text-sidebar-foreground"
-                }`}
+                className={getNavClass(view === "results")}
               >
-                <BarChart3 className="h-3.5 w-3.5 text-aegis" />
-                Results Dashboard
+                <BarChart3 className={getNavIconClass(view === "results")} />
+                <span>Results Dashboard</span>
               </button>
 
               <button
                 onClick={() => setView("scoring")}
-                className={`flex items-center gap-2 rounded-md px-2.5 py-1.5 text-xs font-medium transition-colors hover:bg-sidebar-accent ${
-                  view === "scoring"
-                    ? "bg-aegis/15 text-aegis font-semibold border-l-2 border-aegis"
-                    : "text-sidebar-foreground"
-                }`}
+                className={getNavClass(view === "scoring")}
               >
-                <Calculator className="h-3.5 w-3.5 text-aegis" />
-                Scoring & Rubrics
+                <Calculator className={getNavIconClass(view === "scoring")} />
+                <span>Scoring & Rubrics</span>
               </button>
 
               <button
                 onClick={() => setView("heatmap")}
-                className={`flex items-center gap-2 rounded-md px-2.5 py-1.5 text-xs font-medium transition-colors hover:bg-sidebar-accent ${
-                  view === "heatmap"
-                    ? "bg-aegis/15 text-aegis font-semibold border-l-2 border-aegis"
-                    : "text-sidebar-foreground"
-                }`}
+                className={getNavClass(view === "heatmap")}
               >
-                <Grid3X3 className="h-3.5 w-3.5 text-aegis" />
-                Vulnerability Heatmap
+                <Grid3X3 className={getNavIconClass(view === "heatmap")} />
+                <span>Vulnerability Heatmap</span>
               </button>
 
               <button
                 onClick={() => setView("regression")}
-                className={`flex items-center gap-2 rounded-md px-2.5 py-1.5 text-xs font-medium transition-colors hover:bg-sidebar-accent ${
-                  view === "regression"
-                    ? "bg-aegis/15 text-aegis font-semibold border-l-2 border-aegis"
-                    : "text-sidebar-foreground"
-                }`}
+                className={getNavClass(view === "regression")}
               >
-                <GitBranch className="h-3.5 w-3.5 text-aegis" />
-                Regression Suite
+                <GitBranch className={getNavIconClass(view === "regression")} />
+                <span>Regression Suite</span>
               </button>
 
               <button
                 onClick={() => setView("comparison")}
-                className={`flex items-center gap-2 rounded-md px-2.5 py-1.5 text-xs font-medium transition-colors hover:bg-sidebar-accent ${
-                  view === "comparison"
-                    ? "bg-aegis/15 text-aegis font-semibold border-l-2 border-aegis"
-                    : "text-sidebar-foreground"
-                }`}
+                className={getNavClass(view === "comparison")}
               >
-                <GitCompareArrows className="h-3.5 w-3.5 text-aegis" />
-                Run Comparison
+                <GitCompareArrows className={getNavIconClass(view === "comparison")} />
+                <span>Run Comparison</span>
               </button>
             </div>
           </div>
 
-          <Separator className="my-1.5" />
+          <Separator className="my-1.5 bg-sidebar-border" />
 
           {/* REPORTS Section */}
-          <div className="mb-3">
-            <h2 className="mb-1.5 px-2 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+          <div className="mb-2.5">
+            <h2 className="mb-1 px-2 text-[10px] font-mono uppercase tracking-wider text-muted-foreground">
               Reports & Audit
             </h2>
             <div className="flex flex-col gap-0.5">
               <button
                 onClick={() => setView("reports")}
-                className={`flex items-center gap-2 rounded-md px-2.5 py-1.5 text-xs font-medium transition-colors hover:bg-sidebar-accent ${
-                  view === "reports"
-                    ? "bg-aegis/15 text-aegis font-semibold border-l-2 border-aegis"
-                    : "text-sidebar-foreground"
-                }`}
+                className={getNavClass(view === "reports")}
               >
-                <FileText className="h-3.5 w-3.5 text-aegis" />
-                Executive Reports
+                <FileText className={getNavIconClass(view === "reports")} />
+                <span>Executive Reports</span>
               </button>
             </div>
           </div>
 
-          <Separator className="my-1.5" />
+          <Separator className="my-1.5 bg-sidebar-border" />
 
           {/* SYSTEM Section */}
           <div className="mb-2">
-            <h2 className="mb-1.5 px-2 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+            <h2 className="mb-1 px-2 text-[10px] font-mono uppercase tracking-wider text-muted-foreground">
               System
             </h2>
             <div className="flex flex-col gap-0.5">
               <button
                 onClick={() => setView("settings")}
-                className={`flex items-center gap-2 rounded-md px-2.5 py-1.5 text-xs font-medium transition-colors hover:bg-sidebar-accent ${
-                  view === "settings"
-                    ? "bg-aegis/15 text-aegis font-semibold border-l-2 border-aegis"
-                    : "text-sidebar-foreground"
-                }`}
+                className={getNavClass(view === "settings")}
               >
-                <Settings className="h-3.5 w-3.5 text-aegis" />
-                Settings & Security
+                <Settings className={getNavIconClass(view === "settings")} />
+                <span>Settings & Security</span>
               </button>
 
               <button
                 onClick={() => setView("about")}
-                className={`flex items-center gap-2 rounded-md px-2.5 py-1.5 text-xs font-medium transition-colors hover:bg-sidebar-accent ${
-                  view === "about"
-                    ? "bg-aegis/15 text-foreground font-semibold border-l-2 border-aegis"
-                    : "text-sidebar-foreground"
-                }`}
+                className={getNavClass(view === "about")}
               >
-                <Info className="h-3.5 w-3.5 text-aegis" />
-                About & Attribution
+                <Info className={getNavIconClass(view === "about")} />
+                <span>About & Attribution</span>
               </button>
             </div>
           </div>
@@ -645,31 +640,31 @@ export function Sidebar() {
       </ScrollArea>
 
       {/* Theme Toggle */}
-      <div className="shrink-0 border-t border-border px-4 py-2">
+      <div className="shrink-0 border-t border-sidebar-border px-3 py-2 bg-sidebar">
         <ThemeToggle />
       </div>
 
-      {/* RUN / STOP Buttons */}
-      <div className="shrink-0 border-t border-border p-4 space-y-2">
+      {/* RUN / STOP Buttons & Controls */}
+      <div className="shrink-0 border-t border-sidebar-border p-3 space-y-2.5 bg-sidebar">
         {/* Concurrency selector */}
         <div className="flex items-center justify-between">
-          <label className="flex items-center gap-1.5 text-xs text-muted-foreground">
+          <label className="flex items-center gap-1.5 text-xs text-muted-foreground font-mono">
             <Zap className="h-3 w-3" />
             Concurrency
           </label>
           <div className="flex items-center gap-1">
             <button
-              className="flex h-6 w-6 items-center justify-center rounded border border-border text-muted-foreground transition-colors hover:bg-accent hover:text-foreground disabled:opacity-30"
+              className="flex h-6 w-6 items-center justify-center rounded-[2px] border border-sidebar-border bg-card text-muted-foreground transition-colors hover:bg-sidebar-accent hover:text-sidebar-foreground disabled:opacity-30"
               onClick={() => setConcurrency(concurrency - 1)}
               disabled={concurrency <= 1 || isRunning}
             >
               <Minus className="h-3 w-3" />
             </button>
-            <span className="w-6 text-center text-xs font-mono font-semibold text-foreground">
+            <span className="w-6 text-center text-xs font-mono font-medium text-sidebar-foreground">
               {concurrency}
             </span>
             <button
-              className="flex h-6 w-6 items-center justify-center rounded border border-border text-muted-foreground transition-colors hover:bg-accent hover:text-foreground disabled:opacity-30"
+              className="flex h-6 w-6 items-center justify-center rounded-[2px] border border-sidebar-border bg-card text-muted-foreground transition-colors hover:bg-sidebar-accent hover:text-sidebar-foreground disabled:opacity-30"
               onClick={() => setConcurrency(concurrency + 1)}
               disabled={concurrency >= 10 || isRunning}
             >
@@ -679,44 +674,44 @@ export function Sidebar() {
         </div>
 
         {isRunning && runProgress && runProgress.total > 0 && (
-          <RunProgressDisplay progress={runProgress} />
+          <RunProgressDisplay progress={runProgress} isStopping={isStopping} />
         )}
 
         {isRunning ? (
           <Button
-            className="w-full gap-2 bg-destructive font-semibold text-destructive-foreground hover:bg-destructive/90"
-            size="lg"
+            className="w-full gap-2 bg-destructive font-sans font-medium text-xs text-destructive-foreground hover:bg-destructive/90 disabled:opacity-40 rounded-[3px] h-9 shadow-none tracking-wide"
+            size="default"
             disabled={isStopping}
             onClick={stopAttacks}
           >
             {isStopping ? (
-              <Loader2 className="h-4 w-4 animate-spin" />
+              <Loader2 className="h-3.5 w-3.5 animate-spin" />
             ) : (
-              <Square className="h-4 w-4" />
+              <Square className="h-3.5 w-3.5 fill-current" />
             )}
-            {isStopping ? "STOPPING..." : "STOP"}
+            {isStopping ? "STOPPING..." : "STOP RUN"}
           </Button>
         ) : (
           <Button
-            className="w-full gap-2 bg-aegis font-semibold text-white hover:bg-aegis/90 disabled:opacity-40 shadow-md shadow-black/40"
-            size="lg"
+            className="w-full gap-2 bg-primary font-sans font-medium text-xs text-primary-foreground hover:bg-[#2A2D2B] dark:hover:bg-[#D0D1D3] disabled:opacity-40 rounded-[3px] h-9 shadow-none tracking-wide"
+            size="default"
             disabled={!canRun}
             onClick={runAttacks}
           >
-            <Play className="h-4 w-4" />
+            <Play className="h-3.5 w-3.5 fill-current" />
             RUN ATTACK
           </Button>
         )}
 
         {authEnabled && (
           <div className="flex items-center justify-between pt-1">
-            <span className="text-xs text-muted-foreground truncate">
+            <span className="text-[11px] font-mono text-muted-foreground truncate">
               {username || "authenticated"}
             </span>
             <Button
               variant="ghost"
               size="sm"
-              className="h-7 gap-1 text-xs text-muted-foreground hover:text-foreground"
+              className="h-6 gap-1 text-[11px] text-muted-foreground hover:text-sidebar-foreground hover:bg-sidebar-accent rounded-[2px] px-1.5"
               onClick={logout}
             >
               <LogOut className="h-3 w-3" />

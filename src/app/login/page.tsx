@@ -44,18 +44,18 @@ function LoginForm() {
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       {error && (
-        <div className="flex items-center gap-2 rounded-md border border-destructive/50 bg-destructive/10 p-3 text-sm text-destructive">
-          <AlertCircle className="h-4 w-4 shrink-0" />
-          {error}
+        <div className="flex items-center gap-2 rounded-[3px] border border-destructive/40 bg-destructive/10 p-2.5 text-xs text-destructive font-mono">
+          <AlertCircle className="h-3.5 w-3.5 shrink-0" />
+          <span>{error}</span>
         </div>
       )}
 
-      <div className="space-y-2">
+      <div className="space-y-1.5">
         <label
           htmlFor="username"
-          className="text-sm font-medium text-foreground"
+          className="text-xs font-mono uppercase tracking-wider text-muted-foreground"
         >
-          Username
+          Operator Identifier
         </label>
         <input
           id="username"
@@ -65,17 +65,17 @@ function LoginForm() {
           required
           autoComplete="username"
           autoFocus
-          className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-          placeholder="Enter username"
+          className="flex h-9 w-full rounded-[3px] border border-input bg-card px-3 py-1 text-xs font-mono text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none transition-colors"
+          placeholder="username"
         />
       </div>
 
-      <div className="space-y-2">
+      <div className="space-y-1.5">
         <label
           htmlFor="password"
-          className="text-sm font-medium text-foreground"
+          className="text-xs font-mono uppercase tracking-wider text-muted-foreground"
         >
-          Password
+          Security Passphrase
         </label>
         <input
           id="password"
@@ -84,23 +84,23 @@ function LoginForm() {
           onChange={(e) => setPassword(e.target.value)}
           required
           autoComplete="current-password"
-          className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-          placeholder="Enter password"
+          className="flex h-9 w-full rounded-[3px] border border-input bg-card px-3 py-1 text-xs font-mono text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none transition-colors"
+          placeholder="••••••••••••"
         />
       </div>
 
       <button
         type="submit"
         disabled={loading || !username || !password}
-        className="inline-flex h-10 w-full items-center justify-center rounded-md bg-aegis px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-aegis/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 shadow-md shadow-black/40"
+        className="inline-flex h-9 w-full items-center justify-center rounded-[3px] bg-primary px-4 py-2 text-xs font-sans font-medium text-primary-foreground tracking-wide transition-colors hover:bg-[#2A2D2B] dark:hover:bg-[#D0D1D3] disabled:pointer-events-none disabled:opacity-40 shadow-none mt-2"
       >
         {loading ? (
           <>
-            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+            <Loader2 className="mr-2 h-3.5 w-3.5 animate-spin" />
             Authenticating...
           </>
         ) : (
-          "Sign In to Console"
+          "Authenticate to Console"
         )}
       </button>
     </form>
@@ -110,28 +110,28 @@ function LoginForm() {
 export default function LoginPage() {
   return (
     <div className="flex min-h-screen items-center justify-center bg-background p-4">
-      <div className="w-full max-w-sm space-y-6">
+      <div className="w-full max-w-sm space-y-5">
         {/* Header */}
-        <div className="text-center space-y-3">
+        <div className="text-center space-y-2.5">
           <div className="flex justify-center">
-            <CentauriAegisLogo size={52} className="drop-shadow-[0_0_20px_rgba(91,141,184,0.35)]" />
+            <CentauriAegisLogo size={36} />
           </div>
           <div>
-            <h1 className="text-2xl font-bold tracking-tight text-foreground font-mono">
-              CENTAURI <span className="text-aegis">AEGIS</span>
+            <h1 className="text-base font-bold tracking-wider text-foreground font-mono uppercase">
+              Centauri Aegis
             </h1>
-            <p className="text-xs text-muted-foreground font-medium mt-1">
-              AI Security Testing & Research
+            <p className="text-[11px] font-mono uppercase tracking-wider text-muted-foreground mt-0.5">
+              AI Security Testing Console
             </p>
           </div>
         </div>
 
         {/* Form wrapped in Suspense for useSearchParams */}
-        <div className="rounded-xl border border-border/60 bg-card/60 p-6 backdrop-blur-sm shadow-xl">
+        <div className="rounded-[4px] border border-border bg-card p-5 shadow-[0_1px_2px_rgba(0,0,0,0.04)] dark:shadow-none">
           <Suspense
             fallback={
-              <div className="flex justify-center py-8">
-                <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+              <div className="flex justify-center py-6">
+                <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
               </div>
             }
           >
@@ -139,9 +139,9 @@ export default function LoginPage() {
           </Suspense>
         </div>
 
-        <p className="text-center text-xs text-muted-foreground">
-          Console credentials configured via <code className="text-xs font-mono text-primary">AEGIS_USERNAME</code>{" "}
-          and <code className="text-xs font-mono text-primary">AEGIS_PASSWORD</code>.
+        <p className="text-center text-[11px] font-mono text-muted-foreground">
+          Console credentials configured via <code className="text-[10px] font-mono text-foreground">AEGIS_USERNAME</code>{" "}
+          and <code className="text-[10px] font-mono text-foreground">AEGIS_PASSWORD</code>.
         </p>
       </div>
     </div>

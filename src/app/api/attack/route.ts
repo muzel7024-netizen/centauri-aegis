@@ -61,27 +61,52 @@ export async function POST(request: NextRequest) {
 
     const concurrency = clampConcurrency(body.concurrency);
 
+    const abortController = new AbortController();
+    const forwardAbort = () => {
+      abortController.abort();
+    };
+    request.signal.addEventListener("abort", forwardAbort);
+
     // Stream results as newline-delimited JSON
     const stream = new ReadableStream({
       async start(controller) {
         const encoder = new TextEncoder();
         const writeLine = (value: unknown) => {
-          controller.enqueue(encoder.encode(`${JSON.stringify(value)}\n`));
+          if (abortController.signal.aborted || request.signal.aborted) return;
+          try {
+            controller.enqueue(encoder.encode(`${JSON.stringify(value)}\n`));
+          } catch {
+            abortController.abort();
+          }
         };
 
         // Send meta line first so clients know total payload count
         writeLine({ type: "meta", totalPayloads: payloads.length });
 
-        await executePayloads(
-          payloads,
-          { endpoint, apiKey, model, provider },
-          concurrency,
-          (result) => {
-            writeLine(result);
+        try {
+          await executePayloads(
+            payloads,
+            { endpoint, apiKey, model, provider },
+            concurrency,
+            (result) => {
+              writeLine(result);
+            },
+            abortController.signal
+          );
+        } finally {
+          request.signal.removeEventListener("abort", forwardAbort);
+          if (!abortController.signal.aborted && !request.signal.aborted) {
+            try {
+              controller.close();
+            } catch {
+              // ignore
+            }
           }
-        );
-
-        controller.close();
+        }
+      },
+      cancel() {
+        abortController.abort();
+        request.signal.removeEventListener("abort", forwardAbort);
       },
     });
 

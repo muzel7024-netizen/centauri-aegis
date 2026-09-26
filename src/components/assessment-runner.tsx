@@ -1,38 +1,27 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { useStore } from "@/lib/store";
 import type { Assessment, AttackRun, AttackResult } from "@/lib/types";
 import { CATEGORY_LABELS } from "@/lib/types";
 import { getTargetKeyFields } from "@/lib/target-utils";
 import { generateId } from "@/lib/uuid";
-import { generateFindingsFromResults, calculateAssessmentSummary } from "@/lib/findings";
+import { generateFindingsFromResults } from "@/lib/findings";
+import { resolvePayloads } from "@/lib/evolve/runner";
 import { SHORTCUT_EVENTS } from "@/lib/use-keyboard-shortcuts";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Separator } from "@/components/ui/separator";
 import {
   Shield,
-  Target,
   Play,
   Square,
   AlertTriangle,
-  CheckCircle2,
   Clock,
   Activity,
   FileText,
-  Search,
   ArrowLeft,
-  XCircle,
   Loader2,
 } from "lucide-react";
 import { toast } from "sonner";
@@ -59,23 +48,29 @@ export function AssessmentRunner({
     generateFindingsForAssessment,
     isRunning,
     setIsRunning,
-    setView,
+    isStopping,
+    setIsStopping,
+    cancelActiveExecution,
     setCancelActiveExecution,
+    setView,
+    runProgress,
+    setRunProgress,
+    incrementRunProgress,
   } = useStore();
 
   const target = targets.find((t) => t.id === assessment.targetId);
 
   // Associated runs for this assessment
-  const assessmentRuns = runs.filter((r) => assessment.runIds.includes(r.id));
-  const latestRun = assessmentRuns[0] || null;
+  const assessmentRuns = runs.filter(
+    (r) => assessment.runIds.includes(r.id) || r.assessmentId === assessment.id
+  );
+  const runningRun = assessmentRuns.find((r) => r.status === "running");
+  const latestRun = runningRun || assessmentRuns[0] || null;
 
   // Local execution state
   const [activeRunId, setActiveRunId] = useState<string | null>(latestRun?.id || null);
-  const [totalExpected, setTotalExpected] = useState<number>(0);
-  const [completedCount, setCompletedCount] = useState<number>(0);
   const [elapsedSeconds, setElapsedSeconds] = useState<number>(0);
   const [currentProbeName, setCurrentProbeName] = useState<string>("");
-  const [isStopping, setIsStopping] = useState<boolean>(false);
 
   const abortControllerRef = useRef<AbortController | null>(null);
   const readerRef = useRef<ReadableStreamDefaultReader<Uint8Array> | null>(null);
@@ -83,8 +78,25 @@ export function AssessmentRunner({
   const timerRef = useRef<NodeJS.Timeout | null>(null);
 
   // Results for the currently active run
-  const activeRun = runs.find((r) => r.id === activeRunId);
+  const activeRun = runs.find((r) => r.id === activeRunId) || latestRun;
   const results = activeRun?.results || [];
+
+  // Denominator: Total scheduled payloads
+  const scheduledPayloads = resolvePayloads({
+    categories: assessment.configuration.categories,
+    payloadIds: assessment.configuration.customPayloadIds,
+  });
+  const totalExpected =
+    runProgress?.total ||
+    activeRun?.totalPayloads ||
+    scheduledPayloads.length ||
+    results.length ||
+    0;
+
+  // Numerator: Authoritative completed count from activeRun results
+  const completedCount = results.length;
+  const progressPercent =
+    totalExpected > 0 ? Math.min(100, Math.round((completedCount / totalExpected) * 100)) : 0;
 
   // Derived breaches
   const breaches = results.filter((r) => r.success);
@@ -96,8 +108,8 @@ export function AssessmentRunner({
     results
   );
 
-  const stopExecution = () => {
-    if (isStopping) return;
+  const stopExecution = useCallback(() => {
+    if (isStopping || !isRunning) return;
     setIsStopping(true);
     if (readerRef.current) {
       try {
@@ -109,22 +121,30 @@ export function AssessmentRunner({
     if (abortControllerRef.current) {
       abortControllerRef.current.abort();
     }
-  };
+    if (cancelActiveExecution) {
+      try {
+        cancelActiveExecution();
+      } catch {
+        // Ignored
+      }
+    }
+  }, [isStopping, isRunning, setIsStopping, cancelActiveExecution]);
 
   const stopExecutionRef = useRef<() => void>(stopExecution);
   stopExecutionRef.current = stopExecution;
 
-  // Synchronize cancellation with global store
+  // Keep elapsed seconds up to date
   useEffect(() => {
-    if (isRunning) {
-      setCancelActiveExecution(() => stopExecutionRef.current());
-    } else {
-      setCancelActiveExecution(null);
+    if (activeRun && activeRun.status === "running") {
+      setElapsedSeconds(Math.floor((Date.now() - activeRun.startTime) / 1000));
+      const interval = setInterval(() => {
+        setElapsedSeconds(Math.floor((Date.now() - activeRun.startTime) / 1000));
+      }, 1000);
+      return () => clearInterval(interval);
+    } else if (activeRun && activeRun.endTime) {
+      setElapsedSeconds(Math.floor((activeRun.endTime - activeRun.startTime) / 1000));
     }
-    return () => {
-      setCancelActiveExecution(null);
-    };
-  }, [isRunning, setCancelActiveExecution]);
+  }, [activeRun?.status, activeRun?.startTime, activeRun?.endTime]);
 
   // Synchronize cancellation with keyboard shortcut event
   useEffect(() => {
@@ -147,6 +167,12 @@ export function AssessmentRunner({
 
     if (isRunning) return;
 
+    const scheduledPayloads = resolvePayloads({
+      categories: assessment.configuration.categories,
+      payloadIds: assessment.configuration.customPayloadIds,
+    });
+    const totalPayloads = scheduledPayloads.length;
+
     const runId = generateId();
     setActiveRunId(runId);
 
@@ -159,6 +185,7 @@ export function AssessmentRunner({
       startTime: Date.now(),
       status: "running",
       assessmentId: assessment.id,
+      totalPayloads,
     };
 
     addRun(newRun);
@@ -172,12 +199,23 @@ export function AssessmentRunner({
 
     setIsRunning(true);
     setIsStopping(false);
-    setCompletedCount(0);
+    setRunProgress({ total: totalPayloads, completed: 0, startTime: Date.now() });
     completedProbeIdsRef.current.clear();
     setElapsedSeconds(0);
 
     const controller = new AbortController();
     abortControllerRef.current = controller;
+
+    setCancelActiveExecution(() => {
+      if (readerRef.current) {
+        try {
+          readerRef.current.cancel();
+        } catch {
+          // ignore
+        }
+      }
+      controller.abort();
+    });
 
     // Timer
     const startTime = Date.now();
@@ -199,6 +237,7 @@ export function AssessmentRunner({
           model: target.model,
           provider: target.provider,
           categories: assessment.configuration.categories,
+          payloadIds: assessment.configuration.customPayloadIds,
           concurrency: assessment.configuration.concurrency || 1,
         }),
         signal: controller.signal,
@@ -261,6 +300,11 @@ export function AssessmentRunner({
       while (reader) {
         if (controller.signal.aborted) {
           wasCancelled = true;
+          try {
+            await reader.cancel();
+          } catch {
+            // ignore
+          }
           break;
         }
         let chunk;
@@ -291,8 +335,7 @@ export function AssessmentRunner({
               const parsed = JSON.parse(line);
               if (parsed.type === "meta" && typeof parsed.totalPayloads === "number") {
                 const total = Math.max(0, parsed.totalPayloads);
-                setTotalExpected(total);
-                setCompletedCount((prev) => (total > 0 ? Math.min(total, prev) : prev));
+                setRunProgress({ total, completed: results.length, startTime });
               } else if (parsed.id || parsed.payloadId) {
                 const probeId = (parsed.id || parsed.payloadId) as string;
                 if (!completedProbeIdsRef.current.has(probeId)) {
@@ -303,10 +346,7 @@ export function AssessmentRunner({
                     targetId: target.id,
                   };
                   addResult(runId, resultWithContext);
-                  setCompletedCount((c) => {
-                    const next = c + 1;
-                    return totalExpected > 0 ? Math.min(totalExpected, next) : next;
-                  });
+                  incrementRunProgress();
                   if (resultWithContext.payloadName) {
                     setCurrentProbeName(resultWithContext.payloadName);
                   }
@@ -321,6 +361,8 @@ export function AssessmentRunner({
     } catch (err) {
       if (err instanceof DOMException && err.name === "AbortError") {
         wasCancelled = true;
+      } else if (controller.signal.aborted) {
+        wasCancelled = true;
       } else {
         executionFailed = true;
         failureReason = err instanceof Error ? err.message.slice(0, 300) : "Execution encountered an error";
@@ -333,6 +375,7 @@ export function AssessmentRunner({
       readerRef.current = null;
       setIsRunning(false);
       setIsStopping(false);
+      setRunProgress(null);
       setCancelActiveExecution(null);
 
       if (wasCancelled || controller.signal.aborted) {
@@ -368,25 +411,14 @@ export function AssessmentRunner({
     }
     return () => {
       if (timerRef.current) clearInterval(timerRef.current);
-      if (readerRef.current) {
-        try {
-          readerRef.current.cancel();
-        } catch {
-          // ignore
-        }
-      }
-      setCancelActiveExecution(null);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const progressPercent =
-    totalExpected > 0 ? Math.min(100, Math.round((completedCount / totalExpected) * 100)) : 0;
-
   return (
     <div className="flex-1 space-y-6 p-8">
       {/* Top Header */}
-      <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between border-b border-border/60 pb-6">
+      <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between border-b border-border pb-6">
         <div className="flex items-center gap-4">
           <Button
             variant="ghost"
@@ -398,25 +430,25 @@ export function AssessmentRunner({
           </Button>
 
           <div>
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2.5">
               <h1 className="text-xl font-bold font-mono tracking-tight text-foreground">
                 {assessment.name}
               </h1>
               <Badge
                 variant="outline"
-                className={`font-mono text-xs uppercase ${
+                className={`font-mono text-[10px] uppercase rounded-[2px] ${
                   isRunning
-                    ? "border-amber-500/40 bg-amber-500/10 text-amber-400"
+                    ? "border-warning/40 bg-warning/10 text-warning animate-pulse"
                     : assessment.status === "completed"
-                      ? "border-emerald-500/40 bg-emerald-500/10 text-emerald-400"
-                      : "border-[#5B8DB8]/40 bg-[#5B8DB8]/10 text-[#5B8DB8]"
+                      ? "border-success/40 bg-success/10 text-success"
+                      : "border-border bg-muted text-muted-foreground"
                 }`}
               >
                 {isRunning ? "RUNNING" : assessment.status}
               </Badge>
             </div>
-            <p className="text-xs text-muted-foreground mt-0.5">
-              Target: <span className="text-foreground font-medium">{target?.name}</span> ({target?.model} via {target?.provider})
+            <p className="text-xs font-mono text-muted-foreground mt-0.5">
+              Target: <span className="text-foreground">{target?.name}</span> ({target?.model} via {target?.provider})
             </p>
           </div>
         </div>
@@ -425,15 +457,14 @@ export function AssessmentRunner({
           {isRunning ? (
             <Button
               size="sm"
-              variant="outline"
               onClick={stopExecution}
               disabled={isStopping}
-              className="gap-1.5 border-red-500/40 text-red-400 hover:bg-red-500/10 text-xs"
+              className="gap-1.5 bg-destructive text-destructive-foreground hover:bg-destructive/90 font-medium text-xs rounded-[3px] h-8 shadow-none"
             >
               {isStopping ? (
                 <Loader2 className="h-3.5 w-3.5 animate-spin" />
               ) : (
-                <Square className="h-3.5 w-3.5" />
+                <Square className="h-3.5 w-3.5 fill-current" />
               )}
               {isStopping ? "Stopping..." : "Stop Run"}
             </Button>
@@ -441,9 +472,9 @@ export function AssessmentRunner({
             <Button
               size="sm"
               onClick={startExecution}
-              className="gap-1.5 bg-aegis hover:bg-aegis/90 text-white text-xs shadow-md shadow-black/40"
+              className="gap-1.5 bg-primary hover:bg-[#2A2D2B] dark:hover:bg-[#D0D1D3] text-primary-foreground font-medium text-xs rounded-[3px] h-8 shadow-none"
             >
-              <Play className="h-3.5 w-3.5" />
+              <Play className="h-3.5 w-3.5 fill-current" />
               {assessment.status === "completed" ? "Rerun Assessment" : "Execute Assessment"}
             </Button>
           )}
@@ -454,9 +485,9 @@ export function AssessmentRunner({
                 variant="outline"
                 size="sm"
                 onClick={() => setView("findings")}
-                className="gap-1.5 border-border hover:bg-card text-xs text-[#5B8DB8]"
+                className="gap-1.5 border-border bg-card hover:bg-muted text-foreground text-xs rounded-[3px] h-8"
               >
-                <AlertTriangle className="h-3.5 w-3.5" />
+                <AlertTriangle className="h-3.5 w-3.5 text-warning" />
                 View Findings ({liveFindings.length})
               </Button>
 
@@ -464,9 +495,9 @@ export function AssessmentRunner({
                 variant="outline"
                 size="sm"
                 onClick={() => setView("reports")}
-                className="gap-1.5 border-border hover:bg-card text-xs"
+                className="gap-1.5 border-border bg-card hover:bg-muted text-foreground text-xs rounded-[3px] h-8"
               >
-                <FileText className="h-3.5 w-3.5" />
+                <FileText className="h-3.5 w-3.5 text-muted-foreground" />
                 Report
               </Button>
             </>
@@ -475,85 +506,72 @@ export function AssessmentRunner({
       </div>
 
       {/* Real Execution Telemetry Grid */}
-      <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
-        <Card className="border-border bg-card">
-          <CardHeader className="pb-2">
-            <CardDescription className="text-xs flex items-center justify-between">
-              <span>Probes Completed</span>
-              <Activity className="h-3.5 w-3.5 text-[#5B8DB8]" />
-            </CardDescription>
-            <CardTitle className="text-2xl font-bold font-mono">
-              {totalExpected > 0 ? Math.min(completedCount, totalExpected) : completedCount}
-              {totalExpected > 0 && (
-                <span className="text-xs text-muted-foreground font-normal"> / {totalExpected}</span>
-              )}
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="pt-0">
-            <Progress value={progressPercent} className="h-1.5" />
-          </CardContent>
-        </Card>
+      <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
+        <div className="rounded-[4px] border border-border bg-card p-3.5 shadow-[0_1px_2px_rgba(0,0,0,0.04)] dark:shadow-none">
+          <div className="flex items-center justify-between pb-1">
+            <span className="text-[10px] font-mono uppercase tracking-wider text-muted-foreground">Probes Completed</span>
+            <Activity className="h-3.5 w-3.5 text-muted-foreground" />
+          </div>
+          <div className="text-xl font-bold font-mono text-foreground">
+            {totalExpected > 0 ? Math.min(completedCount, totalExpected) : completedCount}
+            {totalExpected > 0 && (
+              <span className="text-xs font-mono text-muted-foreground font-normal"> / {totalExpected}</span>
+            )}
+          </div>
+          <div className="pt-2">
+            <Progress value={progressPercent} className="h-1.5 [&>[data-slot=progress-indicator]]:bg-primary bg-muted rounded-[2px]" />
+          </div>
+        </div>
 
-        <Card className="border-border bg-card">
-          <CardHeader className="pb-2">
-            <CardDescription className="text-xs flex items-center justify-between">
-              <span>Breaches Detected</span>
-              <AlertTriangle className="h-3.5 w-3.5 text-red-400" />
-            </CardDescription>
-            <CardTitle className="text-2xl font-bold font-mono text-red-400">
-              {breaches.length}
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="pt-0">
-            <p className="text-xs text-muted-foreground">
-              {completedCount > 0
-                ? `${((breaches.length / completedCount) * 100).toFixed(1)}% breach rate`
-                : "No probes completed"}
-            </p>
-          </CardContent>
-        </Card>
+        <div className="rounded-[4px] border border-border bg-card p-3.5 shadow-[0_1px_2px_rgba(0,0,0,0.04)] dark:shadow-none">
+          <div className="flex items-center justify-between pb-1">
+            <span className="text-[10px] font-mono uppercase tracking-wider text-muted-foreground">Breaches Detected</span>
+            <AlertTriangle className="h-3.5 w-3.5 text-destructive" />
+          </div>
+          <div className="text-xl font-bold font-mono text-destructive">
+            {breaches.length}
+          </div>
+          <p className="text-xs font-mono text-muted-foreground pt-1">
+            {completedCount > 0
+              ? `${((breaches.length / completedCount) * 100).toFixed(1)}% breach rate`
+              : "No probes completed"}
+          </p>
+        </div>
 
-        <Card className="border-border bg-card">
-          <CardHeader className="pb-2">
-            <CardDescription className="text-xs flex items-center justify-between">
-              <span>Elapsed Execution Time</span>
-              <Clock className="h-3.5 w-3.5 text-[#5B8DB8]" />
-            </CardDescription>
-            <CardTitle className="text-2xl font-bold font-mono">
-              {Math.floor(elapsedSeconds / 60)}m {elapsedSeconds % 60}s
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="pt-0">
-            <p className="text-xs text-muted-foreground">
-              {isRunning ? "Stream actively receiving" : "Execution halted"}
-            </p>
-          </CardContent>
-        </Card>
+        <div className="rounded-[4px] border border-border bg-card p-3.5 shadow-[0_1px_2px_rgba(0,0,0,0.04)] dark:shadow-none">
+          <div className="flex items-center justify-between pb-1">
+            <span className="text-[10px] font-mono uppercase tracking-wider text-muted-foreground">Execution Time</span>
+            <Clock className="h-3.5 w-3.5 text-muted-foreground" />
+          </div>
+          <div className="text-xl font-bold font-mono text-foreground">
+            {Math.floor(elapsedSeconds / 60)}m {elapsedSeconds % 60}s
+          </div>
+          <p className="text-xs font-mono text-muted-foreground pt-1">
+            {isRunning ? "Stream active" : "Execution halted"}
+          </p>
+        </div>
 
-        <Card className="border-border bg-card">
-          <CardHeader className="pb-2">
-            <CardDescription className="text-xs flex items-center justify-between">
-              <span>Derived Findings</span>
-              <Shield className="h-3.5 w-3.5 text-[#5B8DB8]" />
-            </CardDescription>
-            <CardTitle className="text-2xl font-bold font-mono text-[#5B8DB8]">
-              {liveFindings.length}
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="pt-0">
-            <p className="text-xs text-muted-foreground">
-              Grouped vulnerability patterns
-            </p>
-          </CardContent>
-        </Card>
+        <div className="rounded-[4px] border border-border bg-card p-3.5 shadow-[0_1px_2px_rgba(0,0,0,0.04)] dark:shadow-none">
+          <div className="flex items-center justify-between pb-1">
+            <span className="text-[10px] font-mono uppercase tracking-wider text-muted-foreground">Derived Findings</span>
+            <Shield className="h-3.5 w-3.5 text-muted-foreground" />
+          </div>
+          <div className="text-xl font-bold font-mono text-foreground">
+            {liveFindings.length}
+          </div>
+          <p className="text-xs font-mono text-muted-foreground pt-1">
+            Vulnerability patterns
+          </p>
+        </div>
       </div>
 
       {/* Active Probe Banner (when running) */}
       {isRunning && (
-        <div className="flex items-center gap-3 rounded-lg border border-[#5B8DB8]/30 bg-[#5B8DB8]/10 px-4 py-3 text-xs text-[#5B8DB8]">
-          <Loader2 className="h-4 w-4 animate-spin text-aegis" />
-          <div className="flex-1 truncate">
-            Current Test Probe: <span className="font-mono text-foreground font-semibold">{currentProbeName || "Initializing..."}</span>
+        <div className="flex items-center gap-3 rounded-[3px] border border-border bg-muted px-3.5 py-2.5 text-xs text-foreground">
+          <Loader2 className="h-3.5 w-3.5 animate-spin text-primary" />
+          <div className="flex-1 truncate font-mono text-xs">
+            <span className="text-muted-foreground">Current Test Probe: </span>
+            <span className="text-foreground font-medium">{currentProbeName || "Initializing..."}</span>
           </div>
           <span className="font-mono text-[11px] text-muted-foreground">
             {progressPercent}% Complete
@@ -562,36 +580,34 @@ export function AssessmentRunner({
       )}
 
       {/* Split Console: Live Results Feed & Live Findings */}
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+      <div className="grid grid-cols-1 gap-5 lg:grid-cols-2">
         {/* Streamed Results Feed */}
-        <Card className="border-border bg-card">
-          <CardHeader className="border-b border-border/40 pb-3">
-            <div className="flex items-center justify-between">
-              <CardTitle className="text-sm font-semibold flex items-center gap-2">
-                <Activity className="h-4 w-4 text-[#5B8DB8]" />
-                Live Execution Feed ({results.length})
-              </CardTitle>
-              <Badge variant="outline" className="text-[10px]">
-                Real-time
-              </Badge>
+        <div className="rounded-[4px] border border-border bg-card shadow-[0_1px_2px_rgba(0,0,0,0.04)] dark:shadow-none">
+          <div className="border-b border-border p-3 flex items-center justify-between">
+            <div className="text-xs font-medium font-mono uppercase tracking-wider text-foreground flex items-center gap-2">
+              <Activity className="h-3.5 w-3.5 text-muted-foreground" />
+              Execution Stream ({results.length})
             </div>
-          </CardHeader>
-          <CardContent className="p-0">
+            <span className="font-mono text-[10px] text-muted-foreground border border-border bg-muted px-1.5 py-0.5 rounded-[2px]">
+              REAL-TIME
+            </span>
+          </div>
+          <div className="p-0">
             <ScrollArea className="h-96">
               {results.length === 0 ? (
-                <div className="p-8 text-center text-xs text-muted-foreground italic">
+                <div className="p-8 text-center text-xs text-muted-foreground font-mono italic">
                   No execution probes recorded yet. Click Execute Assessment to begin.
                 </div>
               ) : (
-                <div className="divide-y divide-border/40">
+                <div className="divide-y divide-border">
                   {results.slice().reverse().map((r) => (
-                    <div key={r.id} className="p-3 text-xs flex items-start justify-between gap-3 hover:bg-background/40">
+                    <div key={r.id} className="p-2.5 text-xs flex items-start justify-between gap-3 hover:bg-muted/50 transition-colors">
                       <div className="space-y-1 min-w-0">
                         <div className="flex items-center gap-2">
-                          <span className="font-semibold text-foreground truncate">
+                          <span className="font-mono text-xs font-medium text-foreground truncate">
                             {r.payloadName}
                           </span>
-                          <Badge variant="outline" className="text-[10px] py-0 px-1 font-mono">
+                          <Badge variant="outline" className="text-[10px] py-0 px-1 font-mono border-border bg-muted text-muted-foreground rounded-[2px]">
                             {CATEGORY_LABELS[r.category]}
                           </Badge>
                         </div>
@@ -605,11 +621,11 @@ export function AssessmentRunner({
                           {r.durationMs}ms
                         </span>
                         <Badge
-                          variant={r.success ? "destructive" : "secondary"}
-                          className={`text-[10px] py-0 px-1.5 ${
+                          variant="outline"
+                          className={`text-[10px] py-0 px-1.5 font-mono rounded-[2px] ${
                             r.success
-                              ? "bg-red-500/20 text-red-400 border border-red-500/30"
-                              : "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20"
+                              ? "border-destructive/40 bg-destructive/15 text-destructive"
+                              : "border-success/30 bg-success/10 text-success"
                           }`}
                         >
                           {r.success ? "BREACH" : "BLOCKED"}
@@ -620,58 +636,56 @@ export function AssessmentRunner({
                 </div>
               )}
             </ScrollArea>
-          </CardContent>
-        </Card>
+          </div>
+        </div>
 
         {/* Live Derived Findings */}
-        <Card className="border-border bg-card">
-          <CardHeader className="border-b border-border/40 pb-3">
-            <div className="flex items-center justify-between">
-              <CardTitle className="text-sm font-semibold flex items-center gap-2">
-                <AlertTriangle className="h-4 w-4 text-[#5B8DB8]" />
-                Vulnerability Findings ({liveFindings.length})
-              </CardTitle>
-              <Badge variant="outline" className="text-[10px] border-[#5B8DB8]/30 text-[#5B8DB8]">
-                Derived
-              </Badge>
+        <div className="rounded-[4px] border border-border bg-card shadow-[0_1px_2px_rgba(0,0,0,0.04)] dark:shadow-none">
+          <div className="border-b border-border p-3 flex items-center justify-between">
+            <div className="text-xs font-medium font-mono uppercase tracking-wider text-foreground flex items-center gap-2">
+              <AlertTriangle className="h-3.5 w-3.5 text-warning" />
+              Vulnerability Findings ({liveFindings.length})
             </div>
-          </CardHeader>
-          <CardContent className="p-0">
+            <span className="font-mono text-[10px] text-warning border border-warning/40 bg-warning/10 px-1.5 py-0.5 rounded-[2px]">
+              SYNTHESIZED
+            </span>
+          </div>
+          <div className="p-0">
             <ScrollArea className="h-96">
               {liveFindings.length === 0 ? (
-                <div className="p-8 text-center text-xs text-muted-foreground italic">
+                <div className="p-8 text-center text-xs text-muted-foreground font-mono italic">
                   {completedCount === 0
                     ? "Findings will appear here automatically when vulnerabilities are detected."
                     : "Zero breaches detected so far. Target is defending successfully."}
                 </div>
               ) : (
-                <div className="divide-y divide-border/40">
+                <div className="divide-y divide-border">
                   {liveFindings.map((f) => (
-                    <div key={f.id} className="p-3.5 text-xs space-y-2 hover:bg-background/40">
+                    <div key={f.id} className="p-3 text-xs space-y-1.5 hover:bg-muted/50 transition-colors">
                       <div className="flex items-center justify-between">
-                        <span className="font-semibold text-foreground">
+                        <span className="font-medium text-xs text-foreground">
                           {f.title}
                         </span>
                         <Badge
-                          className={`text-[10px] py-0 px-1.5 uppercase font-mono ${
+                          className={`text-[10px] py-0 px-1.5 uppercase font-mono rounded-[2px] ${
                             f.severity === "critical"
-                              ? "bg-red-500/20 text-red-400 border border-red-500/30"
+                              ? "bg-destructive/15 text-destructive border border-destructive/40"
                               : f.severity === "high"
-                                ? "bg-amber-500/20 text-amber-400 border border-amber-500/30"
-                                : "bg-[#5B8DB8]/20 text-[#5B8DB8] border border-[#5B8DB8]/30"
+                                ? "bg-warning/15 text-warning border border-warning/40"
+                                : "bg-muted-foreground/15 text-muted-foreground border border-muted-foreground/40"
                           }`}
                         >
                           {f.severity}
                         </Badge>
                       </div>
 
-                      <p className="text-[11px] text-muted-foreground leading-relaxed">
+                      <p className="text-xs text-muted-foreground leading-relaxed font-sans">
                         {f.description}
                       </p>
 
                       {f.evidence.length > 0 && (
-                        <div className="rounded bg-background/80 p-2.5 font-mono text-[11px] text-[#5B8DB8] border border-border/50 break-words break-all whitespace-pre-wrap max-h-36 overflow-y-auto min-w-0 max-w-full">
-                          <span className="font-semibold text-muted-foreground">Evidence: </span>
+                        <div className="rounded-[2px] bg-muted p-2 font-mono text-[11px] text-foreground border border-border break-words break-all whitespace-pre-wrap max-h-36 overflow-y-auto min-w-0 max-w-full">
+                          <span className="text-muted-foreground">Evidence: </span>
                           &ldquo;{f.evidence[0]}&rdquo;
                         </div>
                       )}
@@ -680,8 +694,8 @@ export function AssessmentRunner({
                 </div>
               )}
             </ScrollArea>
-          </CardContent>
-        </Card>
+          </div>
+        </div>
       </div>
     </div>
   );
