@@ -1,4 +1,4 @@
-# CLAUDE.md
+# Information.md
 
 This file provides architectural guidance when working with code in this repository.
 
